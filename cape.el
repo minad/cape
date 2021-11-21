@@ -41,8 +41,8 @@
   :type 'string)
 
 (defcustom cape-keywords
-  ;; Taken from company-keywords.el
-  ;; Please contribute corrections or additions.
+  ;; This variable was taken from company-keywords.el.
+  ;; Please contribute corrections or additions to both Cape and Company.
   '((c++-mode ;; https://en.cppreference.com/w/cpp/keyword
      "alignas" "alignof" "and" "and_eq" "asm" "atomic_cancel" "atomic_commit"
      "atomic_noexcept" "auto" "bitand" "bitor" "bool" "break" "case" "catch"
