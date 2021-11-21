@@ -289,26 +289,32 @@
   "Alist of major modes and keywords."
   :type 'alist)
 
-(defun cape--complete-in-region (thing table &rest extra)
+(defun cape--complete-in-region (thing table extra)
   "Complete THING at point given completion TABLE and EXTRA properties."
   (let ((bounds (or (bounds-of-thing-at-point thing) (cons (point) (point))))
         (completion-extra-properties extra))
     (completion-in-region (car bounds) (cdr bounds) table)))
 
+(defvar cape--file-properties
+  (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
+        :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file))))
+
 ;;;###autoload
 (defun cape-file-capf ()
   "File name completion-at-point-function."
   (when-let (bounds (bounds-of-thing-at-point 'filename))
-    (list (car bounds) (cdr bounds)
-          #'read-file-name-internal
-          :exclusive 'no
-          :annotation-function (lambda (_) " File"))))
+    `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
+      :exclusive no ,@cape--file-properties)))
 
 ;;;###autoload
 (defun cape-file ()
   "Complete file name at point."
   (interactive)
-  (cape--complete-in-region 'filename #'read-file-name-internal))
+  (cape--complete-in-region 'filename #'read-file-name-internal cape--file-properties))
+
+(defvar cape--dabbrev-properties
+  (list :annotation-function (lambda (_) " Dabbrev")
+        :company-kind (lambda (_) 'text)))
 
 ;;;###autoload
 (defun cape-dabbrev-capf ()
@@ -335,11 +341,13 @@
            (let ((beg (progn (search-backward abbrev) (point)))
                  (end (progn (search-forward abbrev) (point))))
              (unless (string-match-p "\n" (buffer-substring beg end))
-               (list beg end words
-                     :exclusive 'no
-                     :annotation-function (lambda (_) " Dabbrev"))))))))))
+               `(,beg ,end ,words :exclusive no ,@cape--dabbrev-properties)))))))))
 
 (autoload 'ispell-lookup-words "ispell")
+
+(defvar cape--ispell-properties
+  (list :annotation-function (lambda (_) " Ispell")
+        :company-kind (lambda (_) 'text)))
 
 ;;;###autoload
 (defun cape-ispell-capf ()
@@ -351,9 +359,7 @@
                            (ispell-lookup-words
                             (format "*%s*"
                                     (buffer-substring-no-properties (car bounds) (cdr bounds))))))))
-    (list (car bounds) (cdr bounds) table
-          :exclusive 'no
-          :annotation-function (lambda (_) " Ispell"))))
+    `(,(car bounds) ,(cdr bounds) ,table :exclusive no ,@cape--ispell-properties)))
 
 ;;;###autoload
 (defun cape-ispell ()
@@ -361,6 +367,10 @@
   (interactive)
   (let ((completion-at-point-functions (list #'cape-ispell-capf)))
     (completion-at-point)))
+
+(defvar cape--dict-properties
+  (list :annotation-function (lambda (_) " Dict")
+        :company-kind (lambda (_) 'text)))
 
 (defvar cape--dict-words nil)
 (defun cape--dict-words ()
@@ -376,34 +386,30 @@
 (defun cape-dict-capf ()
   "Dictionary completion-at-point-function."
   (when-let (bounds (bounds-of-thing-at-point 'word))
-    (list (car bounds) (cdr bounds) (cape--dict-words)
-          :exclusive 'no
-          :annotation-function (lambda (_) " Dict"))))
+    `(,(car bounds) ,(cdr bounds) ,(cape--dict-words) :exclusive no ,@cape--dict-properties)))
 
 ;;;###autoload
 (defun cape-dict ()
   "Complete word at point."
   (interactive)
-  (cape--complete-in-region 'word (cape--dict-words)))
+  (cape--complete-in-region 'word (cape--dict-words) cape--dict-properties))
 
 (defun cape--abbrev-completions ()
   "Return all abbreviations."
   (delete "" (nconc (all-completions "" global-abbrev-table)
                     (all-completions "" local-abbrev-table))))
 
-(defun cape--abbrev-expand (&rest _)
-  "Expand abbreviation before point."
-  (expand-abbrev))
+(defvar cape--abbrev-properties
+  (list :annotation-function (lambda (_) " Abbrev")
+        :exit-function (lambda (&rest _) (expand-abbrev))
+        :company-kind (lambda (_) 'snippet)))
 
 ;;;###autoload
 (defun cape-abbrev-capf ()
   "Abbrev completion-at-point-function."
   (when-let ((bounds (bounds-of-thing-at-point 'symbol))
              (abbrevs (cape--abbrev-completions)))
-    (list (car bounds) (cdr bounds) abbrevs
-          :exclusive 'no
-          :exit-function #'cape--abbrev-expand
-          :annotation-function (lambda (_) " Abbrev"))))
+    `(,(car bounds) ,(cdr bounds) ,abbrevs :exclusive no ,@cape--abbrev-properties)))
 
 ;;;###autoload
 (defun cape-abbrev ()
@@ -411,21 +417,23 @@
   (interactive)
   (cape--complete-in-region 'symbol (or (cape--abbrev-completions)
                                         (user-error "No abbreviations"))
-                            :exit-function #'cape--abbrev-expand))
+                            cape--abbrev-properties))
 
 (defun cape--keywords ()
   "Return keywords for current major mode."
   (when-let (kw (alist-get major-mode cape-keywords))
     (if (symbolp (cadr kw)) (alist-get (cadr kw) cape-keywords) kw)))
 
+(defvar cape--keyword-properties
+  (list :annotation-function (lambda (_) " Keyword")
+        :company-kind (lambda (_) 'keyword)))
+
 ;;;###autoload
 (defun cape-keyword-capf ()
   "Dictionary completion-at-point-function."
   (when-let ((bounds (bounds-of-thing-at-point 'symbol))
              (keywords (cape--keywords)))
-    (list (car bounds) (cdr bounds) keywords
-          :exclusive 'no
-          :annotation-function (lambda (_) " Keyword"))))
+    `(,(car bounds) ,(cdr bounds) ,keywords :exclusive no ,@cape--keyword-properties)))
 
 ;;;###autoload
 (defun cape-keyword ()
@@ -433,7 +441,8 @@
   (interactive)
   (cape--complete-in-region 'symbol
                             (or (cape--keywords)
-                                (user-error "No keywords for %s" major-mode))))
+                                (user-error "No keywords for %s" major-mode))
+                            cape--keyword-properties))
 
 (provide 'cape)
 ;;; cape.el ends here
