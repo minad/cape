@@ -44,7 +44,7 @@
     (list (car bounds) (cdr bounds)
           #'read-file-name-internal
           :exclusive 'no
-          :annotation-function (lambda (_) " (File)"))))
+          :annotation-function (lambda (_) " File"))))
 
 ;;;###autoload
 (defun cape-file ()
@@ -79,7 +79,7 @@
              (unless (string-match-p "\n" (buffer-substring beg end))
                (list beg end words
                      :exclusive 'no
-                     :annotation-function (lambda (_) " (Dabbrev)"))))))))))
+                     :annotation-function (lambda (_) " Dabbrev"))))))))))
 
 (autoload 'ispell-lookup-words "ispell")
 
@@ -95,7 +95,7 @@
                                     (buffer-substring-no-properties (car bounds) (cdr bounds))))))))
     (list (car bounds) (cdr bounds) table
           :exclusive 'no
-          :annotation-function (lambda (_) " (Ispell)"))))
+          :annotation-function (lambda (_) " Ispell"))))
 
 ;;;###autoload
 (defun cape-ispell ()
@@ -125,7 +125,7 @@
   (when-let (bounds (bounds-of-thing-at-point 'word))
     (list (car bounds) (cdr bounds) (cape--dict-words)
           :exclusive 'no
-          :annotation-function (lambda (_) " (Dict)"))))
+          :annotation-function (lambda (_) " Dict"))))
 
 ;;;###autoload
 (defun cape-dict ()
@@ -150,7 +150,7 @@
     (list (car bounds) (cdr bounds) abbrevs
           :exclusive 'no
           :exit-function #'cape--abbrev-expand
-          :annotation-function (lambda (_) " (Abbrev)"))))
+          :annotation-function (lambda (_) " Abbrev"))))
 
 ;;;###autoload
 (defun cape-abbrev ()
@@ -420,7 +420,7 @@
              (keywords (cape--keywords)))
     (list (car bounds) (cdr bounds) keywords
           :exclusive 'no
-          :annotation-function (lambda (_) " (Keyword)"))))
+          :annotation-function (lambda (_) " Keyword"))))
 
 ;;;###autoload
 (defun cape-keyword ()
