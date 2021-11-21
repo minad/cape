@@ -29,8 +29,6 @@
 
 ;;; Code:
 
-(require 'dabbrev)
-
 (defgroup cape nil
   "Completion At Point Extensions."
   :group 'convenience
@@ -316,14 +314,22 @@
   (list :annotation-function (lambda (_) " Dabbrev")
         :company-kind (lambda (_) 'text)))
 
+(defvar dabbrev-check-all-buffers)
+(defvar dabbrev-check-other-buffers)
+(declare-function dabbrev--abbrev-at-point "dabbrev")
+(declare-function dabbrev--ignore-case-p "dabbrev")
+(declare-function dabbrev--find-all-expansions "dabbrev")
+(declare-function dabbrev--reset-global-variables "dabbrev")
+
 ;;;###autoload
 (defun cape-dabbrev-capf ()
   "Dabbrev completion-at-point-function."
+  (require 'dabbrev)
   (let ((dabbrev-check-all-buffers nil)
         (dabbrev-check-other-buffers nil))
     (dabbrev--reset-global-variables))
   (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))))
-    (when (and abbrev (not (string-match-p "[ \t]" abbrev)))
+    (when (and abbrev (not (string-match-p "[ \t\n]" abbrev)))
       (pcase ;; Interruptible scanning
           (while-no-input
             (let ((inhibit-message t)
@@ -343,14 +349,14 @@
              (unless (string-match-p "\n" (buffer-substring beg end))
                `(,beg ,end ,words :exclusive no ,@cape--dabbrev-properties)))))))))
 
-
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
         :company-kind (lambda (_) 'text)))
 
-(autoload 'ispell-lookup-words "ispell")
+(declare-function ispell-lookup-words "ispell")
 (defun cape--ispell-words (bounds)
   "Return words from Ispell which match the string within BOUNDS."
+  (require 'ispell)
   (with-demoted-errors
       (let ((message-log-max nil)
             (inhibit-message t))
