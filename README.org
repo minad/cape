@@ -53,3 +53,17 @@ this package should be upstreamed into Emacs itself.
     ;;(add-to-list 'completion-at-point-functions #'cape-dict-capf)
   )
 #+end_src
+
+* Company adapter
+
+Cape provides an adapter for Company backends ~cape-company-to-capf~. The adapter
+transforms Company backends to Capfs which are understood by the built-in Emacs
+completion mechanism. The adapter is still experimental and may have certain edge
+cases. It can be used as follows:
+
+#+begin_src emacs-lsp
+  ;; Use Company backends as Capfs!
+  (setq-local completion-at-point-functions
+    (mapcar #'cape-company-to-capf
+      (list #'company-files #'company-ispell #'company-dabbrev)))
+#+end_src
