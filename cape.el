@@ -343,30 +343,36 @@
              (unless (string-match-p "\n" (buffer-substring beg end))
                `(,beg ,end ,words :exclusive no ,@cape--dabbrev-properties)))))))))
 
-(autoload 'ispell-lookup-words "ispell")
 
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
         :company-kind (lambda (_) 'text)))
 
+(autoload 'ispell-lookup-words "ispell")
+(defun cape--ispell-words (bounds)
+  "Return words from Ispell which match the string within BOUNDS."
+  (with-demoted-errors
+      (let ((message-log-max nil)
+            (inhibit-message t))
+        (ispell-lookup-words
+         (format "*%s*" (buffer-substring-no-properties
+                         (car bounds) (cdr bounds)))))))
+
 ;;;###autoload
 (defun cape-ispell-capf ()
   "Ispell completion-at-point-function."
   (when-let* ((bounds (bounds-of-thing-at-point 'word))
-              (table (with-demoted-errors
-                         (let ((message-log-max nil)
-                               (inhibit-message t))
-                           (ispell-lookup-words
-                            (format "*%s*"
-                                    (buffer-substring-no-properties (car bounds) (cdr bounds))))))))
+              (table (cape--ispell-words bounds)))
     `(,(car bounds) ,(cdr bounds) ,table :exclusive no ,@cape--ispell-properties)))
 
 ;;;###autoload
 (defun cape-ispell ()
   "Complete with Ispell at point."
   (interactive)
-  (let ((completion-at-point-functions (list #'cape-ispell-capf)))
-    (completion-at-point)))
+  (let ((bounds (or (bounds-of-thing-at-point 'word) (cons (point) (point))))
+        (completion-extra-properties cape--ispell-properties))
+    (when-let (table (cape--ispell-words bounds))
+      (completion-in-region (car bounds) (cdr bounds) (cape--ispell-words bounds)))))
 
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
