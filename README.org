@@ -6,6 +6,8 @@
 #+texinfo_dir_title: Cape: (cape).
 #+texinfo_dir_desc: Completion At Point Extensions
 
+#+html: <a href="https://melpa.org/#/cape"><img alt="MELPA" src="https://melpa.org/packages/cape-badge.svg"/></a>
+#+html: <a href="https://stable.melpa.org/#/cape"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/cape-badge.svg"/></a>
 #+html: <img src="https://upload.wikimedia.org/wikipedia/en/3/35/Supermanflying.png" align="right">
 
 * Introduction
@@ -20,9 +22,8 @@ you can bind directly to a key in your user configuration.
 
 * Configuration
 
-Cape is work in progress and should be installed manually. I have not yet
-decided where the package is going to land. Ideally some of the Capfs provided
-by this package should be upstreamed into Emacs itself.
+Cape is available from MELPA. In the long term some of the Capfs provided by
+this package should be upstreamed into Emacs itself.
 
 #+begin_src emacs-lisp
   ;; Enable Corfu completion UI

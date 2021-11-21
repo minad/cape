@@ -24,7 +24,7 @@
 
 ;;; Commentary:
 
-;; Make your completions fly! This package provides additional completion
+;; Let your completions fly! This package provides additional completion
 ;; backends in the form of capfs.
 
 ;;; Code:
