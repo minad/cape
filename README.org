@@ -1,0 +1,50 @@
+#+title: cape.el - Let your completions fly!
+#+author: Daniel Mendler
+#+language: en
+#+export_file_name: cape.texi
+#+texinfo_dir_category: Emacs
+#+texinfo_dir_title: Cape: (cape).
+#+texinfo_dir_desc: Completion At Point Extensions
+
+#+html: <img src="https://upload.wikimedia.org/wikipedia/en/3/35/Supermanflying.png" align="right">
+
+* Introduction
+
+Cape provides a bunch of Completion At Point Extensions which can be used in
+combination with my [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. You can
+register the ~cape-*-capf~ functions in the ~completion-at-point-functions~ list.
+This makes the corresponding completion backends available to the
+~completion-at-point~ command, which is usually invoked by pressing ~TAB~ or ~M-TAB~.
+Furthermore there are a handful of dedicated completion commands ~cape-*~, which
+you can bind directly to a key in your user configuration.
+
+* Configuration
+
+Cape is work in progress and should be installed manually. I have not yet
+decided where the package is going to land. Ideally some of the Capfs provided
+by this package should be upstreamed into Emacs itself.
+
+#+begin_src emacs-lisp
+  ;; Enable Corfu completion UI
+  ;; See the Corfu README for more configuration tips.
+  (use-package corfu
+    :init
+    (corfu-global-mode))
+
+  ;; Add extensions
+  (use-package cape
+    ;; Bind dedicated completion commands
+    :bind (("C-c p f" . cape-file)
+           ("C-c p a" . cape-abbrev)
+           ("C-c p s" . cape-ispell)
+           ("C-c p w" . cape-dict)
+           ("C-c p d" . dabbrev-completion))
+    :init
+    ;; Add `completion-at-point-functions', used by `completion-at-point'.
+    (add-to-list 'completion-at-point-functions #'cape-file-capf)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev-capf)
+    ;;(add-to-list 'completion-at-point-functions #'cape-abbrev-capf)
+    ;;(add-to-list 'completion-at-point-functions #'cape-ispell-capf)
+    ;;(add-to-list 'completion-at-point-functions #'cape-dict-capf)
+  )
+#+end_src
