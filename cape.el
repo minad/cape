@@ -38,6 +38,14 @@
   "Dictionary word list file."
   :type 'string)
 
+(defcustom cape-company-async-timeout 1.0
+  "Company asynchronous timeout."
+  :type 'float)
+
+(defcustom cape-company-async-wait 0.02
+  "Company asynchronous busy waiting time."
+  :type 'float)
+
 (defcustom cape-keywords
   ;; This variable was taken from company-keywords.el.
   ;; Please contribute corrections or additions to both Cape and Company.
@@ -455,6 +463,70 @@
                             (or (cape--keywords)
                                 (user-error "No keywords for %s" major-mode))
                             cape--keyword-properties))
+
+(defun cape--company-call (backend &rest args)
+  "Call Company BACKEND with ARGS."
+  (pcase (apply backend args)
+    (`(:async . ,fetcher)
+     (let ((res 'trash))
+       ;; Force synchronization
+       (funcall fetcher (lambda (arg) (setq res arg)))
+       (with-timeout (cape-company-async-timeout (setq res nil))
+         (while (eq res 'trash)
+           (sleep-for cape-company-async-wait)))
+       res))
+    (res res)))
+
+;;;###autoload
+(defun cape-company-to-capf (backend)
+  "Convert Company BACKEND function to Capf.
+This feature is experimental."
+  (unless (symbolp backend)
+    (error "Backend must be a symbol"))
+  (let ((name (intern (format "cape--company-capf:%s" backend)))
+        (initialized (intern (format "cape--company-capf-initialized:%s" backend))))
+    (unless (symbol-function name)
+      (make-variable-buffer-local initialized)
+      (set initialized nil)
+      (fset name
+            (lambda ()
+              (unless (symbol-value initialized)
+                (cape--company-call backend 'init)
+                (set initialized t))
+              (when-let* ((prefix (cape--company-call backend 'prefix))
+                          (input (if (stringp prefix) prefix (car-safe prefix))))
+                ;; TODO When fetching candidates, support asynchronous operation. If a
+                ;; future is returned, the capf should fail first. As soon as the future
+                ;; callback is called, remember the result, refresh the UI and return the
+                ;; remembered result the next time the capf is called.
+                (let ((sorted (cape--company-call backend 'sorted))
+                      (no-cache (cape--company-call backend 'no-cache))
+                      (dups (if (cape--company-call backend 'duplicates) #'delete-dups #'identity))
+                      (candidates nil))
+                  (list (- (point) (length input)) (point)
+                        (lambda (str pred action)
+                          (if (and (eq action 'metadata) sorted)
+                              '(metadata
+                                (display-sort-function . identity)
+                                (cycle-sort-function . identity))
+                            (complete-with-action
+                             action
+                             (if no-cache
+                                 (funcall dups (cape--company-call backend 'candidates input))
+                               (or candidates
+                                   (setq candidates
+                                         (funcall dups (cape--company-call backend 'candidates input)))))
+                             str pred)))
+                        :exclusive 'no
+                        :company-prefix-length (cdr-safe prefix)
+                        :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
+                        :company-location (lambda (x) (cape--company-call backend 'location x))
+                        :company-docsig (lambda (x) (cape--company-call backend 'meta x))
+                        :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
+                        :company-kind (lambda (x) (cape--company-call backend 'kind x))
+                        :annotation-function (lambda (x) (cape--company-call backend 'annotation x))
+                        :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
+    name))
 
 (provide 'cape)
 ;;; cape.el ends here
