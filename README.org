@@ -58,6 +58,8 @@ this package should be upstreamed into Emacs itself.
 
 ** Company adapter
 
+/Wrap your Company backend in a Cape and turn it into a Capf!/
+
 Cape provides an adapter for Company backends ~cape-company-to-capf~. The adapter
 transforms Company backends to Capfs which are understood by the built-in Emacs
 completion mechanism. The adapter is still experimental and may have certain edge
@@ -71,6 +73,8 @@ cases. It can be used as follows:
 #+end_src
 
 ** Merging multiple Capfs
+
+/Throw multiple Capfs under the Cape and get a Super-Capf!/
 
 Cape supports merging multiple Capfs using the function ~cape-merge-capfs~. This
 feature is experimental and works only for well-behaved Capfs and simple
