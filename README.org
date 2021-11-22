@@ -23,8 +23,8 @@ by pressing ~TAB~ or ~M-TAB~. Furthermore there are a handful of dedicated
 completion commands ~cape-*~, which you can bind directly to a key in your user
 configuration.
 
-On the more experimental side, Cape provides the super power to transform
-Company backends into Capfs and merge multiple Capfs into a Super-Capf!
+On the more experimental side, Cape has the super power to transform Company
+backends into Capfs and merge multiple Capfs into a Super-Capf!
 
 * Configuration
 
@@ -68,8 +68,10 @@ this package should be upstreamed into Emacs itself.
 
 Cape provides an adapter for Company backends ~cape-company-to-capf~. The adapter
 transforms Company backends to Capfs which are understood by the built-in Emacs
-completion mechanism. The adapter is still experimental and may have certain edge
-cases. It can be used as follows:
+completion mechanism. The adapter is still experimental and may have certain
+edge cases. In particular, asynchronous completions are forcibly synchronized,
+but we are investigating possible Capf extensions to support asynchronous Capfs.
+The adapter can be used as follows:
 
 #+begin_src emacs-lisp
   ;; Use Company backends as Capfs.
@@ -83,8 +85,10 @@ cases. It can be used as follows:
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
 
 Cape supports merging multiple Capfs using the function ~cape-merge-capfs~. This
-feature is experimental and works only for well-behaved Capfs and simple
-completion tables. But it is a start to emulate the corresponding Company feature.
+feature is experimental and works only for well-behaved Capfs and static
+completion tables. But it is a start to emulate the corresponding Company
+feature. Maybe it is possible to extend the capabilities of the completion table
+merging in the future.
 
 #+begin_src emacs-lisp
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
