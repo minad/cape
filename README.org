@@ -13,12 +13,18 @@
 * Introduction
 
 Cape provides a bunch of Completion At Point Extensions which can be used in
-combination with my [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. You can
-register the ~cape-*-capf~ functions in the ~completion-at-point-functions~ list.
-This makes the corresponding completion backends available to the
-~completion-at-point~ command, which is usually invoked by pressing ~TAB~ or ~M-TAB~.
-Furthermore there are a handful of dedicated completion commands ~cape-*~, which
-you can bind directly to a key in your user configuration.
+combination with my [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. The
+completion backends used by ~completion-at-point~ are so called
+~completion-at-point-functions~ (Capfs).
+
+You can register the ~cape-*-capf~ functions in the ~completion-at-point-functions~
+list. This makes the backends available for completion, which is usually invoked
+by pressing ~TAB~ or ~M-TAB~. Furthermore there are a handful of dedicated
+completion commands ~cape-*~, which you can bind directly to a key in your user
+configuration.
+
+On the more experimental side, Cape provides the super power to transform
+Company backends into Capfs and merge multiple Capfs into a Super-Capf!
 
 * Configuration
 
