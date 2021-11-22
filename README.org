@@ -62,8 +62,20 @@ completion mechanism. The adapter is still experimental and may have certain edg
 cases. It can be used as follows:
 
 #+begin_src emacs-lisp
-  ;; Use Company backends as Capfs!
+  ;; Use Company backends as Capfs.
   (setq-local completion-at-point-functions
     (mapcar #'cape-company-to-capf
       (list #'company-files #'company-ispell #'company-dabbrev)))
+#+end_src
+
+* Merging Capf
+
+Cape supports merging multiple Capfs using the function ~cape-merge-capfs~. This
+feature is experimental and works only for well-behaved Capfs and simple
+completion tables. But it is a start to emulate the corresponding Company feature.
+
+#+begin_src emacs-lisp
+  ;; Merge the dabbrev and dict capfs, display candidates together.
+  (setq-local completion-at-point-functions
+              (list (cape-merge-capfs #'cape-dabbrev-capf #'cape-dict-capf)))
 #+end_src

@@ -29,6 +29,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (defgroup cape nil
   "Completion At Point Extensions."
   :group 'convenience
@@ -463,6 +465,40 @@
                             (or (cape--keywords)
                                 (user-error "No keywords for %s" major-mode))
                             cape--keyword-properties))
+
+(defun cape--merged-function (ht prop)
+  "Return merged function for PROP given HT."
+  (lambda (x)
+    (when-let (fun (plist-get (gethash x ht) prop))
+      (funcall fun x))))
+
+(defun cape-merge-capfs (&rest capfs)
+  "Merge CAPFS and return new Capf which includes all candidates."
+  (lambda ()
+    (when-let (results (delq nil (mapcar #'funcall capfs)))
+      (pcase-let ((`((,beg ,end . ,_)) results)
+                  (candidates nil)
+                  (ht (make-hash-table :test #'equal)))
+        (cl-loop for (beg2 end2 table . plist) in results do
+                 (when (and (= beg beg2) (= end end2))
+                   (setq table (all-completions "" table (plist-get plist :predicate))
+                         candidates (nconc candidates table))
+                   (cl-loop for cand in table do (puthash cand plist ht))))
+        (list beg end
+              (lambda (str pred action)
+                (if (eq action 'metadata)
+                    '(metadata
+                      (display-sort-function . identity)
+                      (cycle-sort-function . identity))
+                  (complete-with-action action candidates str pred)))
+              :exclusive 'no
+              :company-doc-buffer (cape--merged-function ht :company-doc-buffer)
+              :company-location (cape--merged-function ht :company-location)
+              :company-docsig (cape--merged-function ht :company-docsig)
+              :company-deprecated (cape--merged-function ht :company-deprecated)
+              :company-kind (cape--merged-function ht :company-kind)
+              :annotation-function (cape--merged-function ht :annotation-function)
+              :exit-function (lambda (x _status) (funcall (cape--merged-function ht :exit-function) x)))))))
 
 (defun cape--company-call (backend &rest args)
   "Call Company BACKEND with ARGS."
