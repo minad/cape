@@ -481,9 +481,13 @@
                   (ht (make-hash-table :test #'equal)))
         (cl-loop for (beg2 end2 table . plist) in results do
                  (when (and (= beg beg2) (= end end2))
-                   (setq table (all-completions "" table (plist-get plist :predicate))
-                         candidates (nconc candidates table))
-                   (cl-loop for cand in table do (puthash cand plist ht))))
+                   (let* ((pred (plist-get plist :predicate))
+                          (metadata (completion-metadata "" table pred))
+                          (sort (or (completion-metadata-get metadata 'display-sort-function)
+                                    #'identity))
+                          (cands (funcall sort (all-completions "" table pred))))
+                     (setq candidates (nconc candidates cands))
+                     (cl-loop for cand in cands do (puthash cand plist ht)))))
         (list beg end
               (lambda (str pred action)
                 (if (eq action 'metadata)
