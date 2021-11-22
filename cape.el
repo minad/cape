@@ -478,6 +478,7 @@
     (when-let (results (delq nil (mapcar #'funcall capfs)))
       (pcase-let ((`((,beg ,end . ,_)) results)
                   (candidates nil)
+                  (prefix-len nil)
                   (ht (make-hash-table :test #'equal)))
         (cl-loop for (beg2 end2 table . plist) in results do
                  (when (and (= beg beg2) (= end end2))
@@ -485,7 +486,15 @@
                           (metadata (completion-metadata "" table pred))
                           (sort (or (completion-metadata-get metadata 'display-sort-function)
                                     #'identity))
-                          (cands (funcall sort (all-completions "" table pred))))
+                          (cands (funcall sort (all-completions "" table pred)))
+                          (plen (plist-get plist :company-prefix-length)))
+                     (cond
+                      ((eq plen t)
+                       (setq prefix-len t))
+                      ((and (not prefix-len) (integerp plen))
+                       (setq prefix-len plen))
+                      ((and (integerp prefix-len) (integerp plen))
+                       (setq prefix-len (max prefix-len plen))))
                      (setq candidates (nconc candidates cands))
                      (cl-loop for cand in cands do (puthash cand plist ht)))))
         (list beg end
@@ -497,6 +506,7 @@
                       (cycle-sort-function . identity))
                   (complete-with-action action candidates str pred)))
               :exclusive 'no
+              :company-prefix-length prefix-len
               :company-doc-buffer (cape--merged-function ht :company-doc-buffer)
               :company-location (cape--merged-function ht :company-location)
               :company-docsig (cape--merged-function ht :company-docsig)
