@@ -54,7 +54,9 @@ this package should be upstreamed into Emacs itself.
   )
 #+end_src
 
-* Company adapter
+* Experimental features
+
+** Company adapter
 
 Cape provides an adapter for Company backends ~cape-company-to-capf~. The adapter
 transforms Company backends to Capfs which are understood by the built-in Emacs
@@ -68,7 +70,7 @@ cases. It can be used as follows:
       (list #'company-files #'company-ispell #'company-dabbrev)))
 #+end_src
 
-* Merging Capf
+** Merging multiple Capfs
 
 Cape supports merging multiple Capfs using the function ~cape-merge-capfs~. This
 feature is experimental and works only for well-behaved Capfs and simple
