@@ -488,6 +488,7 @@
               (lambda (str pred action)
                 (if (eq action 'metadata)
                     '(metadata
+                      (category . cape-merged)
                       (display-sort-function . identity)
                       (cycle-sort-function . identity))
                   (complete-with-action action candidates str pred)))
@@ -535,16 +536,17 @@ This feature is experimental."
                 ;; future is returned, the capf should fail first. As soon as the future
                 ;; callback is called, remember the result, refresh the UI and return the
                 ;; remembered result the next time the capf is called.
-                (let ((sorted (cape--company-call backend 'sorted))
-                      (no-cache (cape--company-call backend 'no-cache))
+                (let ((no-cache (cape--company-call backend 'no-cache))
                       (dups (if (cape--company-call backend 'duplicates) #'delete-dups #'identity))
-                      (candidates nil))
+                      (candidates nil)
+                      (metadata `(metadata (category . ,backend))))
+                  (when (cape--company-call backend 'sorted)
+                    (nconc metadata '((display-sort-function . identity)
+                                      (cycle-sort-function . identity))))
                   (list (- (point) (length input)) (point)
                         (lambda (str pred action)
-                          (if (and (eq action 'metadata) sorted)
-                              '(metadata
-                                (display-sort-function . identity)
-                                (cycle-sort-function . identity))
+                          (if (eq action 'metadata)
+                              metadata
                             (complete-with-action
                              action
                              (if no-cache
