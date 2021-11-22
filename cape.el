@@ -472,6 +472,7 @@
     (when-let (fun (plist-get (gethash x ht) prop))
       (funcall fun x))))
 
+;;;###autoload
 (defun cape-merge-capfs (&rest capfs)
   "Merge CAPFS and return new Capf which includes all candidates."
   (lambda ()
