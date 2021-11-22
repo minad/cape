@@ -312,6 +312,7 @@
   "File name completion-at-point-function."
   (when-let (bounds (bounds-of-thing-at-point 'filename))
     `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
+      :company-prefix-length ,(eq (char-before) ?/)
       :exclusive no ,@cape--file-properties)))
 
 ;;;###autoload
