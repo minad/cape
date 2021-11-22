@@ -81,7 +81,7 @@ feature is experimental and works only for well-behaved Capfs and simple
 completion tables. But it is a start to emulate the corresponding Company feature.
 
 #+begin_src emacs-lisp
-  ;; Merge the dabbrev and dict capfs, display candidates together.
+  ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
   (setq-local completion-at-point-functions
-              (list (cape-merge-capfs #'cape-dabbrev-capf #'cape-dict-capf)))
+              (list (cape-merge-capfs #'cape-dabbrev-capf #'cape-dict-capf #'cape-keyword-capf)))
 #+end_src
