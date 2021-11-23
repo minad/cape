@@ -573,7 +573,7 @@ This feature is experimental."
                 ;; future is returned, the capf should fail first. As soon as the future
                 ;; callback is called, remember the result, refresh the UI and return the
                 ;; remembered result the next time the capf is called.
-                (let ((no-cache (cape--company-call backend 'no-cache))
+                (let ((no-cache (cape--company-call backend 'no-cache input))
                       (dups (if (cape--company-call backend 'duplicates) #'delete-dups #'identity))
                       (candidates nil)
                       (metadata `(metadata (category . ,backend))))
