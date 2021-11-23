@@ -500,26 +500,21 @@
   (lambda ()
     (when-let (results (delq nil (mapcar #'funcall capfs)))
       (pcase-let ((`((,beg ,end . ,_)) results)
-                  (candidates nil)
-                  (prefix-len nil)
-                  (ht (make-hash-table :test #'equal)))
-        (cl-loop for (beg2 end2 table . plist) in results do
+                  (candidates 'init)
+                  (ht (make-hash-table :test #'equal))
+                  (tables nil)
+                  (prefix-len nil))
+        (cl-loop for (beg2 end2 . rest) in results do
                  (when (and (= beg beg2) (= end end2))
-                   (let* ((pred (plist-get plist :predicate))
-                          (metadata (completion-metadata "" table pred))
-                          (sort (or (completion-metadata-get metadata 'display-sort-function)
-                                    #'identity))
-                          (cands (funcall sort (all-completions "" table pred)))
-                          (plen (plist-get plist :company-prefix-length)))
+                   (push rest tables)
+                   (let ((plen (plist-get (cdr rest) :company-prefix-length)))
                      (cond
                       ((eq plen t)
                        (setq prefix-len t))
                       ((and (not prefix-len) (integerp plen))
                        (setq prefix-len plen))
                       ((and (integerp prefix-len) (integerp plen))
-                       (setq prefix-len (max prefix-len plen))))
-                     (setq candidates (nconc candidates cands))
-                     (cl-loop for cand in cands do (puthash cand plist ht)))))
+                       (setq prefix-len (max prefix-len plen)))))))
         (list beg end
               (lambda (str pred action)
                 (if (eq action 'metadata)
@@ -527,6 +522,16 @@
                       (category . cape-merged)
                       (display-sort-function . identity)
                       (cycle-sort-function . identity))
+                  (when (eq candidates 'init)
+                    (setq candidates
+                          (cl-loop for (table . plist) in (nreverse tables) nconc
+                                   (let* ((pred (plist-get plist :predicate))
+                                          (metadata (completion-metadata "" table pred))
+                                          (sort (or (completion-metadata-get metadata 'display-sort-function)
+                                                    #'identity))
+                                          (cands (funcall sort (all-completions "" table pred))))
+                                     (cl-loop for cand in cands do (puthash cand plist ht))
+                                     cands))))
                   (complete-with-action action candidates str pred)))
               :exclusive 'no
               :company-prefix-length prefix-len
