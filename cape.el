@@ -586,6 +586,9 @@ This feature is experimental."
                               metadata
                             (complete-with-action
                              action
+                             ;; TODO It is not clear which prefix to use here.
+                             ;; Either use `str' (but this is affected by the completion style),
+                             ;; or request a new prefix from the backend and use that?
                              (if no-cache
                                  (funcall dups (cape--company-call backend 'candidates input))
                                (or candidates
