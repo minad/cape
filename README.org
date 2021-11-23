@@ -46,8 +46,9 @@ this package should be upstreamed into Emacs itself.
            ("C-c p t" . complete-tag)        ;; etags
            ("C-c p f" . cape-file)
            ("C-c p k" . cape-keyword)
+           ("C-c p s" . cape-symbol)
            ("C-c p a" . cape-abbrev)
-           ("C-c p s" . cape-ispell)
+           ("C-c p i" . cape-ispell)
            ("C-c p w" . cape-dict))
     :init
     ;; Add `completion-at-point-functions', used by `completion-at-point'.

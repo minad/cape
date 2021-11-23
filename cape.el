@@ -321,6 +321,27 @@
   (interactive)
   (cape--complete-in-region 'filename #'read-file-name-internal cape--file-properties))
 
+(defvar cape--symbol-properties
+  (list :annotation-function (lambda (_) " Symbol")
+        :company-kind #'cape--symbol-kind))
+
+(defun cape--symbol-kind (sym)
+  "Return kind of SYM."
+  (setq sym (intern-soft sym))
+  (cond
+   ((or (macrop sym) (special-form-p sym)) 'keyword)
+   ((fboundp sym) 'function)
+   ((boundp sym) 'variable)
+   ((featurep sym) 'module)
+   ((facep sym) 'color)
+   (t 'text)))
+
+;;;###autoload
+(defun cape-symbol ()
+  "Complete symbol at point."
+  (interactive)
+  (cape--complete-in-region 'symbol obarray cape--symbol-properties))
+
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
         :company-kind (lambda (_) 'text)))
