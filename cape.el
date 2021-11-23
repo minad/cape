@@ -575,10 +575,10 @@ This feature is experimental."
                 ;; remembered result the next time the capf is called.
                 (let* ((no-cache (cape--company-call backend 'no-cache input))
                        (dups (if (cape--company-call backend 'duplicates) #'delete-dups #'identity))
-                       (candidates (funcall dups (cape--company-call backend 'candidates input)))
                        (metadata `(metadata (category . ,backend)))
                        (beg (copy-marker (- (point) (length input))))
-                       (end (copy-marker (point) t)))
+                       (end (copy-marker (point) t))
+                       (candidates 'init))
                   (when (cape--company-call backend 'sorted)
                     (nconc metadata '((display-sort-function . identity)
                                       (cycle-sort-function . identity))))
@@ -586,11 +586,11 @@ This feature is experimental."
                         (lambda (str pred action)
                           (if (eq action 'metadata)
                               metadata
-                            (when no-cache
+                            (when (or (eq candidates 'init) no-cache)
                               ;; Use current input string as prefix (before spaces)
                               (let ((new-input (replace-regexp-in-string
                                                 "\\s-.*" "" (buffer-substring-no-properties beg end))))
-                                (unless (equal new-input input)
+                                (unless (or (eq candidates 'init) (equal new-input input))
                                   (setq input new-input
                                         candidates (funcall dups (cape--company-call backend 'candidates input))))))
                             (complete-with-action action candidates str pred)))
