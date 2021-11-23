@@ -573,28 +573,27 @@ This feature is experimental."
                 ;; future is returned, the capf should fail first. As soon as the future
                 ;; callback is called, remember the result, refresh the UI and return the
                 ;; remembered result the next time the capf is called.
-                (let ((no-cache (cape--company-call backend 'no-cache input))
-                      (dups (if (cape--company-call backend 'duplicates) #'delete-dups #'identity))
-                      (candidates nil)
-                      (metadata `(metadata (category . ,backend))))
+                (let* ((no-cache (cape--company-call backend 'no-cache input))
+                       (dups (if (cape--company-call backend 'duplicates) #'delete-dups #'identity))
+                       (candidates (funcall dups (cape--company-call backend 'candidates input)))
+                       (metadata `(metadata (category . ,backend)))
+                       (beg (copy-marker (- (point) (length input))))
+                       (end (copy-marker (point) t)))
                   (when (cape--company-call backend 'sorted)
                     (nconc metadata '((display-sort-function . identity)
                                       (cycle-sort-function . identity))))
-                  (list (- (point) (length input)) (point)
+                  (list beg end
                         (lambda (str pred action)
                           (if (eq action 'metadata)
                               metadata
-                            (complete-with-action
-                             action
-                             ;; TODO It is not clear which prefix to use here.
-                             ;; Either use `str' (but this is affected by the completion style),
-                             ;; or request a new prefix from the backend and use that?
-                             (if no-cache
-                                 (funcall dups (cape--company-call backend 'candidates input))
-                               (or candidates
-                                   (setq candidates
-                                         (funcall dups (cape--company-call backend 'candidates input)))))
-                             str pred)))
+                            (when no-cache
+                              ;; Use current input string as prefix (before spaces)
+                              (let ((new-input (replace-regexp-in-string
+                                                "\\s-.*" "" (buffer-substring-no-properties beg end))))
+                                (unless (equal new-input input)
+                                  (setq input new-input
+                                        candidates (funcall dups (cape--company-call backend 'candidates input))))))
+                            (complete-with-action action candidates str pred)))
                         :exclusive 'no
                         :company-prefix-length (cdr-safe prefix)
                         :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
