@@ -424,7 +424,7 @@
             (split-string (with-temp-buffer
                             (insert-file-contents-literally cape-dict-file)
                             (buffer-string))
-                          "\n"))))
+                          "\n" 'omit-nulls))))
 
 ;;;###autoload
 (defun cape-dict-capf ()
