@@ -15,7 +15,8 @@
 Cape provides a bunch of Completion At Point Extensions which can be used in
 combination with my [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. The
 completion backends used by ~completion-at-point~ are so called
-~completion-at-point-functions~ (Capfs).
+~completion-at-point-functions~ (Capfs). In principle, the Capfs provided by Cape
+can also be used by [[https://github.com/company-mode/company-mode][Company]].
 
 You can register the ~cape-*-capf~ functions in the ~completion-at-point-functions~
 list. This makes the backends available for completion, which is usually invoked
