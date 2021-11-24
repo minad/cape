@@ -596,47 +596,43 @@ CMP is the input comparator, see `cape--input-changed-p'.
 This feature is experimental."
   (unless (symbolp backend)
     (error "Backend must be a symbol"))
-  (let ((name (intern (format "cape--company-capf:%s" backend)))
-        (initialized (intern (format "cape--company-capf-initialized:%s" backend))))
-    (unless (symbol-function name)
-      (make-variable-buffer-local initialized)
-      (set initialized nil)
-      (fset name
-            (lambda ()
-              (unless (symbol-value initialized)
-                (cape--company-call backend 'init)
-                (set initialized t))
-              (when-let* ((prefix (cape--company-call backend 'prefix))
-                          (initial-input (if (stringp prefix) prefix (car-safe prefix))))
-                ;; TODO When fetching candidates, support asynchronous operation. If a
-                ;; future is returned, the capf should fail first. As soon as the future
-                ;; callback is called, remember the result, refresh the UI and return the
-                ;; remembered result the next time the capf is called.
-                (let* ((end (point)) (beg (- end (length initial-input))))
-                  (list beg end
-                        (cape--cached-table beg end
-                                            (if (cape--company-call backend 'no-cache initial-input)
-                                                'always cmp)
-                                            (if (cape--company-call backend 'duplicates)
-                                              (lambda (input)
-                                                (delete-dups (cape--company-call backend 'candidates input)))
-                                              (apply-partially #'cape--company-call backend 'candidates))
-                                            (if (cape--company-call backend 'sorted)
-                                                `(metadata
-                                                  (category . ,backend)
-                                                  (display-sort-function . identity)
-                                                  (cycle-sort-function . identity))
-                                              `(metadata (category . ,backend))))
-                        :exclusive 'no
-                        :company-prefix-length (cdr-safe prefix)
-                        :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
-                        :company-location (lambda (x) (cape--company-call backend 'location x))
-                        :company-docsig (lambda (x) (cape--company-call backend 'meta x))
-                        :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
-                        :company-kind (lambda (x) (cape--company-call backend 'kind x))
-                        :annotation-function (lambda (x) (cape--company-call backend 'annotation x))
-                        :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
-    name))
+  (let ((init (intern (format "cape--company-init:%s" backend))))
+    (lambda ()
+      (unless (boundp init)
+        (make-variable-buffer-local init))
+      (unless (symbol-value init)
+        (cape--company-call backend 'init)
+        (set init t))
+      (when-let* ((prefix (cape--company-call backend 'prefix))
+                  (initial-input (if (stringp prefix) prefix (car-safe prefix))))
+        ;; TODO When fetching candidates, support asynchronous operation. If a
+        ;; future is returned, the capf should fail first. As soon as the future
+        ;; callback is called, remember the result, refresh the UI and return the
+        ;; remembered result the next time the capf is called.
+        (let* ((end (point)) (beg (- end (length initial-input))))
+          (list beg end
+                (cape--cached-table beg end
+                                    (if (cape--company-call backend 'no-cache initial-input)
+                                        'always cmp)
+                                    (if (cape--company-call backend 'duplicates)
+                                        (lambda (input)
+                                          (delete-dups (cape--company-call backend 'candidates input)))
+                                      (apply-partially #'cape--company-call backend 'candidates))
+                                    (if (cape--company-call backend 'sorted)
+                                        `(metadata
+                                          (category . ,backend)
+                                          (display-sort-function . identity)
+                                          (cycle-sort-function . identity))
+                                      `(metadata (category . ,backend))))
+                :exclusive 'no
+                :company-prefix-length (cdr-safe prefix)
+                :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
+                :company-location (lambda (x) (cape--company-call backend 'location x))
+                :company-docsig (lambda (x) (cape--company-call backend 'meta x))
+                :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
+                :company-kind (lambda (x) (cape--company-call backend 'kind x))
+                :annotation-function (lambda (x) (cape--company-call backend 'annotation x))
+                :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
 
 (defun cape-capf-buster (capf &optional cmp)
   "Return transformed CAPF where the cache is busted on input change.
