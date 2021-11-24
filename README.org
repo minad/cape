@@ -111,3 +111,8 @@ circumstances.
   (setq-local completion-at-point-functions
               (list (cape-capf-buster #'some-caching-capf)))
 #+end_src
+
+** Other Capf transformers
+
+- ~cape-silent-capf~: Wrap a chatty Capf and silence it.
+- ~cape-capf-with-properties~: Add completion properties to a Capf.

@@ -526,7 +526,7 @@ METADATA is optional completion metadata."
                                 (user-error "No keywords for %s" major-mode))
                             cape--keyword-properties))
 
-(defun cape--merged-function (ht prop)
+(defun cape--super-function (ht prop)
   "Return merged function for PROP given HT."
   (lambda (x)
     (when-let (fun (plist-get (gethash x ht) prop))
@@ -557,7 +557,7 @@ METADATA is optional completion metadata."
               (lambda (str pred action)
                 (if (eq action 'metadata)
                     '(metadata
-                      (category . cape-merged)
+                      (category . cape-super)
                       (display-sort-function . identity)
                       (cycle-sort-function . identity))
                   (when (eq candidates 'init)
@@ -573,13 +573,13 @@ METADATA is optional completion metadata."
                   (complete-with-action action candidates str pred)))
               :exclusive 'no
               :company-prefix-length prefix-len
-              :company-doc-buffer (cape--merged-function ht :company-doc-buffer)
-              :company-location (cape--merged-function ht :company-location)
-              :company-docsig (cape--merged-function ht :company-docsig)
-              :company-deprecated (cape--merged-function ht :company-deprecated)
-              :company-kind (cape--merged-function ht :company-kind)
-              :annotation-function (cape--merged-function ht :annotation-function)
-              :exit-function (lambda (x _status) (funcall (cape--merged-function ht :exit-function) x)))))))
+              :company-doc-buffer (cape--super-function ht :company-doc-buffer)
+              :company-location (cape--super-function ht :company-location)
+              :company-docsig (cape--super-function ht :company-docsig)
+              :company-deprecated (cape--super-function ht :company-deprecated)
+              :company-kind (cape--super-function ht :company-kind)
+              :annotation-function (cape--super-function ht :annotation-function)
+              :exit-function (lambda (x _status) (funcall (cape--super-function ht :exit-function) x)))))))
 
 (defun cape--company-call (backend &rest args)
   "Call Company BACKEND with ARGS."
@@ -639,6 +639,7 @@ This feature is experimental."
                 :annotation-function (lambda (x) (cape--company-call backend 'annotation x))
                 :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
 
+;;;###autoload
 (defun cape-capf-buster (capf &optional cmp)
   "Return transformed CAPF where the cache is busted on input change.
 See `cape--input-changed-p' for the CMP argument."
@@ -674,6 +675,7 @@ The CMP argument determines how the new input is compared to the old input.
              ('equal (equal old-input new-input))
              ('substring (string-match-p (regexp-quote old-input) new-input))))))
 
+;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
   "Return a new CAPF with additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function
@@ -683,6 +685,7 @@ and the various :company-* extensions."
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end ,table ,@properties ,@plist)))))
 
+;;;###autoload
 (defun cape-silent-capf (capf)
   "Return a new CAPF which is silent (no messages, no errors)."
   (lambda ()
