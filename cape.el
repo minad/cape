@@ -381,27 +381,37 @@
              (unless (string-match-p "\n" (buffer-substring beg end))
                `(,beg ,end ,words :exclusive no ,@cape--dabbrev-properties)))))))))
 
+(defun cape--cached-table (beg end cmp fun)
+  "Create caching completion table.
+BEG and END are the input bounds.
+CMP is the input comparison function, see `cape--input-changed-p'.
+FUN is the function which computes the candidates."
+  (let ((input nil)
+        (beg (copy-marker beg))
+        (end (copy-marker end t))
+        (table 'init))
+    (lambda (str pred action)
+      (let ((new-input (buffer-substring-no-properties beg end)))
+        (when (or (eq table 'init) (cape--input-changed-p input new-input cmp))
+          (setq table (funcall fun new-input) input new-input)))
+      (complete-with-action action table str pred))))
+
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
         :company-kind (lambda (_) 'text)))
 
 (declare-function ispell-lookup-words "ispell")
+(defun cape--ispell-words (str)
+  "Return all words from Ispell matching STR."
+  (with-demoted-errors "Ispell Error: %S"
+    (require 'ispell)
+    (let ((message-log-max nil)
+          (inhibit-message t))
+      (ispell-lookup-words (format "*%s*" str)))))
+
 (defun cape--ispell-table (bounds)
   "Return completion table for Ispell completion between BOUNDS."
-  (let ((input nil)
-        (beg (copy-marker (car bounds)))
-        (end (copy-marker (car bounds) t))
-        (words 'init))
-    (lambda (str pred action)
-      (let ((new-input (buffer-substring-no-properties beg end)))
-        (when (or (eq words 'init) (not (string-match-p (regexp-quote input) new-input)))
-          (setq input new-input
-                words (with-demoted-errors "Ispell Error: %S"
-                        (require 'ispell)
-                        (let ((message-log-max nil)
-                              (inhibit-message t))
-                          (ispell-lookup-words (format "*%s*" input)))))))
-      (complete-with-action action words str pred))))
+  (cape--cached-table (car bounds) (cdr bounds) 'substring #'cape--ispell-words))
 
 ;;;###autoload
 (defun cape-ispell-capf ()
