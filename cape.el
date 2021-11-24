@@ -386,35 +386,39 @@
         :company-kind (lambda (_) 'text)))
 
 (declare-function ispell-lookup-words "ispell")
-(defun cape--ispell-words (str)
-  "Return words from Ispell which match STR."
-  (require 'ispell)
-  (with-demoted-errors
-      (let ((message-log-max nil)
-            (inhibit-message t))
-        (ispell-lookup-words (format "*%s*" str)))))
+(defun cape--ispell-table (bounds)
+  "Return completion table for Ispell completion between BOUNDS."
+  (let ((input nil)
+        (beg (copy-marker (car bounds)))
+        (end (copy-marker (car bounds) t))
+        (words 'init))
+    (lambda (str pred action)
+      (let ((new-input (buffer-substring-no-properties beg end)))
+        (when (or (eq words 'init) (not (string-match-p (regexp-quote input) new-input)))
+          (setq input new-input
+                words (with-demoted-errors
+                          (require 'ispell)
+                        (let ((message-log-max nil)
+                              (inhibit-message t))
+                          (ispell-lookup-words (format "*%s*" input)))))))
+      (complete-with-action action words str pred))))
 
 ;;;###autoload
 (defun cape-ispell-capf ()
   "Ispell completion-at-point-function."
   (when-let (bounds (bounds-of-thing-at-point 'word))
-    (let ((input (buffer-substring-no-properties (car bounds) (cdr bounds)))
-          (words nil))
-      `(,(car bounds) ,(cdr bounds)
-        ,(lambda (str pred action)
-           (complete-with-action
-            action (or words (setq words (cape--ispell-words input))) str pred))
-        :exclusive no
-        ,@cape--ispell-properties))))
+    `(,(car bounds) ,(cdr bounds)
+      ,(cape--ispell-table bounds)
+      :exclusive no
+      ,@cape--ispell-properties)))
 
 ;;;###autoload
 (defun cape-ispell ()
   "Complete with Ispell at point."
   (interactive)
-  (let* ((bounds (or (bounds-of-thing-at-point 'word) (cons (point) (point))))
-         (input (buffer-substring-no-properties (car bounds) (cdr bounds)))
-         (completion-extra-properties cape--ispell-properties))
-    (completion-in-region (car bounds) (cdr bounds) (cape--ispell-words input))))
+  (let ((bounds (or (bounds-of-thing-at-point 'word) (cons (point) (point))))
+        (completion-extra-properties cape--ispell-properties))
+    (completion-in-region (car bounds) (cdr bounds) (cape--ispell-table bounds))))
 
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
