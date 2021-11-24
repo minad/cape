@@ -396,8 +396,8 @@
       (let ((new-input (buffer-substring-no-properties beg end)))
         (when (or (eq words 'init) (not (string-match-p (regexp-quote input) new-input)))
           (setq input new-input
-                words (with-demoted-errors
-                          (require 'ispell)
+                words (with-demoted-errors "Ispell Error: %S"
+                        (require 'ispell)
                         (let ((message-log-max nil)
                               (inhibit-message t))
                           (ispell-lookup-words (format "*%s*" input)))))))
@@ -620,10 +620,7 @@ This feature is experimental."
 
 (defun cape-capf-buster (capf &optional cmp)
   "Return transformed CAPF where the cache is busted on input change.
-The CMP argument determines how the new input is compared to the old input.
-- prefix/nil: Preserve cache when the old input is a prefix of the new input.
-- equal: Preserve cache when the old input is equal to the new input.
-- substring: Preserve cache when the old input is a substring of the new input."
+See `cape--input-changed-p' for the CMP argument."
   (lambda ()
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
@@ -632,17 +629,24 @@ The CMP argument determines how the new input is compared to the old input.
          `(,beg ,end
                 ,(lambda (str pred action)
                    (let ((new-input (buffer-substring-no-properties start (point))))
-                     (unless (or
-                              (pcase-exhaustive cmp
-                                ((or 'prefix 'nil) (not (string-prefix-p input new-input)))
-                                ('equal (equal new-input input))
-                                ('substring (not (string-match-p (regexp-quote input) new-input))))
-                              (string-match-p "\\s-" new-input))
+                     (when (and (not (string-match-p "\\s-" new-input))
+                                (cape--input-changed-p input new-input cmp))
                        (pcase (funcall capf)
                          (`(,_beg ,_end ,new-table . ,_plist)
                           (setq table new-table input new-input)))))
                    (complete-with-action action table str pred))
                 ,@plist))))))
+
+(defun cape--input-changed-p (old-input new-input cmp)
+  "Return non-nil if the NEW-INPUT has changed in comparison to OLD-INPUT.
+The CMP argument determines how the new input is compared to the old input.
+- prefix/nil: The old input is not a prefix of the new input.
+- equal: The old input is not equal to the new input.
+- substring: The old input is not a substring of the new input."
+  (not (pcase-exhaustive cmp
+         ((or 'prefix 'nil) (string-prefix-p old-input new-input))
+         ('equal (equal old-input new-input))
+         ('substring (string-match-p (regexp-quote old-input) new-input)))))
 
 (provide 'cape)
 ;;; cape.el ends here
