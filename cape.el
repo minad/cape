@@ -373,15 +373,19 @@ METADATA is optional completion metadata."
 (declare-function dabbrev--ignore-case-p "dabbrev")
 (declare-function dabbrev--find-all-expansions "dabbrev")
 (declare-function dabbrev--reset-global-variables "dabbrev")
+(declare-function dabbrev--abbrev-at-point "dabbrev")
 
 ;;;###autoload
 (defun cape-dabbrev-capf ()
   "Ispell completion-at-point-function."
-  (when-let (bounds (bounds-of-thing-at-point 'word))
-    `(,(car bounds) ,(cdr bounds)
-      ,(cape--cached-table (car bounds) (cdr bounds) 'prefix #'cape--dabbrev-expansions)
-      :exclusive no
-      ,@cape--dabbrev-properties)))
+  (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))))
+    (when (and abbrev (not (string-match-p "\\s-" abbrev)))
+      (let ((beg (progn (search-backward abbrev) (point)))
+            (end (progn (search-forward abbrev) (point))))
+        `(,beg ,end
+          ,(cape--cached-table beg end 'prefix #'cape--dabbrev-expansions)
+          :exclusive no
+          ,@cape--dabbrev-properties)))))
 
 (defun cape--dabbrev-expansions (word)
   "Find all dabbrev expansions for WORD."
