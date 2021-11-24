@@ -96,3 +96,15 @@ merging in the future.
   (setq-local completion-at-point-functions
               (list (cape-merge-capfs #'cape-dabbrev-capf #'cape-dict-capf #'cape-keyword-capf)))
 #+end_src
+
+** Capf cache busting
+
+/The Capf buster ensures that you always get a fresh set of candidates!/
+
+If a Capf caches the candidates too aggressively we can use a cache busting
+Capf-transformer.
+
+#+begin_src emacs-lisp
+  (setq-local completion-at-point-functions
+              (list (cape-capf-buster #'some-caching-capf)))
+#+end_src
