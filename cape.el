@@ -682,6 +682,16 @@ The CMP argument determines how the new input is compared to the old input.
              ('substring (string-match-p (regexp-quote old-input) new-input))))))
 
 ;;;###autoload
+(defun cape-capf-with-predicate (capf predicate)
+  "Return a new CAPF which activates only when the PREDICATE is non-nil.
+The PREDICATE takes the completion beginning and end positions as arguments."
+  (lambda ()
+    (pcase (funcall capf)
+      ((and result `(,beg ,end ,_table . ,_plist))
+       (when (funcall predicate beg end)
+         result)))))
+
+;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
   "Return a new CAPF with additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function
