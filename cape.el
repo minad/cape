@@ -466,7 +466,11 @@ METADATA is optional completion metadata."
 (defun cape-dict-capf ()
   "Dictionary completion-at-point-function."
   (when-let (bounds (bounds-of-thing-at-point 'word))
-    `(,(car bounds) ,(cdr bounds) ,(cape--dict-words) :exclusive no ,@cape--dict-properties)))
+    `(,(car bounds) ,(cdr bounds)
+      ,(lambda (str pred action)
+         ;; Load the dict lazily
+         (complete-with-action action (cape--dict-words) str pred))
+      :exclusive no ,@cape--dict-properties)))
 
 ;;;###autoload
 (defun cape-dict ()
