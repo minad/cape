@@ -378,6 +378,8 @@ METADATA is optional completion metadata."
 ;;;###autoload
 (defun cape-dabbrev-capf ()
   "Ispell completion-at-point-function."
+  (require 'dabbrev)
+  (cape--dabbrev-reset)
   (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))))
     (when (and abbrev (not (string-match-p "\\s-" abbrev)))
       (let ((beg (progn (search-backward abbrev) (point)))
@@ -387,11 +389,15 @@ METADATA is optional completion metadata."
           :exclusive no
           ,@cape--dabbrev-properties)))))
 
-(defun cape--dabbrev-expansions (word)
-  "Find all dabbrev expansions for WORD."
+(defun cape--dabbrev-reset ()
+  "Reset dabbrev state."
   (let ((dabbrev-check-all-buffers nil)
         (dabbrev-check-other-buffers nil))
-    (dabbrev--reset-global-variables))
+    (dabbrev--reset-global-variables)))
+
+(defun cape--dabbrev-expansions (word)
+  "Find all dabbrev expansions for WORD."
+  (cape--dabbrev-reset)
   (let* ((inhibit-message t)
          (message-log-max nil)
          (min-len (+ cape-dabbrev-min-length (length word)))
