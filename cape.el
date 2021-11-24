@@ -309,7 +309,8 @@
 
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
-        :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file))))
+        :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file)))
+  "Completion extra properties for `cape-file-capf'.")
 
 ;;;###autoload
 (defun cape-file-capf ()
@@ -327,7 +328,8 @@
 
 (defvar cape--symbol-properties
   (list :annotation-function (lambda (_) " Symbol")
-        :company-kind #'cape--symbol-kind))
+        :company-kind #'cape--symbol-kind)
+  "Completion extra properties for `cape-symbol'.")
 
 (defun cape--symbol-kind (sym)
   "Return kind of SYM."
@@ -366,7 +368,8 @@ METADATA is optional completion metadata."
 
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
-        :company-kind (lambda (_) 'text)))
+        :company-kind (lambda (_) 'text))
+  "Completion extra properties for `cape-dabbrev-capf'.")
 
 (defvar dabbrev-check-all-buffers)
 (defvar dabbrev-check-other-buffers)
@@ -406,7 +409,8 @@ METADATA is optional completion metadata."
 
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
-        :company-kind (lambda (_) 'text)))
+        :company-kind (lambda (_) 'text))
+  "Completion extra properties for `cape-ispell-capf'.")
 
 (declare-function ispell-lookup-words "ispell")
 (defun cape--ispell-words (str)
@@ -440,7 +444,8 @@ METADATA is optional completion metadata."
 
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
-        :company-kind (lambda (_) 'text)))
+        :company-kind (lambda (_) 'text))
+  "Completion extra properties for `cape-dict-capf'.")
 
 (defvar cape--dict-words nil)
 (defun cape--dict-words ()
@@ -472,7 +477,8 @@ METADATA is optional completion metadata."
 (defvar cape--abbrev-properties
   (list :annotation-function (lambda (_) " Abbrev")
         :exit-function (lambda (&rest _) (expand-abbrev))
-        :company-kind (lambda (_) 'snippet)))
+        :company-kind (lambda (_) 'snippet))
+  "Completion extra properties for `cape-abbrev-capf'.")
 
 ;;;###autoload
 (defun cape-abbrev-capf ()
@@ -496,7 +502,8 @@ METADATA is optional completion metadata."
 
 (defvar cape--keyword-properties
   (list :annotation-function (lambda (_) " Keyword")
-        :company-kind (lambda (_) 'keyword)))
+        :company-kind (lambda (_) 'keyword))
+  "Completion extra properties for `cape-keyword-capf'.")
 
 ;;;###autoload
 (defun cape-keyword-capf ()
