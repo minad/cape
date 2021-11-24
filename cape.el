@@ -301,6 +301,13 @@
   "Alist of major modes and keywords."
   :type 'alist)
 
+(defmacro cape--silent (&rest body)
+  "Silence BODY."
+  `(cl-letf ((inhibit-message t)
+             (message-log-max nil)
+             ((symbol-function #'minibuffer-message) #'ignore))
+     (ignore-errors ,@body)))
+
 (defun cape--complete-in-region (thing table extra)
   "Complete THING at point given completion TABLE and EXTRA properties."
   (let ((bounds (or (bounds-of-thing-at-point thing) (cons (point) (point))))
@@ -401,11 +408,11 @@ METADATA is optional completion metadata."
 (defun cape--dabbrev-expansions (word)
   "Find all dabbrev expansions for WORD."
   (cape--dabbrev-reset)
-  (let* ((inhibit-message t)
-         (message-log-max nil)
-         (min-len (+ cape-dabbrev-min-length (length word)))
-         (words (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))))
-    (cl-loop for w in words if (>= (length w) min-len) collect w)))
+  (cape--silent
+   (cl-loop
+    with min-len = (+ cape-dabbrev-min-length (length word))
+    for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
+    if (>= (length w) min-len) collect w)))
 
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
@@ -417,9 +424,7 @@ METADATA is optional completion metadata."
   "Return all words from Ispell matching STR."
   (with-demoted-errors "Ispell Error: %S"
     (require 'ispell)
-    (let ((message-log-max nil)
-          (inhibit-message t))
-      (ispell-lookup-words (format "*%s*" str)))))
+    (cape--silent (ispell-lookup-words (format "*%s*" str)))))
 
 (defun cape--ispell-table (bounds)
   "Return completion table for Ispell completion between BOUNDS."
@@ -677,12 +682,6 @@ and the various :company-* extensions."
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end ,table ,@properties ,@plist)))))
-
-(defmacro cape--silent (&rest body)
-  "Silence BODY."
-  `(cl-letf ((inhibit-message t)
-             ((symbol-function #'minibuffer-message) #'ignore))
-     (ignore-errors ,@body)))
 
 (defun cape-silent-capf (capf)
   "Return a new CAPF which is silent (no messages, no errors)."
