@@ -397,7 +397,8 @@ METADATA is optional completion metadata."
       (let ((beg (progn (search-backward abbrev) (point)))
             (end (progn (search-forward abbrev) (point))))
         `(,beg ,end
-          ,(cape--cached-table beg end 'prefix #'cape--dabbrev-expansions)
+          ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
+          ,(cape--cached-table beg end 'equal #'cape--dabbrev-expansions)
           :exclusive no
           ,@cape--dabbrev-properties)))))
 
