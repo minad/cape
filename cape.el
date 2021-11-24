@@ -323,9 +323,11 @@
 (defun cape-file-capf ()
   "File name completion-at-point-function."
   (when-let (bounds (bounds-of-thing-at-point 'filename))
-    `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
-      :company-prefix-length ,(eq (char-before) ?/)
-      :exclusive no ,@cape--file-properties)))
+    (let ((file (buffer-substring (car bounds) (cdr bounds))))
+      (when (and (string-match-p "/" file) (file-exists-p (file-name-directory file)))
+        `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
+          :company-prefix-length ,(and (not (equal file "/")) (string-suffix-p "/" file))
+          :exclusive no ,@cape--file-properties)))))
 
 ;;;###autoload
 (defun cape-file ()
