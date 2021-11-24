@@ -386,13 +386,13 @@
 BEG and END are the input bounds.
 CMP is the input comparison function, see `cape--input-changed-p'.
 FUN is the function which computes the candidates."
-  (let ((input nil)
+  (let ((input 'init)
         (beg (copy-marker beg))
         (end (copy-marker end t))
-        (table 'init))
+        (table nil))
     (lambda (str pred action)
       (let ((new-input (buffer-substring-no-properties beg end)))
-        (when (or (eq table 'init) (cape--input-changed-p input new-input cmp))
+        (when (or (eq input 'init) (cape--input-changed-p input new-input cmp))
           (setq table (funcall fun new-input) input new-input)))
       (complete-with-action action table str pred))))
 
@@ -634,18 +634,18 @@ See `cape--input-changed-p' for the CMP argument."
   (lambda ()
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
-       (let* ((start (copy-marker beg))
-              (input (buffer-substring-no-properties start (point))))
-         `(,beg ,end
-                ,(lambda (str pred action)
-                   (let ((new-input (buffer-substring-no-properties start (point))))
-                     (when (and (not (string-match-p "\\s-" new-input))
-                                (cape--input-changed-p input new-input cmp))
+       `(,beg ,end
+              ,(let* ((beg (copy-marker beg))
+                      (end (copy-marker end t))
+                      (input (buffer-substring-no-properties beg end)))
+                 (lambda (str pred action)
+                   (let ((new-input (buffer-substring-no-properties beg end)))
+                     (when (cape--input-changed-p input new-input cmp)
                        (pcase (funcall capf)
                          (`(,_beg ,_end ,new-table . ,_plist)
                           (setq table new-table input new-input)))))
-                   (complete-with-action action table str pred))
-                ,@plist))))))
+                   (complete-with-action action table str pred)))
+              ,@plist)))))
 
 (defun cape--input-changed-p (old-input new-input cmp)
   "Return non-nil if the NEW-INPUT has changed in comparison to OLD-INPUT.
@@ -653,10 +653,13 @@ The CMP argument determines how the new input is compared to the old input.
 - prefix/nil: The old input is not a prefix of the new input.
 - equal: The old input is not equal to the new input.
 - substring: The old input is not a substring of the new input."
-  (not (pcase-exhaustive cmp
-         ((or 'prefix 'nil) (string-prefix-p old-input new-input))
-         ('equal (equal old-input new-input))
-         ('substring (string-match-p (regexp-quote old-input) new-input)))))
+  ;; Treat input as not changed if it contains space to allow
+  ;; Orderless completion style filtering.
+  (not (or (string-match-p "\\s-" new-input)
+           (pcase-exhaustive cmp
+             ((or 'prefix 'nil) (string-prefix-p old-input new-input))
+             ('equal (equal old-input new-input))
+             ('substring (string-match-p (regexp-quote old-input) new-input))))))
 
 (provide 'cape)
 ;;; cape.el ends here
