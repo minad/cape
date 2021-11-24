@@ -346,20 +346,23 @@
   (interactive)
   (cape--complete-in-region 'symbol obarray cape--symbol-properties))
 
-(defun cape--cached-table (beg end cmp fun)
+(defun cape--cached-table (beg end cmp fun &optional metadata)
   "Create caching completion table.
 BEG and END are the input bounds.
 CMP is the input comparison function, see `cape--input-changed-p'.
-FUN is the function which computes the candidates."
+FUN is the function which computes the candidates.
+METADATA is optional completion metadata."
   (let ((input 'init)
         (beg (copy-marker beg))
         (end (copy-marker end t))
         (table nil))
     (lambda (str pred action)
-      (let ((new-input (buffer-substring-no-properties beg end)))
-        (when (or (eq input 'init) (cape--input-changed-p input new-input cmp))
-          (setq table (funcall fun new-input) input new-input)))
-      (complete-with-action action table str pred))))
+      (if (eq action 'metadata)
+          metadata
+        (let ((new-input (buffer-substring-no-properties beg end)))
+          (when (or (eq input 'init) (cape--input-changed-p input new-input cmp))
+            (setq table (funcall fun new-input) input new-input)))
+        (complete-with-action action table str pred)))))
 
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
@@ -570,8 +573,9 @@ FUN is the function which computes the candidates."
     (res res)))
 
 ;;;###autoload
-(defun cape-company-to-capf (backend)
+(defun cape-company-to-capf (backend &optional cmp)
   "Convert Company BACKEND function to Capf.
+CMP is the input comparator, see `cape--input-changed-p'.
 This feature is experimental."
   (unless (symbolp backend)
     (error "Backend must be a symbol"))
@@ -586,32 +590,26 @@ This feature is experimental."
                 (cape--company-call backend 'init)
                 (set initialized t))
               (when-let* ((prefix (cape--company-call backend 'prefix))
-                          (input (if (stringp prefix) prefix (car-safe prefix))))
+                          (initial-input (if (stringp prefix) prefix (car-safe prefix))))
                 ;; TODO When fetching candidates, support asynchronous operation. If a
                 ;; future is returned, the capf should fail first. As soon as the future
                 ;; callback is called, remember the result, refresh the UI and return the
                 ;; remembered result the next time the capf is called.
-                (let* ((no-cache (cape--company-call backend 'no-cache input))
-                       (dups (if (cape--company-call backend 'duplicates) #'delete-dups #'identity))
-                       (metadata `(metadata (category . ,backend)))
-                       (beg (copy-marker (- (point) (length input))))
-                       (end (copy-marker (point) t))
-                       (candidates 'init))
-                  (when (cape--company-call backend 'sorted)
-                    (nconc metadata '((display-sort-function . identity)
-                                      (cycle-sort-function . identity))))
+                (let* ((end (point)) (beg (- end (length initial-input))))
                   (list beg end
-                        (lambda (str pred action)
-                          (if (eq action 'metadata)
-                              metadata
-                            (when (or (eq candidates 'init) no-cache)
-                              ;; Use current input string as prefix (before spaces)
-                              (let ((new-input (replace-regexp-in-string
-                                                "\\s-.*" "" (buffer-substring-no-properties beg end))))
-                                (unless (or (eq candidates 'init) (equal new-input input))
-                                  (setq input new-input
-                                        candidates (funcall dups (cape--company-call backend 'candidates input))))))
-                            (complete-with-action action candidates str pred)))
+                        (cape--cached-table beg end
+                                            (if (cape--company-call backend 'no-cache initial-input)
+                                                'always cmp)
+                                            (if (cape--company-call backend 'duplicates)
+                                              (lambda (input)
+                                                (delete-dups (cape--company-call backend 'candidates input)))
+                                              (apply-partially #'cape--company-call backend 'candidates))
+                                            (if (cape--company-call backend 'sorted)
+                                                `(metadata
+                                                  (category . ,backend)
+                                                  (display-sort-function . identity)
+                                                  (cycle-sort-function . identity))
+                                              `(metadata (category . ,backend))))
                         :exclusive 'no
                         :company-prefix-length (cdr-safe prefix)
                         :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
@@ -645,6 +643,7 @@ See `cape--input-changed-p' for the CMP argument."
 (defun cape--input-changed-p (old-input new-input cmp)
   "Return non-nil if the NEW-INPUT has changed in comparison to OLD-INPUT.
 The CMP argument determines how the new input is compared to the old input.
+- always: Always treat the input as changed.
 - prefix/nil: The old input is not a prefix of the new input.
 - equal: The old input is not equal to the new input.
 - substring: The old input is not a substring of the new input."
@@ -652,6 +651,7 @@ The CMP argument determines how the new input is compared to the old input.
   ;; Orderless completion style filtering.
   (not (or (string-match-p "\\s-" new-input)
            (pcase-exhaustive cmp
+             ('always nil)
              ((or 'prefix 'nil) (string-prefix-p old-input new-input))
              ('equal (equal old-input new-input))
              ('substring (string-match-p (regexp-quote old-input) new-input))))))
