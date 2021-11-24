@@ -48,6 +48,10 @@
   "Company asynchronous busy waiting time."
   :type 'float)
 
+(defcustom cape-dabbrev-min-length 4
+  "Minimum length of dabbrev expansions."
+  :type 'integer)
+
 (defcustom cape-keywords
   ;; This variable was taken from company-keywords.el.
   ;; Please contribute corrections or additions to both Cape and Company.
@@ -342,45 +346,6 @@
   (interactive)
   (cape--complete-in-region 'symbol obarray cape--symbol-properties))
 
-(defvar cape--dabbrev-properties
-  (list :annotation-function (lambda (_) " Dabbrev")
-        :company-kind (lambda (_) 'text)))
-
-(defvar dabbrev-check-all-buffers)
-(defvar dabbrev-check-other-buffers)
-(declare-function dabbrev--abbrev-at-point "dabbrev")
-(declare-function dabbrev--ignore-case-p "dabbrev")
-(declare-function dabbrev--find-all-expansions "dabbrev")
-(declare-function dabbrev--reset-global-variables "dabbrev")
-
-;;;###autoload
-(defun cape-dabbrev-capf ()
-  "Dabbrev completion-at-point-function."
-  (require 'dabbrev)
-  (let ((dabbrev-check-all-buffers nil)
-        (dabbrev-check-other-buffers nil))
-    (dabbrev--reset-global-variables))
-  (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))))
-    (when (and abbrev (not (string-match-p "[ \t\n]" abbrev)))
-      (pcase ;; Interruptible scanning
-          (while-no-input
-            (let ((inhibit-message t)
-                  (message-log-max nil))
-              (or (dabbrev--find-all-expansions
-                   abbrev (dabbrev--ignore-case-p abbrev))
-                  t)))
-        ('nil (keyboard-quit))
-        ('t nil)
-        (words
-         ;; Ignore completions which are too short
-         (let ((min-len (+ 4 (length abbrev))))
-           (setq words (seq-remove (lambda (x) (< (length x) min-len)) words)))
-         (when words
-           (let ((beg (progn (search-backward abbrev) (point)))
-                 (end (progn (search-forward abbrev) (point))))
-             (unless (string-match-p "\n" (buffer-substring beg end))
-               `(,beg ,end ,words :exclusive no ,@cape--dabbrev-properties)))))))))
-
 (defun cape--cached-table (beg end cmp fun)
   "Create caching completion table.
 BEG and END are the input bounds.
@@ -395,6 +360,36 @@ FUN is the function which computes the candidates."
         (when (or (eq input 'init) (cape--input-changed-p input new-input cmp))
           (setq table (funcall fun new-input) input new-input)))
       (complete-with-action action table str pred))))
+
+(defvar cape--dabbrev-properties
+  (list :annotation-function (lambda (_) " Dabbrev")
+        :company-kind (lambda (_) 'text)))
+
+(defvar dabbrev-check-all-buffers)
+(defvar dabbrev-check-other-buffers)
+(declare-function dabbrev--ignore-case-p "dabbrev")
+(declare-function dabbrev--find-all-expansions "dabbrev")
+(declare-function dabbrev--reset-global-variables "dabbrev")
+
+;;;###autoload
+(defun cape-dabbrev-capf ()
+  "Ispell completion-at-point-function."
+  (when-let (bounds (bounds-of-thing-at-point 'word))
+    `(,(car bounds) ,(cdr bounds)
+      ,(cape--cached-table (car bounds) (cdr bounds) 'prefix #'cape--dabbrev-expansions)
+      :exclusive no
+      ,@cape--dabbrev-properties)))
+
+(defun cape--dabbrev-expansions (word)
+  "Find all dabbrev expansions for WORD."
+  (let ((dabbrev-check-all-buffers nil)
+        (dabbrev-check-other-buffers nil))
+    (dabbrev--reset-global-variables))
+  (let* ((inhibit-message t)
+         (message-log-max nil)
+         (min-len (+ cape-dabbrev-min-length (length word)))
+         (words (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))))
+    (cl-loop for w in words if (>= (length w) min-len) collect w)))
 
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
