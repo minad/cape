@@ -669,5 +669,30 @@ The CMP argument determines how the new input is compared to the old input.
              ('equal (equal old-input new-input))
              ('substring (string-match-p (regexp-quote old-input) new-input))))))
 
+(defun cape-capf-with-properties (capf &rest properties)
+  "Return a new CAPF with additional completion PROPERTIES.
+Completion properties include for example :exclusive, :annotation-function
+and the various :company-* extensions."
+  (lambda ()
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       `(,beg ,end ,table ,@properties ,@plist)))))
+
+(defmacro cape--silent (&rest body)
+  "Silence BODY."
+  `(cl-letf ((inhibit-message t)
+             ((symbol-function #'minibuffer-message) #'ignore))
+     (ignore-errors ,@body)))
+
+(defun cape-silent-capf (capf)
+  "Return a new CAPF which is silent (no messages, no errors)."
+  (lambda ()
+    (pcase (cape--silent (funcall capf))
+      (`(,beg ,end ,table . ,plist)
+       `(,beg ,end
+              ,(lambda (str pred action)
+                 (cape--silent (complete-with-action action table str pred)))
+              ,@plist)))))
+
 (provide 'cape)
 ;;; cape.el ends here
