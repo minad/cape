@@ -81,11 +81,11 @@ The adapter can be used as follows:
       (list #'company-files #'company-ispell #'company-dabbrev)))
 #+end_src
 
-** Merging multiple Capfs
+** Super-Capf - Merging multiple Capfs
 
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
 
-Cape supports merging multiple Capfs using the function ~cape-merge-capfs~. This
+Cape supports merging multiple Capfs using the function ~cape-super-capf~. This
 feature is experimental and works only for well-behaved Capfs and static
 completion tables. But it is a start to emulate the corresponding Company
 feature. Maybe it is possible to extend the capabilities of the completion table
@@ -94,15 +94,15 @@ merging in the future.
 #+begin_src emacs-lisp
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
   (setq-local completion-at-point-functions
-              (list (cape-merge-capfs #'cape-dabbrev-capf #'cape-dict-capf #'cape-keyword-capf)))
+              (list (cape-super-capf #'cape-dabbrev-capf #'cape-dict-capf #'cape-keyword-capf)))
 #+end_src
 
-** Capf cache busting
+** Capf-Buster - Cache busting
 
-/The Capf buster ensures that you always get a fresh set of candidates!/
+/The Capf-Buster ensures that you always get a fresh set of candidates!/
 
 If a Capf caches the candidates too aggressively we can use a cache busting
-Capf-transformer. For example the Capf merging function ~cape-merge-capfs~ creates
+Capf-transformer. For example the Capf merging function ~cape-super-capf~ creates
 a Capf, which caches the candidates for the whole lifetime of the Capf.
 Therefore you may want to combine a merged Capf with a cache buster under some
 circumstances.

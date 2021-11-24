@@ -515,7 +515,7 @@ METADATA is optional completion metadata."
       (funcall fun x))))
 
 ;;;###autoload
-(defun cape-merge-capfs (&rest capfs)
+(defun cape-super-capf (&rest capfs)
   "Merge CAPFS and return new Capf which includes all candidates."
   (lambda ()
     (when-let (results (delq nil (mapcar #'funcall capfs)))
