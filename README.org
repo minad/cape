@@ -120,4 +120,3 @@ achieve a similarly refreshing strategy.
 
 - ~cape-silent-capf~: Wrap a chatty Capf and silence it.
 - ~cape-capf-with-properties~: Add completion properties to a Capf.
-- ~cape-capf-with-predicate~: Add predicate to control if the Capf should activate.
