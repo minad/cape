@@ -618,5 +618,31 @@ This feature is experimental."
                         :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
     name))
 
+(defun cape-capf-buster (capf &optional cmp)
+  "Return transformed CAPF where the cache is busted on input change.
+The CMP argument determines how the new input is compared to the old input.
+- prefix/nil: Preserve cache when the old input is a prefix of the new input.
+- equal: Preserve cache when the old input is equal to the new input.
+- substring: Preserve cache when the old input is a substring of the new input."
+  (lambda ()
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       (let* ((start (copy-marker beg))
+              (input (buffer-substring-no-properties start (point))))
+         `(,beg ,end
+                ,(lambda (str pred action)
+                   (let ((new-input (buffer-substring-no-properties start (point))))
+                     (unless (or
+                              (pcase-exhaustive cmp
+                                ((or 'prefix 'nil) (not (string-prefix-p input new-input)))
+                                ('equal (equal new-input input))
+                                ('substring (not (string-match-p (regexp-quote input) new-input))))
+                              (string-match-p "\\s-" new-input))
+                       (pcase (funcall capf)
+                         (`(,_beg ,_end ,new-table . ,_plist)
+                          (setq table new-table input new-input)))))
+                   (complete-with-action action table str pred))
+                ,@plist))))))
+
 (provide 'cape)
 ;;; cape.el ends here
