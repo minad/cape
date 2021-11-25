@@ -18,11 +18,11 @@ completion backends used by ~completion-at-point~ are so called
 ~completion-at-point-functions~ (Capfs). In principle, the Capfs provided by Cape
 can also be used by [[https://github.com/company-mode/company-mode][Company]].
 
-You can register the ~cape-*-capf~ functions in the ~completion-at-point-functions~
-list. This makes the backends available for completion, which is usually invoked
-by pressing ~TAB~ or ~M-TAB~. Furthermore there are a handful of dedicated
-completion commands ~cape-*~, which you can bind directly to a key in your user
-configuration.
+You can register the ~cape-*~ functions in the ~completion-at-point-functions~ list.
+This makes the backends available for completion, which is usually invoked by
+pressing ~TAB~ or ~M-TAB~. The functions can also be invoked interactively to
+trigger the respective completion at point. You can bind them directly to a key
+in your user configuration.
 
 On the more experimental side, Cape has the super power to transform Company
 backends into Capfs and merge multiple Capfs into a Super-Capf!
@@ -43,8 +43,8 @@ this package should be upstreamed into Emacs itself.
   (use-package cape
     ;; Bind dedicated completion commands
     :bind (("C-c p p" . completion-at-point) ;; capf
-           ("C-c p d" . dabbrev-completion)  ;; dabbrev
            ("C-c p t" . complete-tag)        ;; etags
+           ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
            ("C-c p f" . cape-file)
            ("C-c p k" . cape-keyword)
            ("C-c p s" . cape-symbol)
@@ -54,12 +54,14 @@ this package should be upstreamed into Emacs itself.
            ("C-c p w" . cape-dict))
     :init
     ;; Add `completion-at-point-functions', used by `completion-at-point'.
-    (add-to-list 'completion-at-point-functions #'cape-file-capf)
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev-capf)
-    (add-to-list 'completion-at-point-functions #'cape-keyword-capf)
-    ;;(add-to-list 'completion-at-point-functions #'cape-abbrev-capf)
-    ;;(add-to-list 'completion-at-point-functions #'cape-ispell-capf)
-    ;;(add-to-list 'completion-at-point-functions #'cape-dict-capf)
+    (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+    (add-to-list 'completion-at-point-functions #'cape-keyword)
+    ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+    ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+    ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+    ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+    ;;(add-to-list 'completion-at-point-functions #'cape-line)
   )
 #+end_src
 
@@ -97,7 +99,7 @@ merging in the future.
 #+begin_src emacs-lisp
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
   (setq-local completion-at-point-functions
-              (list (cape-super-capf #'cape-dabbrev-capf #'cape-dict-capf #'cape-keyword-capf)))
+              (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
 #+end_src
 
 ** Capf-Buster - Cache busting
