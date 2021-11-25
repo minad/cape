@@ -310,9 +310,13 @@
 
 (defun cape--complete-thing (thing table extra)
   "Complete THING at point given completion TABLE and EXTRA properties."
-  (let ((bounds (or (bounds-of-thing-at-point thing) (cons (point) (point))))
-        (completion-extra-properties extra))
-    (completion-in-region (car bounds) (cdr bounds) table)))
+  (let ((bounds (or (bounds-of-thing-at-point thing) (cons (point) (point)))))
+    (cape--complete (car bounds) (cdr bounds) table extra)))
+
+(defun cape--complete (beg end table extra)
+  "Complete between BEG and END given completion TABLE and EXTRA properties."
+  (let ((completion-extra-properties extra))
+    (completion-in-region beg end table)))
 
 (cl-defun cape--table-with-properties (table &key category (sort t))
   "Create completion TABLE with properties.
@@ -480,9 +484,9 @@ SORT should be nil to disable sorting."
 (defun cape-ispell ()
   "Complete with Ispell at point."
   (interactive)
-  (let ((bounds (or (bounds-of-thing-at-point 'word) (cons (point) (point))))
-        (completion-extra-properties cape--ispell-properties))
-    (completion-in-region (car bounds) (cdr bounds) (cape--ispell-table bounds))))
+  (let ((bounds (or (bounds-of-thing-at-point 'word) (cons (point) (point)))))
+    (cape--complete (car bounds) (cdr bounds) (cape--ispell-table bounds)
+                    cape--ispell-properties)))
 
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
@@ -710,6 +714,9 @@ VALID is the input comparator, see `cape--input-valid-p'."
                    (complete-with-action action table str pred)))
               ,@plist)))))
 
+(defvar cape--line-properties nil
+  "Completion extra properties for `cape-line'.")
+
 ;;;###autoload
 (defun cape-line ()
   "Complete current line from other lines in buffer."
@@ -729,8 +736,9 @@ VALID is the input comparator, see `cape--input-valid-p'."
               (puthash line t ht)
               (push line lines))))
         (setq beg (1+ end))))
-    (completion-in-region (line-beginning-position) (point)
-                          (cape--table-with-properties (nreverse lines) :sort nil))))
+    (cape--complete (line-beginning-position) (point)
+                    (cape--table-with-properties (nreverse lines) :sort nil)
+                    cape--line-properties)))
 
 ;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
