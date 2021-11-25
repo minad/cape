@@ -308,7 +308,7 @@
              ((symbol-function #'minibuffer-message) #'ignore))
      (ignore-errors ,@body)))
 
-(defun cape--complete-in-region (thing table extra)
+(defun cape--complete-thing (thing table extra)
   "Complete THING at point given completion TABLE and EXTRA properties."
   (let ((bounds (or (bounds-of-thing-at-point thing) (cons (point) (point))))
         (completion-extra-properties extra))
@@ -381,7 +381,7 @@ SORT should be nil to disable sorting."
 (defun cape-file ()
   "Complete file name at point."
   (interactive)
-  (cape--complete-in-region 'filename #'read-file-name-internal cape--file-properties))
+  (cape--complete-thing 'filename #'read-file-name-internal cape--file-properties))
 
 (defvar cape--symbol-properties
   (list :annotation-function (lambda (_) " Symbol")
@@ -403,9 +403,9 @@ SORT should be nil to disable sorting."
 (defun cape-symbol ()
   "Complete symbol at point."
   (interactive)
-  (cape--complete-in-region 'symbol
-                            (cape--table-with-properties obarray :category 'symbol)
-                            cape--symbol-properties))
+  (cape--complete-thing 'symbol
+                        (cape--table-with-properties obarray :category 'symbol)
+                        cape--symbol-properties))
 
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
@@ -429,11 +429,11 @@ SORT should be nil to disable sorting."
       (let ((beg (progn (search-backward abbrev) (point)))
             (end (progn (search-forward abbrev) (point))))
         `(,beg ,end
-          ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
-          ,(cape--cached-table beg end #'cape--dabbrev-expansions
-                               :valid 'equal :category 'cape-dabbrev)
-          :exclusive no
-          ,@cape--dabbrev-properties)))))
+               ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
+               ,(cape--cached-table beg end #'cape--dabbrev-expansions
+                                    :valid 'equal :category 'cape-dabbrev)
+               :exclusive no
+               ,@cape--dabbrev-properties)))))
 
 (defun cape--dabbrev-reset ()
   "Reset dabbrev state."
@@ -515,7 +515,7 @@ SORT should be nil to disable sorting."
 (defun cape-dict ()
   "Complete word at point."
   (interactive)
-  (cape--complete-in-region 'word (cape--dict-table) cape--dict-properties))
+  (cape--complete-thing 'word (cape--dict-table) cape--dict-properties))
 
 (defun cape--abbrev-table ()
   "Abbreviation completion table."
@@ -549,9 +549,9 @@ SORT should be nil to disable sorting."
 (defun cape-abbrev ()
   "Complete abbreviation at point."
   (interactive)
-  (cape--complete-in-region 'symbol (or (cape--abbrev-table)
-                                        (user-error "No abbreviations"))
-                            cape--abbrev-properties))
+  (cape--complete-thing 'symbol (or (cape--abbrev-table)
+                                    (user-error "No abbreviations"))
+                        cape--abbrev-properties))
 
 (defun cape--keyword-table ()
   "Return keywords for current major mode."
@@ -575,10 +575,10 @@ SORT should be nil to disable sorting."
 (defun cape-keyword ()
   "Complete word at point."
   (interactive)
-  (cape--complete-in-region 'symbol
-                            (or (cape--keyword-table)
-                                (user-error "No keywords for %s" major-mode))
-                            cape--keyword-properties))
+  (cape--complete-thing 'symbol
+                        (or (cape--keyword-table)
+                            (user-error "No keywords for %s" major-mode))
+                        cape--keyword-properties))
 
 (defun cape--super-function (ht prop)
   "Return merged function for PROP given HT."
