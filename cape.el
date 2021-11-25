@@ -314,6 +314,54 @@
         (completion-extra-properties extra))
     (completion-in-region (car bounds) (cdr bounds) table)))
 
+(cl-defun cape--table-with-properties (table &key category sort)
+  "Create completion TABLE with properties.
+CATEGORY is the optional completion category.
+SORT is an optional sort function."
+  (lambda (str pred action)
+    (if (eq action 'metadata)
+        `(metadata (category . ,category)
+                   (display-sort-function . ,sort)
+                   (cycle-sort-function . ,sort))
+      (complete-with-action action table str pred))))
+
+(defun cape--input-valid-p (old-input new-input cmp)
+  "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
+The CMP argument determines how the new input is compared to the old input.
+- never: Never treat the input as valid.
+- prefix/nil: The old input is a prefix of the new input.
+- equal: The old input is equal to the new input.
+- substring: The old input is a substring of the new input."
+  ;; Treat input as not changed if it contains space to allow
+  ;; Orderless completion style filtering.
+  (or (string-match-p "\\s-" new-input)
+      (pcase-exhaustive cmp
+        ('never nil)
+        ((or 'prefix 'nil) (string-prefix-p old-input new-input))
+        ('equal (equal old-input new-input))
+        ('substring (string-match-p (regexp-quote old-input) new-input)))))
+
+(cl-defun cape--cached-table (beg end fun &key valid category sort)
+  "Create caching completion table.
+BEG and END are the input bounds.
+FUN is the function which computes the candidates.
+VALID is the input comparator, see `cape--input-valid-p'.
+CATEGORY is the optional completion category.
+SORT is an optional sort function."
+  (let ((input 'init)
+        (beg (copy-marker beg))
+        (end (copy-marker end t))
+        (table nil))
+    (lambda (str pred action)
+      (if (eq action 'metadata)
+          `(metadata (category . ,category)
+                     (display-sort-function . ,sort)
+                     (cycle-sort-function . ,sort))
+        (let ((new-input (buffer-substring-no-properties beg end)))
+          (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
+            (setq table (funcall fun new-input) input new-input)))
+        (complete-with-action action table str pred)))))
+
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
         :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file)))
@@ -358,38 +406,6 @@
   (cape--complete-in-region 'symbol
                             (cape--table-with-properties obarray :category 'symbol)
                             cape--symbol-properties))
-
-(cl-defun cape--table-with-properties (table &key category sort)
-  "Create completion TABLE with properties.
-CATEGORY is the optional completion category.
-SORT is an optional sort function."
-  (lambda (str pred action)
-    (if (eq action 'metadata)
-        `(metadata (category . ,category)
-                   (display-sort-function . ,sort)
-                   (cycle-sort-function . ,sort))
-      (complete-with-action action table str pred))))
-
-(cl-defun cape--cached-table (beg end fun &key valid category sort)
-  "Create caching completion table.
-BEG and END are the input bounds.
-FUN is the function which computes the candidates.
-VALID is the input comparator, see `cape--input-valid-p'.
-CATEGORY is the optional completion category.
-SORT is an optional sort function."
-  (let ((input 'init)
-        (beg (copy-marker beg))
-        (end (copy-marker end t))
-        (table nil))
-    (lambda (str pred action)
-      (if (eq action 'metadata)
-          `(metadata (category . ,category)
-                     (display-sort-function . ,sort)
-                     (cycle-sort-function . ,sort))
-        (let ((new-input (buffer-substring-no-properties beg end)))
-          (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
-            (setq table (funcall fun new-input) input new-input)))
-        (complete-with-action action table str pred)))))
 
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
@@ -693,22 +709,6 @@ VALID is the input comparator, see `cape--input-valid-p'."
                           (setq table new-table input new-input)))))
                    (complete-with-action action table str pred)))
               ,@plist)))))
-
-(defun cape--input-valid-p (old-input new-input cmp)
-  "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
-The CMP argument determines how the new input is compared to the old input.
-- never: Never treat the input as valid.
-- prefix/nil: The old input is a prefix of the new input.
-- equal: The old input is equal to the new input.
-- substring: The old input is a substring of the new input."
-  ;; Treat input as not changed if it contains space to allow
-  ;; Orderless completion style filtering.
-  (or (string-match-p "\\s-" new-input)
-      (pcase-exhaustive cmp
-        ('never nil)
-        ((or 'prefix 'nil) (string-prefix-p old-input new-input))
-        ('equal (equal old-input new-input))
-        ('substring (string-match-p (regexp-quote old-input) new-input)))))
 
 ;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
