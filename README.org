@@ -22,7 +22,10 @@ You can register the ~cape-*~ functions in the ~completion-at-point-functions~ l
 This makes the backends available for completion, which is usually invoked by
 pressing ~TAB~ or ~M-TAB~. The functions can also be invoked interactively to
 trigger the respective completion at point. You can bind them directly to a key
-in your user configuration.
+in your user configuration. Notable commands/capfs are ~cape-line~ for completion
+of a line from the current buffer and ~cape-file~ for completion of a file name.
+The command ~cape-symbol~ is particularily useful for documentation of Elisp
+packages or configurations, since it completes elisp symbols anywere.
 
 On the more experimental side, Cape has the super power to transform Company
 backends into Capfs and merge multiple Capfs into a Super-Capf!
