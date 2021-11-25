@@ -402,12 +402,17 @@ If INTERACTIVE is nil the function acts like a capf."
    (t 'text)))
 
 ;;;###autoload
-(defun cape-symbol ()
-  "Complete symbol at point."
-  (interactive)
-  (cape--complete-thing 'symbol
-                        (cape--table-with-properties obarray :category 'symbol)
-                        cape--symbol-properties))
+(defun cape-symbol (&optional interactive)
+  "Complete symbol at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--complete-thing 'symbol
+                            (cape--table-with-properties obarray :category 'symbol)
+                            cape--symbol-properties)
+    (when-let (bounds (bounds-of-thing-at-point 'symbol))
+      `(,(car bounds) ,(cdr bounds) ,obarray
+        :exclusive no ,@cape--symbol-properties))))
 
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
