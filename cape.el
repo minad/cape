@@ -502,20 +502,16 @@ If INTERACTIVE is nil the function acts like a capf."
              :category 'cape-dict))))
 
 ;;;###autoload
-(defun cape-dict-capf ()
-  "Dictionary completion-at-point-function."
-  (when-let (bounds (bounds-of-thing-at-point 'word))
-    `(,(car bounds) ,(cdr bounds)
-      ,(lambda (str pred action)
-         ;; Load the dict lazily
-         (complete-with-action action (cape--dict-table) str pred))
-      :exclusive no ,@cape--dict-properties)))
-
-;;;###autoload
-(defun cape-dict ()
-  "Complete word at point."
-  (interactive)
-  (cape--complete-thing 'word (cape--dict-table) cape--dict-properties))
+(defun cape-dict (&optional interactive)
+  "Complete word at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--complete-thing 'word (cape--dict-table) cape--dict-properties)
+    (when-let (bounds (bounds-of-thing-at-point 'word))
+      `(,(car bounds) ,(cdr bounds)
+        ,(cape--dict-table)
+        :exclusive no ,@cape--dict-properties))))
 
 (defun cape--abbrev-table ()
   "Abbreviation completion table."
