@@ -711,6 +711,27 @@ VALID is the input comparator, see `cape--input-valid-p'."
               ,@plist)))))
 
 ;;;###autoload
+(defun cape-line ()
+  "Complete current line from other lines in buffer."
+  (interactive)
+  (let ((beg (point-min))
+        (max (point-max))
+        (pt (point))
+        (ht (make-hash-table :test #'equal))
+        end lines)
+    (save-excursion
+      (while (< beg max)
+        (goto-char beg)
+        (setq end (line-end-position))
+        (unless (<= beg pt end)
+          (let ((line (buffer-substring-no-properties beg end)))
+            (unless (or (string-blank-p line) (gethash line ht))
+              (puthash line t ht)
+              (push line lines))))
+        (setq beg (1+ end))))
+    (completion-in-region (line-beginning-position) (point) lines)))
+
+;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
   "Return a new CAPF with additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function
