@@ -357,11 +357,11 @@
   (interactive)
   (cape--complete-in-region 'symbol obarray cape--symbol-properties))
 
-(cl-defun cape--cached-table (beg end fun &key cmp category sort)
+(cl-defun cape--cached-table (beg end fun &key valid category sort)
   "Create caching completion table.
 BEG and END are the input bounds.
 FUN is the function which computes the candidates.
-CMP is the input comparison function, see `cape--input-changed-p'.
+VALID is the input comparator, see `cape--input-valid-p'.
 CATEGORY is the optional completion category.
 SORT is an optional sort function."
   (let ((input 'init)
@@ -374,7 +374,7 @@ SORT is an optional sort function."
                      (display-sort-function . ,sort)
                      (cycle-sort-function . ,sort))
         (let ((new-input (buffer-substring-no-properties beg end)))
-          (when (or (eq input 'init) (cape--input-changed-p input new-input cmp))
+          (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
             (setq table (funcall fun new-input) input new-input)))
         (complete-with-action action table str pred)))))
 
@@ -401,7 +401,7 @@ SORT is an optional sort function."
             (end (progn (search-forward abbrev) (point))))
         `(,beg ,end
           ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
-          ,(cape--cached-table beg end #'cape--dabbrev-expansions :cmp 'equal :category 'dabbrev)
+          ,(cape--cached-table beg end #'cape--dabbrev-expansions :valid 'equal :category 'dabbrev)
           :exclusive no
           ,@cape--dabbrev-properties)))))
 
@@ -434,7 +434,7 @@ SORT is an optional sort function."
 
 (defun cape--ispell-table (bounds)
   "Return completion table for Ispell completion between BOUNDS."
-  (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words :cmp 'substring :category 'ispell))
+  (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words :valid 'substring :category 'ispell))
 
 ;;;###autoload
 (defun cape-ispell-capf ()
@@ -616,9 +616,9 @@ SORT is an optional sort function."
     (res res)))
 
 ;;;###autoload
-(defun cape-company-to-capf (backend &optional cmp)
+(defun cape-company-to-capf (backend &optional valid)
   "Convert Company BACKEND function to Capf.
-CMP is the input comparator, see `cape--input-changed-p'.
+VALID is the input comparator, see `cape--input-valid-p'.
 This feature is experimental."
   (unless (symbolp backend)
     (error "Backend must be a symbol"))
@@ -643,7 +643,7 @@ This feature is experimental."
                                           (delete-dups (cape--company-call backend 'candidates input)))
                                       (apply-partially #'cape--company-call backend 'candidates))
                                     :category backend
-                                    :cmp (if (cape--company-call backend 'no-cache initial-input) 'always cmp)
+                                    :valid (if (cape--company-call backend 'no-cache initial-input) 'never valid)
                                     :sort (and (cape--company-call backend 'sorted) #'identity))
                 :exclusive 'no
                 :company-prefix-length (cdr-safe prefix)
@@ -656,9 +656,9 @@ This feature is experimental."
                 :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
 
 ;;;###autoload
-(defun cape-capf-buster (capf &optional cmp)
+(defun cape-capf-buster (capf &optional valid)
   "Return transformed CAPF where the cache is busted on input change.
-See `cape--input-changed-p' for the CMP argument."
+VALID is the input comparator, see `cape--input-valid-p'."
   (lambda ()
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
@@ -668,28 +668,28 @@ See `cape--input-changed-p' for the CMP argument."
                       (input (buffer-substring-no-properties beg end)))
                  (lambda (str pred action)
                    (let ((new-input (buffer-substring-no-properties beg end)))
-                     (when (cape--input-changed-p input new-input cmp)
+                     (unless (cape--input-valid-p input new-input valid)
                        (pcase (funcall capf)
                          (`(,_beg ,_end ,new-table . ,_plist)
                           (setq table new-table input new-input)))))
                    (complete-with-action action table str pred)))
               ,@plist)))))
 
-(defun cape--input-changed-p (old-input new-input cmp)
-  "Return non-nil if the NEW-INPUT has changed in comparison to OLD-INPUT.
+(defun cape--input-valid-p (old-input new-input cmp)
+  "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
 The CMP argument determines how the new input is compared to the old input.
-- always: Always treat the input as changed.
-- prefix/nil: The old input is not a prefix of the new input.
-- equal: The old input is not equal to the new input.
-- substring: The old input is not a substring of the new input."
+- never: Never treat the input as valid.
+- prefix/nil: The old input is a prefix of the new input.
+- equal: The old input is equal to the new input.
+- substring: The old input is a substring of the new input."
   ;; Treat input as not changed if it contains space to allow
   ;; Orderless completion style filtering.
-  (not (or (string-match-p "\\s-" new-input)
-           (pcase-exhaustive cmp
-             ('always nil)
-             ((or 'prefix 'nil) (string-prefix-p old-input new-input))
-             ('equal (equal old-input new-input))
-             ('substring (string-match-p (regexp-quote old-input) new-input))))))
+  (or (string-match-p "\\s-" new-input)
+      (pcase-exhaustive cmp
+        ('never nil)
+        ((or 'prefix 'nil) (string-prefix-p old-input new-input))
+        ('equal (equal old-input new-input))
+        ('substring (string-match-p (regexp-quote old-input) new-input)))))
 
 ;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
