@@ -386,7 +386,7 @@ If INTERACTIVE is nil the function acts like a capf."
             :exclusive no ,@cape--file-properties))))))
 
 (defvar cape--symbol-properties
-  (list :annotation-function (lambda (_) " Symbol")
+  (list :annotation-function #'cape--symbol-annotation
         :company-kind #'cape--symbol-kind)
   "Completion extra properties for `cape-symbol'.")
 
@@ -400,6 +400,17 @@ If INTERACTIVE is nil the function acts like a capf."
    ((featurep sym) 'module)
    ((facep sym) 'color)
    (t 'text)))
+
+(defun cape--symbol-annotation (sym)
+  "Return kind of SYM."
+  (setq sym (intern-soft sym))
+  (cond
+   ((or (macrop sym) (special-form-p sym)) " Macro")
+   ((fboundp sym) " Function")
+   ((boundp sym) " Variable")
+   ((featurep sym) " Feature")
+   ((facep sym) " Face")
+   (t " Symbol")))
 
 ;;;###autoload
 (defun cape-symbol (&optional interactive)
