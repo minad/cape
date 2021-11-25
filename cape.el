@@ -709,10 +709,8 @@ VALID is the input comparator, see `cape--input-valid-p'."
 (defvar cape--line-properties nil
   "Completion extra properties for `cape-line'.")
 
-;;;###autoload
-(defun cape-line ()
-  "Complete current line from other lines in buffer."
-  (interactive)
+(defun cape--line-table ()
+  "Create line completion table."
   (let ((beg (point-min))
         (max (point-max))
         (pt (point))
@@ -728,9 +726,18 @@ VALID is the input comparator, see `cape--input-valid-p'."
               (puthash line t ht)
               (push line lines))))
         (setq beg (1+ end))))
-    (cape--complete (line-beginning-position) (point)
-                    (cape--table-with-properties (nreverse lines) :sort nil)
-                    cape--line-properties)))
+    (cape--table-with-properties (nreverse lines) :sort nil)))
+
+;;;###autoload
+(defun cape-line (&optional interactive)
+  "Complete current line from other lines in buffer.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--complete (line-beginning-position) (point)
+                      (cape--line-table) cape--line-properties)
+    `(,(line-beginning-position) ,(point)
+      ,(cape--line-table) ,@cape--line-properties)))
 
 ;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
