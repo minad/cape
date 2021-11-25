@@ -417,7 +417,7 @@ If INTERACTIVE is nil the function acts like a capf."
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
         :company-kind (lambda (_) 'text))
-  "Completion extra properties for `cape-dabbrev-capf'.")
+  "Completion extra properties for `cape-dabbrev'.")
 
 (defvar dabbrev-check-all-buffers)
 (defvar dabbrev-check-other-buffers)
@@ -427,20 +427,31 @@ If INTERACTIVE is nil the function acts like a capf."
 (declare-function dabbrev--abbrev-at-point "dabbrev")
 
 ;;;###autoload
-(defun cape-dabbrev-capf ()
-  "Ispell completion-at-point-function."
+(defun cape-dabbrev (&optional interactive)
+  "Complete with Dabbrev at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
   (require 'dabbrev)
   (cape--dabbrev-reset)
-  (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))))
-    (when (and abbrev (not (string-match-p "\\s-" abbrev)))
-      (let ((beg (progn (search-backward abbrev) (point)))
-            (end (progn (search-forward abbrev) (point))))
-        `(,beg ,end
-               ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
-               ,(cape--cached-table beg end #'cape--dabbrev-expansions
-                                    :valid 'equal :category 'cape-dabbrev)
-               :exclusive no
-               ,@cape--dabbrev-properties)))))
+  (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))) beg end)
+    (cond
+     ((and abbrev (not (string-match-p "\\s-" abbrev)))
+      (save-excursion
+        (search-backward abbrev)
+        (setq beg (point))
+        (search-forward abbrev)
+        (setq end (point)))
+      (if interactive
+          (cape--complete beg end (cape--dabbrev-table beg end) cape--dabbrev-properties)
+        `(,beg ,end ,(cape--dabbrev-table beg end)
+               :exclusive no ,@cape--dabbrev-properties)))
+     (interactive (user-error "No expansion")))))
+
+(defun cape--dabbrev-table (beg end)
+  "Dabbrev completion table for string between BEG and END."
+  ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
+  (cape--cached-table beg end #'cape--dabbrev-expansions
+                      :valid 'equal :category 'cape-dabbrev))
 
 (defun cape--dabbrev-reset ()
   "Reset dabbrev state."
