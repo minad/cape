@@ -411,7 +411,8 @@ If INTERACTIVE is nil the function acts like a capf."
                             (cape--table-with-properties obarray :category 'symbol)
                             cape--symbol-properties)
     (when-let (bounds (bounds-of-thing-at-point 'symbol))
-      `(,(car bounds) ,(cdr bounds) ,obarray
+      `(,(car bounds) ,(cdr bounds)
+        ,(cape--table-with-properties obarray :category 'symbol)
         :exclusive no ,@cape--symbol-properties))))
 
 (defvar cape--dabbrev-properties
@@ -526,8 +527,7 @@ If INTERACTIVE is nil the function acts like a capf."
   (if interactive
       (cape--complete-thing 'word (cape--dict-table) cape--dict-properties)
     (when-let (bounds (bounds-of-thing-at-point 'word))
-      `(,(car bounds) ,(cdr bounds)
-        ,(cape--dict-table)
+      `(,(car bounds) ,(cdr bounds) ,(cape--dict-table)
         :exclusive no ,@cape--dict-properties))))
 
 (defun cape--abbrev-table ()
