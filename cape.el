@@ -314,16 +314,18 @@
         (completion-extra-properties extra))
     (completion-in-region (car bounds) (cdr bounds) table)))
 
-(cl-defun cape--table-with-properties (table &key category sort)
+(cl-defun cape--table-with-properties (table &key category (sort t))
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
-SORT is an optional sort function."
-  (lambda (str pred action)
-    (if (eq action 'metadata)
-        `(metadata (category . ,category)
-                   (display-sort-function . ,sort)
-                   (cycle-sort-function . ,sort))
-      (complete-with-action action table str pred))))
+SORT should be nil to disable sorting."
+  (let ((metadata `(metadata
+                    ,@(and category `((category . ,category)))
+                    ,@(and (not sort) '((display-sort-function . identity)
+                                        (cycle-sort-function . identity))))))
+    (lambda (str pred action)
+      (if (eq action 'metadata)
+          metadata
+        (complete-with-action action table str pred)))))
 
 (defun cape--input-valid-p (old-input new-input cmp)
   "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
@@ -341,26 +343,24 @@ The CMP argument determines how the new input is compared to the old input.
         ('equal (equal old-input new-input))
         ('substring (string-match-p (regexp-quote old-input) new-input)))))
 
-(cl-defun cape--cached-table (beg end fun &key valid category sort)
+(cl-defun cape--cached-table (beg end fun &key valid category (sort t))
   "Create caching completion table.
 BEG and END are the input bounds.
 FUN is the function which computes the candidates.
 VALID is the input comparator, see `cape--input-valid-p'.
 CATEGORY is the optional completion category.
-SORT is an optional sort function."
+SORT should be nil to disable sorting."
   (let ((input 'init)
         (beg (copy-marker beg))
         (end (copy-marker end t))
         (table nil))
-    (lambda (str pred action)
-      (if (eq action 'metadata)
-          `(metadata (category . ,category)
-                     (display-sort-function . ,sort)
-                     (cycle-sort-function . ,sort))
-        (let ((new-input (buffer-substring-no-properties beg end)))
-          (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
-            (setq table (funcall fun new-input) input new-input)))
-        (complete-with-action action table str pred)))))
+    (cape--table-with-properties
+     (lambda (str pred action)
+       (let ((new-input (buffer-substring-no-properties beg end)))
+         (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
+           (setq table (funcall fun new-input) input new-input)))
+       (complete-with-action action table str pred))
+     :category category :sort sort)))
 
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
@@ -679,7 +679,7 @@ This feature is experimental."
                                       (apply-partially #'cape--company-call backend 'candidates))
                                     :category backend
                                     :valid (if (cape--company-call backend 'no-cache initial-input) 'never valid)
-                                    :sort (and (cape--company-call backend 'sorted) #'identity))
+                                    :sort (not (cape--company-call backend 'sorted)))
                 :exclusive 'no
                 :company-prefix-length (cdr-safe prefix)
                 :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
@@ -729,7 +729,8 @@ VALID is the input comparator, see `cape--input-valid-p'."
               (puthash line t ht)
               (push line lines))))
         (setq beg (1+ end))))
-    (completion-in-region (line-beginning-position) (point) lines)))
+    (completion-in-region (line-beginning-position) (point)
+                          (cape--table-with-properties (nreverse lines) :sort nil))))
 
 ;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
