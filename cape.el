@@ -556,23 +556,22 @@ If INTERACTIVE is nil the function acts like a capf."
 (defvar cape--keyword-properties
   (list :annotation-function (lambda (_) " Keyword")
         :company-kind (lambda (_) 'keyword))
-  "Completion extra properties for `cape-keyword-capf'.")
+  "Completion extra properties for `cape-keyword'.")
 
 ;;;###autoload
-(defun cape-keyword-capf ()
-  "Dictionary completion-at-point-function."
-  (when-let ((bounds (bounds-of-thing-at-point 'symbol))
-             (keywords (cape--keyword-table)))
-    `(,(car bounds) ,(cdr bounds) ,keywords :exclusive no ,@cape--keyword-properties)))
-
-;;;###autoload
-(defun cape-keyword ()
-  "Complete word at point."
-  (interactive)
-  (cape--complete-thing 'symbol
-                        (or (cape--keyword-table)
-                            (user-error "No keywords for %s" major-mode))
-                        cape--keyword-properties))
+(defun cape-keyword (&optional interactive)
+  "Complete word at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--complete-thing 'symbol
+                            (or (cape--keyword-table)
+                                (user-error "No keywords for %s" major-mode))
+                            cape--keyword-properties)
+    (when-let ((bounds (bounds-of-thing-at-point 'symbol))
+               (keywords (cape--keyword-table)))
+      `(,(car bounds) ,(cdr bounds) ,keywords
+        :exclusive no ,@cape--keyword-properties))))
 
 (defun cape--super-function (ht prop)
   "Return merged function for PROP given HT."
