@@ -569,6 +569,7 @@ METADATA is optional completion metadata."
                        (setq prefix-len plen))
                       ((and (integerp prefix-len) (integerp plen))
                        (setq prefix-len (max prefix-len plen)))))))
+        (setq tables (nreverse tables))
         (list beg end
               (lambda (str pred action)
                 (if (eq action 'metadata)
@@ -577,8 +578,9 @@ METADATA is optional completion metadata."
                       (display-sort-function . identity)
                       (cycle-sort-function . identity))
                   (when (eq candidates 'init)
+                    (clrhash ht)
                     (setq candidates
-                          (cl-loop for (table . plist) in (nreverse tables) nconc
+                          (cl-loop for (table . plist) in tables nconc
                                    (let* ((pred (plist-get plist :predicate))
                                           (metadata (completion-metadata "" table pred))
                                           (sort (or (completion-metadata-get metadata 'display-sort-function)
