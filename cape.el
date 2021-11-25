@@ -357,19 +357,22 @@
   (interactive)
   (cape--complete-in-region 'symbol obarray cape--symbol-properties))
 
-(defun cape--cached-table (beg end cmp fun &optional metadata)
+(cl-defun cape--cached-table (beg end fun &key cmp category sort)
   "Create caching completion table.
 BEG and END are the input bounds.
-CMP is the input comparison function, see `cape--input-changed-p'.
 FUN is the function which computes the candidates.
-METADATA is optional completion metadata."
+CMP is the input comparison function, see `cape--input-changed-p'.
+CATEGORY is the optional completion category.
+SORT is an optional sort function."
   (let ((input 'init)
         (beg (copy-marker beg))
         (end (copy-marker end t))
         (table nil))
     (lambda (str pred action)
       (if (eq action 'metadata)
-          metadata
+          `(metadata (category . ,category)
+                     (display-sort-function . ,sort)
+                     (cycle-sort-function . ,sort))
         (let ((new-input (buffer-substring-no-properties beg end)))
           (when (or (eq input 'init) (cape--input-changed-p input new-input cmp))
             (setq table (funcall fun new-input) input new-input)))
@@ -398,7 +401,7 @@ METADATA is optional completion metadata."
             (end (progn (search-forward abbrev) (point))))
         `(,beg ,end
           ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
-          ,(cape--cached-table beg end 'equal #'cape--dabbrev-expansions)
+          ,(cape--cached-table beg end #'cape--dabbrev-expansions :cmp 'equal :category 'dabbrev)
           :exclusive no
           ,@cape--dabbrev-properties)))))
 
@@ -431,7 +434,7 @@ METADATA is optional completion metadata."
 
 (defun cape--ispell-table (bounds)
   "Return completion table for Ispell completion between BOUNDS."
-  (cape--cached-table (car bounds) (cdr bounds) 'substring #'cape--ispell-words))
+  (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words :cmp 'substring :category 'ispell))
 
 ;;;###autoload
 (defun cape-ispell-capf ()
@@ -635,18 +638,13 @@ This feature is experimental."
         (let* ((end (point)) (beg (- end (length initial-input))))
           (list beg end
                 (cape--cached-table beg end
-                                    (if (cape--company-call backend 'no-cache initial-input)
-                                        'always cmp)
                                     (if (cape--company-call backend 'duplicates)
                                         (lambda (input)
                                           (delete-dups (cape--company-call backend 'candidates input)))
                                       (apply-partially #'cape--company-call backend 'candidates))
-                                    (if (cape--company-call backend 'sorted)
-                                        `(metadata
-                                          (category . ,backend)
-                                          (display-sort-function . identity)
-                                          (cycle-sort-function . identity))
-                                      `(metadata (category . ,backend))))
+                                    :category backend
+                                    :cmp (if (cape--company-call backend 'no-cache initial-input) 'always cmp)
+                                    :sort (and (cape--company-call backend 'sorted) #'identity))
                 :exclusive 'no
                 :company-prefix-length (cdr-safe prefix)
                 :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
