@@ -486,8 +486,17 @@ METADATA is optional completion metadata."
   (delete "" (nconc (all-completions "" global-abbrev-table)
                     (all-completions "" local-abbrev-table))))
 
+(defun cape--abbrev-annotation (abbrev)
+  "Annotate ABBREV with expansion."
+  (concat " "
+          (truncate-string-to-width
+           (symbol-value
+            (or (abbrev--symbol abbrev local-abbrev-table)
+                (abbrev--symbol abbrev global-abbrev-table)))
+           30 0 nil t)))
+
 (defvar cape--abbrev-properties
-  (list :annotation-function (lambda (_) " Abbrev")
+  (list :annotation-function #'cape--abbrev-annotation
         :exit-function (lambda (&rest _) (expand-abbrev))
         :company-kind (lambda (_) 'snippet))
   "Completion extra properties for `cape-abbrev-capf'.")
