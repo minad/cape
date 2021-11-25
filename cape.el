@@ -472,21 +472,17 @@ SORT should be nil to disable sorting."
                       :valid 'substring :category 'cape-ispell))
 
 ;;;###autoload
-(defun cape-ispell-capf ()
-  "Ispell completion-at-point-function."
-  (when-let (bounds (bounds-of-thing-at-point 'word))
-    `(,(car bounds) ,(cdr bounds)
-      ,(cape--ispell-table bounds)
-      :exclusive no
-      ,@cape--ispell-properties)))
-
-;;;###autoload
-(defun cape-ispell ()
-  "Complete with Ispell at point."
-  (interactive)
-  (let ((bounds (or (bounds-of-thing-at-point 'word) (cons (point) (point)))))
-    (cape--complete (car bounds) (cdr bounds) (cape--ispell-table bounds)
-                    cape--ispell-properties)))
+(defun cape-ispell (&optional interactive)
+  "Complete with Ispell at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (let ((bounds (or (bounds-of-thing-at-point 'word) (cons (point) (point)))))
+        (cape--complete (car bounds) (cdr bounds) (cape--ispell-table bounds)
+                        cape--ispell-properties))
+    (when-let (bounds (bounds-of-thing-at-point 'word))
+      `(,(car bounds) ,(cdr bounds) ,(cape--ispell-table bounds)
+        :exclusive no ,@cape--ispell-properties))))
 
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
