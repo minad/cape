@@ -369,23 +369,21 @@ SORT should be nil to disable sorting."
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
         :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file)))
-  "Completion extra properties for `cape-file-capf'.")
+  "Completion extra properties for `cape-file'.")
 
 ;;;###autoload
-(defun cape-file-capf ()
-  "File name completion-at-point-function."
-  (when-let (bounds (bounds-of-thing-at-point 'filename))
-    (let ((file (buffer-substring (car bounds) (cdr bounds))))
-      (when (and (string-match-p "/" file) (file-exists-p (file-name-directory file)))
-        `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
-          :company-prefix-length ,(and (not (equal file "/")) (string-suffix-p "/" file))
-          :exclusive no ,@cape--file-properties)))))
-
-;;;###autoload
-(defun cape-file ()
-  "Complete file name at point."
-  (interactive)
-  (cape--complete-thing 'filename #'read-file-name-internal cape--file-properties))
+(defun cape-file (&optional interactive)
+  "Complete file name at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--complete-thing 'filename #'read-file-name-internal cape--file-properties)
+    (when-let (bounds (bounds-of-thing-at-point 'filename))
+      (let ((file (buffer-substring (car bounds) (cdr bounds))))
+        (when (and (string-match-p "/" file) (file-exists-p (file-name-directory file)))
+          `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
+            :company-prefix-length ,(and (not (equal file "/")) (string-suffix-p "/" file))
+            :exclusive no ,@cape--file-properties))))))
 
 (defvar cape--symbol-properties
   (list :annotation-function (lambda (_) " Symbol")
