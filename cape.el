@@ -442,16 +442,16 @@ If INTERACTIVE is nil the function acts like a capf."
         (search-forward abbrev)
         (setq end (point)))
       (if interactive
-          (cape--complete beg end (cape--dabbrev-table beg end) cape--dabbrev-properties)
-        `(,beg ,end ,(cape--dabbrev-table beg end)
+          (cape--complete beg end
+                          (cape--cached-table beg end #'cape--dabbrev-expansions
+                                              :valid 'prefix :category 'cape-dabbrev)
+                          cape--dabbrev-properties)
+        `(,beg ,end
+               ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
+               ,(cape--cached-table beg end #'cape--dabbrev-limited-expansions
+                                    :valid 'equal :category 'cape-dabbrev)
                :exclusive no ,@cape--dabbrev-properties)))
      (interactive (user-error "No expansion")))))
-
-(defun cape--dabbrev-table (beg end)
-  "Dabbrev completion table for string between BEG and END."
-  ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
-  (cape--cached-table beg end #'cape--dabbrev-expansions
-                      :valid 'equal :category 'cape-dabbrev))
 
 (defun cape--dabbrev-reset ()
   "Reset dabbrev state."
@@ -461,12 +461,15 @@ If INTERACTIVE is nil the function acts like a capf."
 
 (defun cape--dabbrev-expansions (word)
   "Find all dabbrev expansions for WORD."
-  (cape--dabbrev-reset)
   (cape--silent
-   (cl-loop
-    with min-len = (+ cape-dabbrev-min-length (length word))
-    for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
-    if (>= (length w) min-len) collect w)))
+   (cape--dabbrev-reset)
+   (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))))
+
+(defun cape--dabbrev-limited-expansions (word)
+  "Find all dabbrev expansions for WORD."
+   (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
+            for w in (cape--dabbrev-expansions word)
+            if (>= (length w) min-len) collect w))
 
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
