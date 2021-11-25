@@ -355,7 +355,20 @@
 (defun cape-symbol ()
   "Complete symbol at point."
   (interactive)
-  (cape--complete-in-region 'symbol obarray cape--symbol-properties))
+  (cape--complete-in-region 'symbol
+                            (cape--table-with-properties obarray :category 'symbol)
+                            cape--symbol-properties))
+
+(cl-defun cape--table-with-properties (table &key category sort)
+  "Create completion TABLE with properties.
+CATEGORY is the optional completion category.
+SORT is an optional sort function."
+  (lambda (str pred action)
+    (if (eq action 'metadata)
+        `(metadata (category . ,category)
+                   (display-sort-function . ,sort)
+                   (cycle-sort-function . ,sort))
+      (complete-with-action action table str pred))))
 
 (cl-defun cape--cached-table (beg end fun &key valid category sort)
   "Create caching completion table.
@@ -401,7 +414,8 @@ SORT is an optional sort function."
             (end (progn (search-forward abbrev) (point))))
         `(,beg ,end
           ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
-          ,(cape--cached-table beg end #'cape--dabbrev-expansions :valid 'equal :category 'dabbrev)
+          ,(cape--cached-table beg end #'cape--dabbrev-expansions
+                               :valid 'equal :category 'cape-dabbrev)
           :exclusive no
           ,@cape--dabbrev-properties)))))
 
@@ -434,7 +448,8 @@ SORT is an optional sort function."
 
 (defun cape--ispell-table (bounds)
   "Return completion table for Ispell completion between BOUNDS."
-  (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words :valid 'substring :category 'ispell))
+  (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words
+                      :valid 'substring :category 'cape-ispell))
 
 ;;;###autoload
 (defun cape-ispell-capf ()
@@ -458,15 +473,17 @@ SORT is an optional sort function."
         :company-kind (lambda (_) 'text))
   "Completion extra properties for `cape-dict-capf'.")
 
-(defvar cape--dict-words nil)
-(defun cape--dict-words ()
-  "Return list of dictionary words."
-  (or cape--dict-words
-      (setq cape--dict-words
-            (split-string (with-temp-buffer
-                            (insert-file-contents-literally cape-dict-file)
-                            (buffer-string))
-                          "\n" 'omit-nulls))))
+(defvar cape--dict-table nil)
+(defun cape--dict-table ()
+  "Dictionary completion table."
+  (or cape--dict-table
+      (setq cape--dict-table
+            (cape--table-with-properties
+             (split-string (with-temp-buffer
+                             (insert-file-contents-literally cape-dict-file)
+                             (buffer-string))
+                           "\n" 'omit-nulls)
+             :category 'cape-dict))))
 
 ;;;###autoload
 (defun cape-dict-capf ()
@@ -475,19 +492,20 @@ SORT is an optional sort function."
     `(,(car bounds) ,(cdr bounds)
       ,(lambda (str pred action)
          ;; Load the dict lazily
-         (complete-with-action action (cape--dict-words) str pred))
+         (complete-with-action action (cape--dict-table) str pred))
       :exclusive no ,@cape--dict-properties)))
 
 ;;;###autoload
 (defun cape-dict ()
   "Complete word at point."
   (interactive)
-  (cape--complete-in-region 'word (cape--dict-words) cape--dict-properties))
+  (cape--complete-in-region 'word (cape--dict-table) cape--dict-properties))
 
-(defun cape--abbrev-completions ()
-  "Return all abbreviations."
-  (delete "" (nconc (all-completions "" global-abbrev-table)
-                    (all-completions "" local-abbrev-table))))
+(defun cape--abbrev-table ()
+  "Abbreviation completion table."
+  (when-let (abbrevs (delete "" (nconc (all-completions "" global-abbrev-table)
+                                       (all-completions "" local-abbrev-table))))
+    (cape--table-with-properties abbrevs :category 'cape-abbrev)))
 
 (defun cape--abbrev-annotation (abbrev)
   "Annotate ABBREV with expansion."
@@ -508,21 +526,22 @@ SORT is an optional sort function."
 (defun cape-abbrev-capf ()
   "Abbrev completion-at-point-function."
   (when-let ((bounds (bounds-of-thing-at-point 'symbol))
-             (abbrevs (cape--abbrev-completions)))
+             (abbrevs (cape--abbrev-table)))
     `(,(car bounds) ,(cdr bounds) ,abbrevs :exclusive no ,@cape--abbrev-properties)))
 
 ;;;###autoload
 (defun cape-abbrev ()
   "Complete abbreviation at point."
   (interactive)
-  (cape--complete-in-region 'symbol (or (cape--abbrev-completions)
+  (cape--complete-in-region 'symbol (or (cape--abbrev-table)
                                         (user-error "No abbreviations"))
                             cape--abbrev-properties))
 
-(defun cape--keywords ()
+(defun cape--keyword-table ()
   "Return keywords for current major mode."
-  (when-let (kw (alist-get major-mode cape-keywords))
-    (if (symbolp (cadr kw)) (alist-get (cadr kw) cape-keywords) kw)))
+  (when-let* ((kw (alist-get major-mode cape-keywords))
+              (kw (if (symbolp (cadr kw)) (alist-get (cadr kw) cape-keywords) kw)))
+    (cape--table-with-properties kw :category 'cape-keyword)))
 
 (defvar cape--keyword-properties
   (list :annotation-function (lambda (_) " Keyword")
@@ -533,7 +552,7 @@ SORT is an optional sort function."
 (defun cape-keyword-capf ()
   "Dictionary completion-at-point-function."
   (when-let ((bounds (bounds-of-thing-at-point 'symbol))
-             (keywords (cape--keywords)))
+             (keywords (cape--keyword-table)))
     `(,(car bounds) ,(cdr bounds) ,keywords :exclusive no ,@cape--keyword-properties)))
 
 ;;;###autoload
@@ -541,7 +560,7 @@ SORT is an optional sort function."
   "Complete word at point."
   (interactive)
   (cape--complete-in-region 'symbol
-                            (or (cape--keywords)
+                            (or (cape--keyword-table)
                                 (user-error "No keywords for %s" major-mode))
                             cape--keyword-properties))
 
