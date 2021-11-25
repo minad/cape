@@ -457,7 +457,7 @@ SORT should be nil to disable sorting."
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
         :company-kind (lambda (_) 'text))
-  "Completion extra properties for `cape-ispell-capf'.")
+  "Completion extra properties for `cape-ispell'.")
 
 (declare-function ispell-lookup-words "ispell")
 (defun cape--ispell-words (str)
@@ -487,7 +487,7 @@ If INTERACTIVE is nil the function acts like a capf."
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
         :company-kind (lambda (_) 'text))
-  "Completion extra properties for `cape-dict-capf'.")
+  "Completion extra properties for `cape-dict'.")
 
 (defvar cape--dict-table nil)
 (defun cape--dict-table ()
@@ -532,22 +532,20 @@ If INTERACTIVE is nil the function acts like a capf."
   (list :annotation-function #'cape--abbrev-annotation
         :exit-function (lambda (&rest _) (expand-abbrev))
         :company-kind (lambda (_) 'snippet))
-  "Completion extra properties for `cape-abbrev-capf'.")
+  "Completion extra properties for `cape-abbrev'.")
 
 ;;;###autoload
-(defun cape-abbrev-capf ()
-  "Abbrev completion-at-point-function."
-  (when-let ((bounds (bounds-of-thing-at-point 'symbol))
-             (abbrevs (cape--abbrev-table)))
-    `(,(car bounds) ,(cdr bounds) ,abbrevs :exclusive no ,@cape--abbrev-properties)))
-
-;;;###autoload
-(defun cape-abbrev ()
-  "Complete abbreviation at point."
-  (interactive)
-  (cape--complete-thing 'symbol (or (cape--abbrev-table)
-                                    (user-error "No abbreviations"))
-                        cape--abbrev-properties))
+(defun cape-abbrev (&optional interactive)
+  "Complete abbreviation at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--complete-thing 'symbol (or (cape--abbrev-table)
+                                        (user-error "No abbreviations"))
+                            cape--abbrev-properties)
+    (when-let ((bounds (bounds-of-thing-at-point 'symbol))
+               (abbrevs (cape--abbrev-table)))
+      `(,(car bounds) ,(cdr bounds) ,abbrevs :exclusive no ,@cape--abbrev-properties))))
 
 (defun cape--keyword-table ()
   "Return keywords for current major mode."
