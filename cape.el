@@ -687,14 +687,17 @@ If INTERACTIVE is nil the function acts like a capf."
                    ;; NOTE: Set `candidates' in the end, such that the completion table is
                    ;; interruptible.
                    (setq candidates
-                         (cl-loop for (table . plist) in tables nconc
-                                  (let* ((pred (plist-get plist :predicate))
-                                         (metadata (completion-metadata "" table pred))
-                                         (sort (or (completion-metadata-get metadata 'display-sort-function)
-                                                   #'identity))
-                                         (cands (funcall sort (all-completions "" table pred))))
-                                    (cl-loop for cand in cands do (puthash cand plist ht))
-                                    cands))))
+                         (delq nil (cl-loop for (table . plist) in tables nconc
+                                            (let* ((pred (plist-get plist :predicate))
+                                                   (metadata (completion-metadata "" table pred))
+                                                   (sort (or (completion-metadata-get metadata 'display-sort-function)
+                                                             #'identity))
+                                                   (cands (funcall sort (all-completions "" table pred))))
+                                              (cl-loop for cell on cands do
+                                                       (if (eq (gethash (car cell) ht t) t)
+                                                           (puthash (car cell) plist ht)
+                                                         (setcar cell nil)))
+                                              cands)))))
                  (complete-with-action action candidates str pred))
                :sort nil :category 'cape-super)
               :exclusive 'no
