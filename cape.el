@@ -324,18 +324,20 @@
        (completion-in-region beg end table (plist-get extra :predicate))))
     (_ (user-error "%s: No completions" capf))))
 
-(cl-defun cape--table-with-properties (table &key category (sort t))
+(cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
 SORT should be nil to disable sorting."
-  (let ((metadata `(metadata
-                    ,@(and category `((category . ,category)))
-                    ,@(and (not sort) '((display-sort-function . identity)
-                                        (cycle-sort-function . identity))))))
-    (lambda (str pred action)
-      (if (eq action 'metadata)
-          metadata
-        (complete-with-action action table str pred)))))
+  (if (or (not table) (and (not category) sort))
+      table
+    (let ((metadata `(metadata
+                      ,@(and category `((category . ,category)))
+                      ,@(and (not sort) '((display-sort-function . identity)
+                                          (cycle-sort-function . identity))))))
+      (lambda (str pred action)
+        (if (eq action 'metadata)
+            metadata
+          (complete-with-action action table str pred))))))
 
 (defun cape--input-valid-p (old-input new-input cmp)
   "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
@@ -753,12 +755,15 @@ If INTERACTIVE is nil the function acts like a capf."
 ;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
   "Return a new CAPF with additional completion PROPERTIES.
-Completion properties include for example :exclusive, :annotation-function
-and the various :company-* extensions."
+Completion properties include for example :exclusive, :annotation-function and
+the various :company-* extensions. Furthermore a boolean :sort flag and a
+completion :category symbol can be specified."
   (lambda ()
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,table ,@properties ,@plist)))))
+       `(,beg ,end
+              ,(apply #'cape--table-with-properties table properties)
+              ,@properties ,@plist)))))
 
 ;;;###autoload
 (defun cape-silent-capf (capf)
