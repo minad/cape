@@ -777,6 +777,17 @@ completion :category symbol can be specified."
               ,@plist)))))
 
 ;;;###autoload
+(defun cape-noninterruptible-capf (capf)
+  "Return a new CAPF which is non-interruptible silent by input."
+  (lambda ()
+    (pcase (let (throw-on-input) (funcall capf))
+      (`(,beg ,end ,table . ,plist)
+       `(,beg ,end
+              ,(lambda (str pred action)
+                 (let (throw-on-input) (complete-with-action action table str pred)))
+              ,@plist)))))
+
+;;;###autoload
 (defun cape-interactive-capf (capf)
   "Create interactive completion function from CAPF."
   (lambda (&optional interactive)

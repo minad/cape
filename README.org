@@ -125,5 +125,6 @@ achieve a similarly refreshing strategy.
 ** Other Capf transformers
 
 - ~cape-silent-capf~: Wrap a chatty Capf and silence it.
+- ~cape-noninterruptible-capf~: Protect a Capf which does not like to be interrupted.
 - ~cape-interactive-capf~: Create a Capf which can be called interactively.
 - ~cape-capf-with-properties~: Add completion properties to a Capf.
