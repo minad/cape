@@ -31,6 +31,8 @@
 
 (eval-when-compile (require 'cl-lib))
 
+;;;; Customization
+
 (defgroup cape nil
   "Completion At Point Extensions."
   :group 'convenience
@@ -305,6 +307,8 @@
   "Alist of major modes and keywords."
   :type 'alist)
 
+;;;; Helpers
+
 (defmacro cape--silent (&rest body)
   "Silence BODY."
   `(cl-letf ((inhibit-message t)
@@ -373,6 +377,10 @@ VALID is the input comparator, see `cape--input-valid-p'."
                 input new-input)))
       (complete-with-action action table str pred))))
 
+;;;; Capfs
+
+;;;;; cape-file
+
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
         :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file)))
@@ -393,6 +401,8 @@ If INTERACTIVE is nil the function acts like a capf."
         `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
           :company-prefix-length ,(and (not (equal file "/")) (string-suffix-p "/" file))
           :exclusive no ,@cape--file-properties)))))
+
+;;;;; cape-symbol
 
 (defvar cape--symbol-properties
   (list :annotation-function #'cape--symbol-annotation
@@ -432,6 +442,8 @@ If INTERACTIVE is nil the function acts like a capf."
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties obarray :category 'symbol)
         :exclusive no ,@cape--symbol-properties))))
+
+;;;;; cape-dabbrev
 
 (defvar cape--dabbrev-properties
   (list :annotation-function (lambda (_) " Dabbrev")
@@ -485,6 +497,8 @@ If INTERACTIVE is nil the function acts like a capf."
             for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
             if (>= (length w) min-len) collect w)))
 
+;;;;; cape-ispell
+
 (defvar cape--ispell-properties
   (list :annotation-function (lambda (_) " Ispell")
         :company-kind (lambda (_) 'text))
@@ -510,6 +524,8 @@ If INTERACTIVE is nil the function acts like a capf."
           (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words 'substring)
           :category 'cape-ispell)
         :exclusive no ,@cape--ispell-properties))))
+
+;;;;; cape-dict
 
 (defvar cape--dict-properties
   (list :annotation-function (lambda (_) " Dict")
@@ -537,6 +553,8 @@ If INTERACTIVE is nil the function acts like a capf."
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
         :exclusive no ,@cape--dict-properties))))
+
+;;;;; cape-abbrev
 
 (defun cape--abbrev-list ()
   "Abbreviation list."
@@ -571,6 +589,8 @@ If INTERACTIVE is nil the function acts like a capf."
           ,(cape--table-with-properties abbrevs :category 'cape-abbrev)
           :exclusive no ,@cape--abbrev-properties)))))
 
+;;;;; cape-keyword
+
 (defun cape--keyword-list ()
   "Return keywords for current major mode."
   (when-let (kw (alist-get major-mode cape-keywords))
@@ -593,6 +613,43 @@ If INTERACTIVE is nil the function acts like a capf."
         `(,(car bounds) ,(cdr bounds)
           ,(cape--table-with-properties keywords :category 'cape-keyword)
           :exclusive no ,@cape--keyword-properties)))))
+
+;;;;; cape-line
+
+(defvar cape--line-properties nil
+  "Completion extra properties for `cape-line'.")
+
+(defun cape--line-list ()
+  "Return all lines from buffer."
+  (let ((beg (point-min))
+        (max (point-max))
+        (pt (point))
+        (ht (make-hash-table :test #'equal))
+        end lines)
+    (save-excursion
+      (while (< beg max)
+        (goto-char beg)
+        (setq end (line-end-position))
+        (unless (<= beg pt end)
+          (let ((line (buffer-substring-no-properties beg end)))
+            (unless (or (string-blank-p line) (gethash line ht))
+              (puthash line t ht)
+              (push line lines))))
+        (setq beg (1+ end))))
+    (nreverse lines)))
+
+;;;###autoload
+(defun cape-line (&optional interactive)
+  "Complete current line from other lines in buffer.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--interactive #'cape-line)
+    `(,(line-beginning-position) ,(point)
+      ,(cape--table-with-properties (cape--line-list) :sort nil)
+      ,@cape--line-properties)))
+
+;;;; Capf combinators
 
 (defun cape--super-function (ht prop)
   "Return merged function for PROP given HT."
@@ -725,39 +782,6 @@ VALID is the input comparator, see `cape--input-valid-p'."
                           (setq table new-table input new-input)))))
                    (complete-with-action action table str pred)))
               ,@plist)))))
-
-(defvar cape--line-properties nil
-  "Completion extra properties for `cape-line'.")
-
-(defun cape--line-list ()
-  "Return all lines from buffer."
-  (let ((beg (point-min))
-        (max (point-max))
-        (pt (point))
-        (ht (make-hash-table :test #'equal))
-        end lines)
-    (save-excursion
-      (while (< beg max)
-        (goto-char beg)
-        (setq end (line-end-position))
-        (unless (<= beg pt end)
-          (let ((line (buffer-substring-no-properties beg end)))
-            (unless (or (string-blank-p line) (gethash line ht))
-              (puthash line t ht)
-              (push line lines))))
-        (setq beg (1+ end))))
-    (nreverse lines)))
-
-;;;###autoload
-(defun cape-line (&optional interactive)
-  "Complete current line from other lines in buffer.
-If INTERACTIVE is nil the function acts like a capf."
-  (interactive (list t))
-  (if interactive
-      (cape--interactive #'cape-line)
-    `(,(line-beginning-position) ,(point)
-      ,(cape--table-with-properties (cape--line-list) :sort nil)
-      ,@cape--line-properties)))
 
 ;;;###autoload
 (defun cape-capf-with-properties (capf &rest properties)
