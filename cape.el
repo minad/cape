@@ -806,6 +806,11 @@ The PREDICATE is passed the candidate symbol or string."
        `(,beg ,end ,table
               :predicate
               ,(if-let (pred (plist-get plist :predicate))
+                   ;; First argument is key, second is value for hash tables.
+                   ;; The first argument can be a cons cell for alists. Then
+                   ;; the candidate itself is either a string or a symbol. We
+                   ;; normalize the calling convention here such that PREDICATE
+                   ;; always receives a string or a symbol.
                    (lambda (&rest args)
                      (when (apply pred args)
                        (setq args (car args))
