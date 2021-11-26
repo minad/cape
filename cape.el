@@ -367,7 +367,10 @@ VALID is the input comparator, see `cape--input-valid-p'."
     (lambda (str pred action)
       (let ((new-input (buffer-substring-no-properties beg end)))
         (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
-          (setq table (funcall fun new-input) input new-input)))
+          ;; NOTE: We have to make sure that the completion table is interruptible.
+          ;; An interruption should not happen between the setqs.
+          (setq table (funcall fun new-input)
+                input new-input)))
       (complete-with-action action table str pred))))
 
 (defvar cape--file-properties
@@ -624,6 +627,8 @@ If INTERACTIVE is nil the function acts like a capf."
                (lambda (str pred action)
                  (when (eq candidates 'init)
                    (clrhash ht)
+                   ;; NOTE: Set `candidates' in the end, such that the completion table is
+                   ;; interruptible.
                    (setq candidates
                          (cl-loop for (table . plist) in tables nconc
                                   (let* ((pred (plist-get plist :predicate))
@@ -715,6 +720,8 @@ VALID is the input comparator, see `cape--input-valid-p'."
                      (unless (cape--input-valid-p input new-input valid)
                        (pcase (funcall capf)
                          (`(,_beg ,_end ,new-table . ,_plist)
+                          ;; NOTE: We have to make sure that the completion table is interruptible.
+                          ;; An interruption should not happen between the setqs.
                           (setq table new-table input new-input)))))
                    (complete-with-action action table str pred)))
               ,@plist)))))
@@ -773,7 +780,8 @@ completion :category symbol can be specified."
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end
               ,(lambda (str pred action)
-                 (cape--silent (complete-with-action action table str pred)))
+                 (cape--silent
+                  (complete-with-action action table str pred)))
               ,@plist)))))
 
 ;;;###autoload
@@ -784,7 +792,8 @@ completion :category symbol can be specified."
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end
               ,(lambda (str pred action)
-                 (let (throw-on-input) (complete-with-action action table str pred)))
+                 (let (throw-on-input)
+                   (complete-with-action action table str pred)))
               ,@plist)))))
 
 ;;;###autoload
