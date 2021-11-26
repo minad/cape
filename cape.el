@@ -316,7 +316,7 @@
   "Return bounds of THING."
   (or (bounds-of-thing-at-point thing) (cons (point) (point))))
 
-(defun cape--complete (capf)
+(defun cape--interactive (capf)
   "Complete with CAPF."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,extra)
@@ -380,7 +380,7 @@ If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
       (let (cape-file-directory-must-exist)
-        (cape--complete #'cape-file))
+        (cape--interactive #'cape-file))
     (let* ((bounds (cape--bounds 'filename))
            (file (buffer-substring (car bounds) (cdr bounds))))
       (when (or (not cape-file-directory-must-exist)
@@ -422,7 +422,7 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--complete #'cape-symbol)
+      (cape--interactive #'cape-symbol)
     (let ((bounds (cape--bounds 'symbol)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties obarray :category 'symbol)
@@ -447,7 +447,7 @@ If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
       (let ((cape-dabbrev-min-length 0))
-        (cape--complete #'cape-dabbrev))
+        (cape--interactive #'cape-dabbrev))
     (require 'dabbrev)
     (cape--dabbrev-reset)
     (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))) beg end)
@@ -498,7 +498,7 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--complete #'cape-ispell)
+      (cape--interactive #'cape-ispell)
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
@@ -527,7 +527,7 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--complete #'cape-dict)
+      (cape--interactive #'cape-dict)
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
@@ -559,7 +559,7 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--complete #'cape-abbrev)
+      (cape--interactive #'cape-abbrev)
     (when-let (abbrevs (cape--abbrev-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
@@ -582,7 +582,7 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--complete #'cape-keyword)
+      (cape--interactive #'cape-keyword)
     (when-let (keywords (cape--keyword-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
@@ -745,7 +745,7 @@ VALID is the input comparator, see `cape--input-valid-p'."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--complete #'cape-line)
+      (cape--interactive #'cape-line)
     `(,(line-beginning-position) ,(point)
       ,(cape--table-with-properties (cape--line-list) :sort nil)
       ,@cape--line-properties)))
@@ -770,6 +770,13 @@ and the various :company-* extensions."
               ,(lambda (str pred action)
                  (cape--silent (complete-with-action action table str pred)))
               ,@plist)))))
+
+;;;###autoload
+(defun cape-interactive-capf (capf)
+  "Create interactive completion function from CAPF."
+  (lambda (&optional interactive)
+    (interactive (list t))
+    (if interactive (cape--interactive capf) (funcall capf))))
 
 (provide 'cape)
 ;;; cape.el ends here
