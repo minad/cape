@@ -797,6 +797,24 @@ completion :category symbol can be specified."
               ,@properties ,@plist)))))
 
 ;;;###autoload
+(defun cape-capf-with-predicate (capf predicate)
+  "Return a new CAPF with an additional candidate PREDICATE.
+The PREDICATE is passed the candidate symbol or string."
+  (lambda ()
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       `(,beg ,end ,table
+              :predicate
+              ,(if-let (pred (plist-get plist :predicate))
+                   (lambda (&rest args)
+                     (when (apply pred args)
+                       (setq args (car args))
+                       (funcall predicate (if (consp args) (car args) args))))
+                 (lambda (key &optional _val)
+                   (funcall predicate (if (consp key) (car key) key))))
+              ,@plist)))))
+
+;;;###autoload
 (defun cape-silent-capf (capf)
   "Return a new CAPF which is silent (no messages, no errors)."
   (lambda ()

@@ -129,3 +129,4 @@ achieve a similarly refreshing strategy.
 - ~cape-noninterruptible-capf~: Protect a Capf which does not like to be interrupted.
 - ~cape-interactive-capf~: Create a Capf which can be called interactively.
 - ~cape-capf-with-properties~: Add completion properties to a Capf.
+- ~cape-capf-with-predicate~: Add candidate predicate to a Capf.
