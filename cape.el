@@ -347,24 +347,20 @@ The CMP argument determines how the new input is compared to the old input.
         ('equal (equal old-input new-input))
         ('substring (string-match-p (regexp-quote old-input) new-input)))))
 
-(cl-defun cape--cached-table (beg end fun &key valid category (sort t))
+(defun cape--cached-table (beg end fun valid)
   "Create caching completion table.
 BEG and END are the input bounds.
 FUN is the function which computes the candidates.
-VALID is the input comparator, see `cape--input-valid-p'.
-CATEGORY is the optional completion category.
-SORT should be nil to disable sorting."
+VALID is the input comparator, see `cape--input-valid-p'."
   (let ((input 'init)
         (beg (copy-marker beg))
         (end (copy-marker end t))
         (table nil))
-    (cape--table-with-properties
-     (lambda (str pred action)
-       (let ((new-input (buffer-substring-no-properties beg end)))
-         (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
-           (setq table (funcall fun new-input) input new-input)))
-       (complete-with-action action table str pred))
-     :category category :sort sort)))
+    (lambda (str pred action)
+      (let ((new-input (buffer-substring-no-properties beg end)))
+        (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
+          (setq table (funcall fun new-input) input new-input)))
+      (complete-with-action action table str pred))))
 
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
@@ -455,13 +451,15 @@ If INTERACTIVE is nil the function acts like a capf."
         (setq end (point)))
       (if interactive
           (cape--complete beg end
-                          (cape--cached-table beg end #'cape--dabbrev-expansions
-                                              :valid 'prefix :category 'cape-dabbrev)
+                          (cape--table-with-properties
+                           (cape--cached-table beg end #'cape--dabbrev-expansions 'prefix)
+                           :category 'cape-dabbrev)
                           cape--dabbrev-properties)
         `(,beg ,end
                ;; Use equal check, since candidates must be longer than cape-dabbrev-min-length
-               ,(cape--cached-table beg end #'cape--dabbrev-limited-expansions
-                                    :valid 'equal :category 'cape-dabbrev)
+               ,(cape--table-with-properties
+                 (cape--cached-table beg end #'cape--dabbrev-limited-expansions 'equal)
+                 :category 'cape-dabbrev)
                :exclusive no ,@cape--dabbrev-properties)))
      (interactive (user-error "No expansion")))))
 
@@ -497,8 +495,9 @@ If INTERACTIVE is nil the function acts like a capf."
 
 (defun cape--ispell-table (bounds)
   "Return completion table for Ispell completion between BOUNDS."
-  (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words
-                      :valid 'substring :category 'cape-ispell))
+  (cape--table-with-properties
+   (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words 'substring)
+   :category 'cape-ispell))
 
 ;;;###autoload
 (defun cape-ispell (&optional interactive)
@@ -630,24 +629,21 @@ If INTERACTIVE is nil the function acts like a capf."
                        (setq prefix-len (max prefix-len plen)))))))
         (setq tables (nreverse tables))
         (list beg end
-              (lambda (str pred action)
-                (if (eq action 'metadata)
-                    '(metadata
-                      (category . cape-super)
-                      (display-sort-function . identity)
-                      (cycle-sort-function . identity))
-                  (when (eq candidates 'init)
-                    (clrhash ht)
-                    (setq candidates
-                          (cl-loop for (table . plist) in tables nconc
-                                   (let* ((pred (plist-get plist :predicate))
-                                          (metadata (completion-metadata "" table pred))
-                                          (sort (or (completion-metadata-get metadata 'display-sort-function)
-                                                    #'identity))
-                                          (cands (funcall sort (all-completions "" table pred))))
-                                     (cl-loop for cand in cands do (puthash cand plist ht))
-                                     cands))))
-                  (complete-with-action action candidates str pred)))
+              (cape--table-with-properties
+               (lambda (str pred action)
+                 (when (eq candidates 'init)
+                   (clrhash ht)
+                   (setq candidates
+                         (cl-loop for (table . plist) in tables nconc
+                                  (let* ((pred (plist-get plist :predicate))
+                                         (metadata (completion-metadata "" table pred))
+                                         (sort (or (completion-metadata-get metadata 'display-sort-function)
+                                                   #'identity))
+                                         (cands (funcall sort (all-completions "" table pred))))
+                                    (cl-loop for cand in cands do (puthash cand plist ht))
+                                    cands))))
+                 (complete-with-action action candidates str pred))
+               :sort nil :category 'cape-super)
               :exclusive 'no
               :company-prefix-length prefix-len
               :company-doc-buffer (cape--super-function ht :company-doc-buffer)
@@ -693,14 +689,15 @@ This feature is experimental."
         ;; remembered result the next time the capf is called.
         (let* ((end (point)) (beg (- end (length initial-input))))
           (list beg end
-                (cape--cached-table beg end
-                                    (if (cape--company-call backend 'duplicates)
-                                        (lambda (input)
-                                          (delete-dups (cape--company-call backend 'candidates input)))
-                                      (apply-partially #'cape--company-call backend 'candidates))
-                                    :category backend
-                                    :valid (if (cape--company-call backend 'no-cache initial-input) 'never valid)
-                                    :sort (not (cape--company-call backend 'sorted)))
+                (cape--table-with-properties
+                 (cape--cached-table beg end
+                                     (if (cape--company-call backend 'duplicates)
+                                         (lambda (input)
+                                           (delete-dups (cape--company-call backend 'candidates input)))
+                                       (apply-partially #'cape--company-call backend 'candidates))
+                                     (if (cape--company-call backend 'no-cache initial-input) 'never valid))
+                 :category backend
+                 :sort (not (cape--company-call backend 'sorted)))
                 :exclusive 'no
                 :company-prefix-length (cdr-safe prefix)
                 :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
