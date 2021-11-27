@@ -720,11 +720,13 @@ If INTERACTIVE is nil the function acts like a capf."
 
 (defun cape--company-call (backend &rest args)
   "Call Company BACKEND with ARGS."
-  (pcase (apply backend args)
+  ;; Company backends are non-interruptible!
+  (pcase (let (throw-on-input) (apply backend args))
     (`(:async . ,fetcher)
      (let ((res 'trash)
            (start (time-to-seconds)))
-       (funcall fetcher (lambda (arg) (setq res arg)))
+       ;; Company backends are non-interruptible!
+       (let (throw-on-input) (funcall fetcher (lambda (arg) (setq res arg))))
        ;; Force synchronization
        (while (eq res 'trash)
          (sleep-for company-async-wait)
