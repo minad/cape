@@ -320,6 +320,18 @@
        (completion-in-region beg end table (plist-get extra :predicate))))
     (_ (user-error "%s: No completions" capf))))
 
+(defun cape--noninterruptible-table (table)
+  "Create non-interruptible completion TABLE."
+  (lambda (str pred action)
+    (let (throw-on-input)
+      (complete-with-action action table str pred))))
+
+(defun cape--silent-table (table)
+  "Create a new completion TABLE which is silent (no messages, no errors)."
+  (lambda (str pred action)
+    (cape--silent
+      (complete-with-action action table str pred))))
+
 (cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
@@ -836,27 +848,19 @@ The PREDICATE is passed the candidate symbol or string."
 
 ;;;###autoload
 (defun cape-silent-capf (capf)
-  "Return a new CAPF which is silent (no messages, no errors)."
+  "Create a new CAPF which is silent (no messages, no errors)."
   (lambda ()
     (pcase (cape--silent (funcall capf))
       (`(,beg ,end ,table . ,plist)
-       `(,beg ,end
-              ,(lambda (str pred action)
-                 (cape--silent
-                  (complete-with-action action table str pred)))
-              ,@plist)))))
+       `(,beg ,end ,(cape--silent-table table) ,@plist)))))
 
 ;;;###autoload
 (defun cape-noninterruptible-capf (capf)
-  "Return a new CAPF which is non-interruptible silent by input."
+  "Create a new CAPF which is non-interruptible silent by input."
   (lambda ()
     (pcase (let (throw-on-input) (funcall capf))
       (`(,beg ,end ,table . ,plist)
-       `(,beg ,end
-              ,(lambda (str pred action)
-                 (let (throw-on-input)
-                   (complete-with-action action table str pred)))
-              ,@plist)))))
+       `(,beg ,end ,(cape--noninterruptible-table table) ,@plist)))))
 
 ;;;###autoload
 (defun cape-interactive-capf (capf)
