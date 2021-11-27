@@ -738,19 +738,21 @@ If INTERACTIVE is nil the function acts like a capf."
 (defun cape--company-call (backend &rest args)
   "Call Company BACKEND with ARGS."
   ;; Company backends are non-interruptible.
-  (pcase (let (throw-on-input) (apply backend args))
-    (`(:async . ,fetcher)
-     (let ((res 'trash)
-           (start (time-to-seconds)))
-       ;; Company backends are non-interruptible.
-       (let (throw-on-input) (funcall fetcher (lambda (arg) (setq res arg))))
-       ;; Force synchronization. The synchronization is interruptible!
-       (while (eq res 'trash)
-         (sleep-for cape-company-async-wait)
-         (when (> (- (time-to-seconds) start) cape-company-async-timeout)
-           (error "Cape company backend async timeout")))
-       res))
-    (res res)))
+  (let ((old-toi throw-on-input)
+        (throw-on-input nil))
+    (pcase (apply backend args)
+      (`(:async . ,fetcher)
+       (let ((res 'trash)
+             (start (time-to-seconds)))
+         (funcall fetcher (lambda (arg) (setq res arg)))
+         ;; Force synchronization. The synchronization is interruptible!
+         (let ((throw-on-input old-toi))
+           (while (eq res 'trash)
+             (sleep-for cape-company-async-wait)
+             (when (> (- (time-to-seconds) start) cape-company-async-timeout)
+               (error "Cape company backend async timeout"))))
+         res))
+      (res res))))
 
 ;;;###autoload
 (defun cape-company-to-capf (backend &optional valid)
