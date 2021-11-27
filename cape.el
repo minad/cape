@@ -3,7 +3,7 @@
 ;; Author: Daniel Mendler
 ;; Created: 2021
 ;; License: GPL-3.0-or-later
-;; Version: 0.2
+;; Version: 0.3
 ;; Package-Requires: ((emacs "27.1"))
 ;; Homepage: https://github.com/minad/cape
 
