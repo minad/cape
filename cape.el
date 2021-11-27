@@ -42,6 +42,14 @@
   "Dictionary word list file."
   :type 'string)
 
+(defcustom cape-company-async-timeout 1.0
+  "Company asynchronous timeout."
+  :type 'float)
+
+(defcustom cape-company-async-wait 0.02
+  "Company asynchronous busy waiting time."
+  :type 'float)
+
 (defcustom cape-dabbrev-min-length 4
   "Minimum length of dabbrev expansions."
   :type 'integer)
@@ -727,9 +735,6 @@ If INTERACTIVE is nil the function acts like a capf."
               :annotation-function (funcall extra-fun :annotation-function)
               :exit-function (lambda (x _status) (funcall (funcall extra-fun :exit-function) x)))))))
 
-(defvar company-async-wait)
-(defvar company-async-timeout)
-
 (defun cape--company-call (backend &rest args)
   "Call Company BACKEND with ARGS."
   ;; Company backends are non-interruptible.
@@ -741,8 +746,8 @@ If INTERACTIVE is nil the function acts like a capf."
        (let (throw-on-input) (funcall fetcher (lambda (arg) (setq res arg))))
        ;; Force synchronization. The synchronization is interruptible!
        (while (eq res 'trash)
-         (sleep-for company-async-wait)
-         (when (> (- (time-to-seconds) start) company-async-timeout)
+         (sleep-for cape-company-async-wait)
+         (when (> (- (time-to-seconds) start) cape-company-async-timeout)
            (error "Cape company backend async timeout")))
        res))
     (res res)))

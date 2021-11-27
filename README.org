@@ -88,6 +88,39 @@ have certain edge cases. The adapter can be used as follows:
       (list #'company-files #'company-ispell #'company-dabbrev)))
 #+end_src
 
+Note that the adapter does not require Company to be installed. Backends
+implementing the Company specification do not necessarily have to depend on
+Company, however in practice most backends do. The following shows a small
+example completion backend, which can be used with both ~completion-at-point~
+(Corfu, default completion) and Company.
+
+#+begin_src emacs-lisp
+  (defvar emojis
+    '((":-D" . "😀")
+      (";-)" . "😉")
+      (":-/" . "😕")
+      (":-(" . "🙁")
+      (":-*" . "😙")))
+
+  (defun emoji-backend (action &optional arg &rest _)
+    (pcase action
+      ('prefix (and (memq (char-before) '(?: ?\;))
+                    (cons (string (char-before)) t)))
+      ('candidates (all-completions arg emojis))
+      ('annotation (concat " " (cdr (assoc arg emojis))))
+      ('post-completion
+       (let ((str (buffer-substring (- (point) 3) (point))))
+         (delete-region (- (point) 3) (point))
+       (insert (cdr (assoc str emojis)))))))
+
+  ;; Register emoji backend with `completion-at-point'
+  (setq completion-at-point-functions
+        (list (cape-company-to-capf #'emoji-backend)))
+
+  ;; Register emoji backend with Company.
+  (setq company-backends '(emoji-backend))
+#+end_src
+
 ** Super-Capf - Merging multiple Capfs
 
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
