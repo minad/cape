@@ -79,9 +79,7 @@ Cape provides an adapter for Company backends ~cape-company-to-capf~. The adapte
 transforms Company backends to Capfs which are understood by the built-in Emacs
 completion mechanism. The function is approximately the inverse of the
 ~company-capf~ backend from Company. The adapter is still experimental and may
-have certain edge cases. In particular, asynchronous completions are forcibly
-synchronized, but we are investigating possible Capf extensions to support
-asynchronous Capfs. The adapter can be used as follows:
+have certain edge cases. The adapter can be used as follows:
 
 #+begin_src emacs-lisp
   ;; Use Company backends as Capfs.
