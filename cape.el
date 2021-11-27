@@ -865,7 +865,7 @@ The PREDICATE is passed the candidate symbol or string."
 (defun cape-noninterruptible-capf (capf)
   "Create a new CAPF which is non-interruptible silent by input."
   (lambda ()
-    (pcase (let (throw-on-input) (funcall capf))
+    (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end ,(cape--noninterruptible-table table) ,@plist)))))
 
