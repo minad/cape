@@ -126,10 +126,10 @@ example completion backend, which can be used with both ~completion-at-point~
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
 
 Cape supports merging multiple Capfs using the function ~cape-super-capf~. This
-feature is experimental and works only for well-behaved Capfs and static
-completion tables. But it is a start to emulate the corresponding Company
-feature. Maybe it is possible to extend the capabilities of the completion table
-merging in the future.
+feature is experimental. Completion table merging works only for tables which
+are sufficiently well-behaved and tables which do not define completion
+boundaries. ~cape-super-capf~ has the same restrictions as ~completion-table-merge~
+and ~completion-table-in-turn~.
 
 #+begin_src emacs-lisp
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
