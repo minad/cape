@@ -651,22 +651,22 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;; Capf combinators
 
-(defun cape--super-function (ht prop)
-  "Return merged function for PROP given HT."
-  (lambda (x)
-    (when-let (fun (plist-get (gethash x ht) prop))
-      (funcall fun x))))
-
 ;;;###autoload
 (defun cape-super-capf (&rest capfs)
   "Merge CAPFS and return new Capf which includes all candidates."
   (lambda ()
     (when-let (results (delq nil (mapcar #'funcall capfs)))
-      (pcase-let ((`((,beg ,end . ,_)) results)
-                  (candidates 'init)
-                  (ht (make-hash-table :test #'equal))
-                  (tables nil)
-                  (prefix-len nil))
+      (pcase-let* ((`((,beg ,end . ,_)) results)
+                   (cache-candidates nil)
+                   (cache-str nil)
+                   (cache-ht (make-hash-table :test #'equal))
+                   (extra-fun
+                    (lambda (prop)
+                      (lambda (x)
+                        (when-let (fun (plist-get (gethash x cache-ht) prop))
+                          (funcall fun x)))))
+                   (tables nil)
+                   (prefix-len nil))
         (cl-loop for (beg2 end2 . rest) in results do
                  (when (and (= beg beg2) (= end end2))
                    (push rest tables)
@@ -680,35 +680,48 @@ If INTERACTIVE is nil the function acts like a capf."
                        (setq prefix-len (max prefix-len plen)))))))
         (setq tables (nreverse tables))
         (list beg end
-              (cape--table-with-properties
-               (lambda (str pred action)
-                 (when (eq candidates 'init)
-                   (clrhash ht)
-                   ;; NOTE: Set `candidates' in the end, such that the completion table is
-                   ;; interruptible.
-                   (setq candidates
-                         (delq nil (cl-loop for (table . plist) in tables nconc
-                                            (let* ((pred (plist-get plist :predicate))
-                                                   (metadata (completion-metadata "" table pred))
-                                                   (sort (or (completion-metadata-get metadata 'display-sort-function)
-                                                             #'identity))
-                                                   (cands (funcall sort (all-completions "" table pred))))
-                                              (cl-loop for cell on cands do
-                                                       (if (eq (gethash (car cell) ht t) t)
-                                                           (puthash (car cell) plist ht)
-                                                         (setcar cell nil)))
-                                              cands)))))
-                 (complete-with-action action candidates str pred))
-               :sort nil :category 'cape-super)
+              (lambda (str pred action)
+                (pcase action
+                  (`(boundaries . ,_) nil)
+                  ('metadata
+                   '(metadata (category . cape-super)
+                              (display-sort-function . identity)
+                              (cycle-sort-function . identity)))
+                  ('t
+                   (unless (equal str cache-str)
+                     (let ((ht (make-hash-table :test #'equal))
+                           (candidates nil))
+                       (cl-loop for (table . plist) in tables do
+                                (let* ((pr (plist-get plist :predicate))
+                                       (md (completion-metadata "" table pr))
+                                       (sort (or (completion-metadata-get md 'display-sort-function)
+                                                 #'identity))
+                                       (cands (funcall sort (all-completions str table pr))))
+                                  (cl-loop for cell on cands
+                                           for cand = (car cell) do
+                                           (if (and (eq (gethash cand ht t) t)
+                                                    (or (not pred) (funcall pred cand)))
+                                               (puthash cand plist ht)
+                                             (setcar cell nil)))
+                                  (setq candidates (nconc candidates cands))))
+                       (setq cache-str str
+                             cache-candidates (delq nil candidates)
+                             cache-ht ht)))
+                   (copy-sequence cache-candidates))
+                  (_
+                   (completion--some
+                      (lambda (table)
+                        (complete-with-action action table str pred))
+                      tables))))
               :exclusive 'no
               :company-prefix-length prefix-len
-              :company-doc-buffer (cape--super-function ht :company-doc-buffer)
-              :company-location (cape--super-function ht :company-location)
-              :company-docsig (cape--super-function ht :company-docsig)
-              :company-deprecated (cape--super-function ht :company-deprecated)
-              :company-kind (cape--super-function ht :company-kind)
-              :annotation-function (cape--super-function ht :annotation-function)
-              :exit-function (lambda (x _status) (funcall (cape--super-function ht :exit-function) x)))))))
+              :company-doc-buffer (funcall extra-fun :company-doc-buffer)
+              :company-location (funcall extra-fun :company-location)
+              :company-docsig (funcall extra-fun :company-docsig)
+              :company-deprecated (funcall extra-fun :company-deprecated)
+              :company-kind (funcall extra-fun :company-kind)
+              :annotation-function (funcall extra-fun :annotation-function)
+              :exit-function (lambda (x _status) (funcall (funcall extra-fun :exit-function) x)))))))
 
 (defun cape--company-call (backend &rest args)
   "Call Company BACKEND with ARGS."
