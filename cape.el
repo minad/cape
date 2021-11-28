@@ -42,12 +42,8 @@
   "Dictionary word list file."
   :type 'string)
 
-(defcustom cape-company-async-timeout 1.0
+(defcustom cape-company-timeout 5.0
   "Company asynchronous timeout."
-  :type 'float)
-
-(defcustom cape-company-async-wait 0.02
-  "Company asynchronous busy waiting time."
   :type 'float)
 
 (defcustom cape-dabbrev-min-length 4
@@ -738,19 +734,26 @@ If INTERACTIVE is nil the function acts like a capf."
 (defun cape--company-call (backend &rest args)
   "Call Company BACKEND with ARGS."
   ;; Company backends are non-interruptible.
-  (let ((old-toi throw-on-input)
+  (let ((toi throw-on-input)
         (throw-on-input nil))
     (pcase (apply backend args)
       (`(:async . ,future)
        (let ((res 'cape--waiting)
              (start (time-to-seconds)))
-         (funcall future (lambda (arg) (setq res arg)))
-         ;; Force synchronization. The synchronization is interruptible!
-         (let ((throw-on-input old-toi))
-           (while (eq res 'cape--waiting)
-             (sleep-for cape-company-async-wait)
-             (when (> (- (time-to-seconds) start) cape-company-async-timeout)
-               (error "Cape company backend async timeout"))))
+         (funcall future (lambda (arg)
+                           (when (eq res 'cape--waiting)
+                             (push 'cape--event unread-command-events))
+                           (setq res arg)))
+         ;; Force synchronization.
+         (while (eq res 'cape--waiting)
+           ;; When we've got input, interrupt the computation.
+           (when (and unread-command-events toi)
+             (throw toi nil))
+           (when (> (- (time-to-seconds) start) cape-company-timeout)
+             (error "Cape company backend async timeout"))
+           (sit-for 0.1 'noredisplay))
+         ;; Remove cape--events introduced by future callback
+         (setq unread-command-events (delq 'cape--event unread-command-events))
          res))
       (res res))))
 
