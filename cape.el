@@ -770,10 +770,6 @@ This feature is experimental."
         (set init t))
       (when-let* ((prefix (cape--company-call backend 'prefix))
                   (initial-input (if (stringp prefix) prefix (car-safe prefix))))
-        ;; TODO When fetching candidates, support asynchronous operation. If a
-        ;; future is returned, the capf should fail first. As soon as the future
-        ;; callback is called, remember the result, refresh the UI and return the
-        ;; remembered result the next time the capf is called.
         (let* ((end (point)) (beg (- end (length initial-input))))
           (list beg end
                 (cape--table-with-properties
