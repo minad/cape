@@ -737,10 +737,11 @@ If INTERACTIVE is nil the function acts like a capf."
 
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
-  ;; Company backends are non-interruptible.
+  ;; Backends are non-interruptible. Disable interrupts!
   (let ((toi throw-on-input)
         (throw-on-input nil))
     (pcase (apply app)
+      ;; Handle async future return values.
       (`(:async . ,future)
        (let ((res 'cape--waiting)
              (start (time-to-seconds)))
@@ -748,7 +749,7 @@ If INTERACTIVE is nil the function acts like a capf."
              (progn
                (funcall future (lambda (arg)
                                  (when (eq res 'cape--waiting)
-                                   (push 'cape--event unread-command-events))
+                                   (push 'cape--done unread-command-events))
                                  (setq res arg)))
                ;; Force synchronization.
                (while (eq res 'cape--waiting)
@@ -758,9 +759,10 @@ If INTERACTIVE is nil the function acts like a capf."
                  (when (> (- (time-to-seconds) start) cape-company-timeout)
                    (error "Cape company backend async timeout"))
                  (sit-for 0.1 'noredisplay)))
-           ;; Remove cape--events introduced by future callback
-           (setq unread-command-events (delq 'cape--event unread-command-events)))
+           ;; Remove cape--done introduced by future callback
+           (setq unread-command-events (delq 'cape--done unread-command-events)))
          res))
+      ;; Plain old synchronous return value.
       (res res))))
 
 ;;;###autoload
