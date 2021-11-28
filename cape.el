@@ -735,12 +735,12 @@ If INTERACTIVE is nil the function acts like a capf."
               :annotation-function (funcall extra-fun :annotation-function)
               :exit-function (lambda (x _status) (funcall (funcall extra-fun :exit-function) x)))))))
 
-(defun cape--company-call (backend &rest args)
-  "Call Company BACKEND with ARGS."
+(defun cape--company-call (&rest app)
+  "Apply APP and handle future return values."
   ;; Company backends are non-interruptible.
   (let ((toi throw-on-input)
         (throw-on-input nil))
-    (pcase (apply backend args)
+    (pcase (apply app)
       (`(:async . ,future)
        (let ((res 'cape--waiting)
              (start (time-to-seconds)))
