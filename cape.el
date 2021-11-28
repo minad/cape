@@ -775,15 +775,19 @@ This feature is experimental."
                   (initial-input (if (stringp prefix) prefix (car-safe prefix))))
         (let* ((end (point)) (beg (- end (length initial-input))))
           (list beg end
-                (cape--table-with-properties
-                 (cape--cached-table beg end
-                                     (if (cape--company-call backend 'duplicates)
-                                         (lambda (input)
-                                           (delete-dups (cape--company-call backend 'candidates input)))
-                                       (apply-partially #'cape--company-call backend 'candidates))
-                                     (if (cape--company-call backend 'no-cache initial-input) 'never valid))
-                 :category backend
-                 :sort (not (cape--company-call backend 'sorted)))
+                (funcall
+                 (if (cape--company-call backend 'ignore-case)
+                     #'completion-table-case-fold
+                   #'identity)
+                 (cape--table-with-properties
+                  (cape--cached-table beg end
+                                      (if (cape--company-call backend 'duplicates)
+                                          (lambda (input)
+                                            (delete-dups (cape--company-call backend 'candidates input)))
+                                        (apply-partially #'cape--company-call backend 'candidates))
+                                      (if (cape--company-call backend 'no-cache initial-input) 'never valid))
+                  :category backend
+                  :sort (not (cape--company-call backend 'sorted))))
                 :exclusive 'no
                 :company-prefix-length (cdr-safe prefix)
                 :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
