@@ -50,6 +50,10 @@
   "Minimum length of dabbrev expansions."
   :type 'integer)
 
+(defcustom cape-dabbrev-check-other-buffers t
+  "Buffers to check for dabbrev."
+  :type 'boolean)
+
 (defcustom cape-file-directory-must-exist t
   "The parent directory must exist for file completion."
   :type 'integer)
@@ -493,8 +497,8 @@ If INTERACTIVE is nil the function acts like a capf."
 
 (defun cape--dabbrev-reset ()
   "Reset dabbrev state."
-  (let ((dabbrev-check-all-buffers nil)
-        (dabbrev-check-other-buffers nil))
+  (let ((dabbrev-check-all-buffers cape-dabbrev-check-other-buffers)
+        (dabbrev-check-other-buffers cape-dabbrev-check-other-buffers))
     (dabbrev--reset-global-variables)))
 
 (defun cape--dabbrev-list (word)
