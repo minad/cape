@@ -744,20 +744,22 @@ If INTERACTIVE is nil the function acts like a capf."
       (`(:async . ,future)
        (let ((res 'cape--waiting)
              (start (time-to-seconds)))
-         (funcall future (lambda (arg)
-                           (when (eq res 'cape--waiting)
-                             (push 'cape--event unread-command-events))
-                           (setq res arg)))
-         ;; Force synchronization.
-         (while (eq res 'cape--waiting)
-           ;; When we've got input, interrupt the computation.
-           (when (and unread-command-events toi)
-             (throw toi nil))
-           (when (> (- (time-to-seconds) start) cape-company-timeout)
-             (error "Cape company backend async timeout"))
-           (sit-for 0.1 'noredisplay))
-         ;; Remove cape--events introduced by future callback
-         (setq unread-command-events (delq 'cape--event unread-command-events))
+         (unwind-protect
+             (progn
+               (funcall future (lambda (arg)
+                                 (when (eq res 'cape--waiting)
+                                   (push 'cape--event unread-command-events))
+                                 (setq res arg)))
+               ;; Force synchronization.
+               (while (eq res 'cape--waiting)
+                 ;; When we've got input, interrupt the computation.
+                 (when (and unread-command-events toi)
+                   (throw toi nil))
+                 (when (> (- (time-to-seconds) start) cape-company-timeout)
+                   (error "Cape company backend async timeout"))
+                 (sit-for 0.1 'noredisplay)))
+           ;; Remove cape--events introduced by future callback
+           (setq unread-command-events (delq 'cape--event unread-command-events)))
          res))
       (res res))))
 
