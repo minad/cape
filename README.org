@@ -161,3 +161,4 @@ achieve a similarly refreshing strategy.
 - ~cape-interactive-capf~: Create a Capf which can be called interactively.
 - ~cape-capf-with-properties~: Add completion properties to a Capf.
 - ~cape-capf-with-predicate~: Add candidate predicate to a Capf.
+- ~cape-capf-with-case-fold~: Create a Capf which is case insensitive.
