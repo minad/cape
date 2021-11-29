@@ -342,7 +342,7 @@
       (complete-with-action action table str pred))))
 
 (cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
-  "Create completion TABLE with properties.
+  "Create (asynchronous) completion TABLE with properties.
 CATEGORY is the optional completion category.
 SORT should be nil to disable sorting."
   (if (or (not table) (and (not category) sort))
@@ -373,7 +373,7 @@ The CMP argument determines how the new input is compared to the old input.
         ('substring (string-match-p (regexp-quote old-input) new-input)))))
 
 (defun cape--cached-table (beg end fun valid)
-  "Create caching completion table.
+  "Create caching (asynchronous) completion table.
 BEG and END are the input bounds.
 FUN is the function which computes the candidates.
 VALID is the input comparator, see `cape--input-valid-p'."
@@ -384,11 +384,14 @@ VALID is the input comparator, see `cape--input-valid-p'."
     (lambda (str pred action)
       (let ((new-input (buffer-substring-no-properties beg end)))
         (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
-          ;; NOTE: We have to make sure that the completion table is interruptible.
-          ;; An interruption should not happen between the setqs.
           (setq table (funcall fun new-input)
                 input new-input)))
-      (complete-with-action action table str pred))))
+      ;; We map here to support asynchronous futures.
+      (cape--async-map
+       (lambda (tab)
+         (setq table tab)
+         (complete-with-action action table str pred))
+       table))))
 
 ;;;; Capfs
 
@@ -739,13 +742,12 @@ If INTERACTIVE is nil the function acts like a capf."
 (defvar cape-async-throw-on-input nil
   "If set to a symbol throw on input from async capf.")
 
-(defun cape--async-apply (fun args &optional nocancel)
-  "Call FUN with ARGS and handle future return values.
-If NOCANCEL is non-nil the futures cannot be cancelled."
+(defun cape--async-call (&rest app)
+  "Apply APP and handle future return values."
   ;; Backends are non-interruptible. Disable interrupts!
   (let ((toi (or cape-async-throw-on-input throw-on-input))
         (throw-on-input nil))
-    (pcase (apply fun args)
+    (pcase (apply app)
       ;; Handle async future return values.
       (`(:async . ,fetch)
        (let ((res 'cape--waiting)
@@ -769,7 +771,7 @@ If NOCANCEL is non-nil the futures cannot be cancelled."
                    (error "Cape async timeout"))
                  (sit-for 0.1 'noredisplay)))
            ;; Cancel the future if it didn't finish.
-           (when (and (not nocancel) (eq res 'cape--waiting) (functionp cancel))
+           (when (and (eq res 'cape--waiting) (functionp cancel))
              (ignore-errors (funcall cancel)))
            ;; Remove cape--done introduced by future callback
            (setq unread-command-events
@@ -781,11 +783,7 @@ If NOCANCEL is non-nil the futures cannot be cancelled."
 (defun cape--async-function (fun)
   "Convert asynchronous FUN to interruptible function."
   (lambda (&rest args)
-    (cape--async-apply fun args)))
-
-(defun cape--async-call (fun &rest args)
-  "Call asynchronous FUN with ARGS."
-  (cape--async-apply fun args))
+    (apply #'cape--async-call fun args)))
 
 (defun cape--async-map (fun future)
   "Map FUN over FUTURE."
@@ -829,15 +827,23 @@ Every function of the CAPF is allowed to return an async future."
                               :company-docsig :company-deprecated :company-kind))
               ,@plist)))))
 
-(defun cape--company-call (fun &rest args)
-  "Call FUN with ARGS and handle future return values."
-  (cape--async-apply fun args 'nocancel))
+(defun cape--company-call (&rest app)
+  "Apply APP and handle Company future return values."
+  (apply #'cape--async-call #'cape--company-convert app))
 
-;; TODO instead of turning a company backend into a capf,
-;; turn into into an async capf, in order to take advantage
-;; of the asynchrous company features.
+(defun cape--company-convert (&rest app)
+  "Return a future, apply APP in the Company calling convention."
+  (pcase (apply app)
+    (`(:async . ,fetch)
+     ;; NOTE: Company futures are currently not cancellable. Maybe Company
+     ;; should adjust their calling convention, in order to harmonize this. In
+     ;; cape--async-call the return value is checked with functionp, so the two
+     ;; calling conventions should be mostly compatible.
+     (cons :async (lambda (cb) (or (funcall fetch cb) nil))))
+    (res res)))
+
 ;;;###autoload
-(defun cape-company-to-capf (backend &optional valid)
+(defun cape-company-to-async-capf (backend &optional valid)
   "Convert Company BACKEND function to Capf.
 VALID is the input comparator, see `cape--input-valid-p'.
 This feature is experimental."
@@ -855,28 +861,32 @@ This feature is experimental."
         (let* ((end (point)) (beg (- end (length initial-input))))
           (list beg end
                 (funcall
+                 ;; NOTE: `completion-ignore-case' and `completion-regexp-list'
+                 ;; are problematic, since they must be captured in the future
+                 ;; closure! See the comment I made on the github PR.
                  (if (cape--company-call backend 'ignore-case)
                      #'completion-table-case-fold
                    #'identity)
-                 ;; TODO generate an async completion table here!
                  (cape--table-with-properties
                   (cape--cached-table beg end
                                       (if (cape--company-call backend 'duplicates)
                                           (lambda (input)
-                                            (delete-dups (cape--company-call backend 'candidates input)))
-                                        (apply-partially #'cape--company-call backend 'candidates))
+                                            (cape--async-map
+                                             #'delete-dups
+                                             (cape--company-convert backend 'candidates input)))
+                                        (apply-partially #'cape--company-convert backend 'candidates))
                                       (if (cape--company-call backend 'no-cache initial-input) 'never valid))
                   :category backend
                   :sort (not (cape--company-call backend 'sorted))))
                 :exclusive 'no
                 :company-prefix-length (cdr-safe prefix)
-                :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
-                :company-location (lambda (x) (cape--company-call backend 'location x))
-                :company-docsig (lambda (x) (cape--company-call backend 'meta x))
-                :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
-                :company-kind (lambda (x) (cape--company-call backend 'kind x))
-                :annotation-function (lambda (x) (cape--company-call backend 'annotation x))
-                :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
+                :company-doc-buffer (lambda (x) (cape--company-convert backend 'doc-buffer x))
+                :company-location (lambda (x) (cape--company-convert backend 'location x))
+                :company-docsig (lambda (x) (cape--company-convert backend 'meta x))
+                :company-deprecated (lambda (x) (cape--company-convert backend 'deprecated x))
+                :company-kind (lambda (x) (cape--company-convert backend 'kind x))
+                :annotation-function (lambda (x) (cape--company-convert backend 'annotation x))
+                :exit-function (lambda (x _status) (cape--company-convert backend 'post-completion x))))))))
 
 ;;;###autoload
 (defun cape-capf-buster (capf &optional valid)
