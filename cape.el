@@ -366,14 +366,14 @@ SORT should be nil to disable sorting."
                       ,@(and category `((category . ,category)))
                       ,@(and (not sort) '((display-sort-function . identity)
                                           (cycle-sort-function . identity))))))
-      (lambda (str pred action regexp-list ignore-case)
+      (lambda (str pred action regexps ignore-case)
         (if (eq action 'metadata)
             metadata
-          (cape--async-complete-with-action table str pred action regexp-list ignore-case))))))
+          (cape--async-complete-with-action table str pred action regexps ignore-case))))))
 
 (defun cape--async-table-case-fold (table &optional dont-fold)
-  (lambda (str pred action regexp-list _ignore-case)
-    (cape--async-complete-with-action table str pred action regexp-list (not dont-fold))))
+  (lambda (str pred action regexps _ignore-case)
+    (cape--async-complete-with-action table str pred action regexps (not dont-fold))))
 
 (defun cape--input-valid-p (old-input new-input cmp)
   "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
@@ -416,7 +416,7 @@ VALID is the input comparator, see `cape--input-valid-p'."
         (beg (copy-marker beg))
         (end (copy-marker end t))
         (table nil))
-    (lambda (str pred action regexp-list ignore-case)
+    (lambda (str pred action regexps ignore-case)
       (let ((new-input (buffer-substring-no-properties beg end)))
         (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
           (setq table (funcall fun new-input)
@@ -424,12 +424,12 @@ VALID is the input comparator, see `cape--input-valid-p'."
       (cape--async-map
        (lambda (tab)
          (setq table tab)
-         (cape--async-complete-with-action table str pred action regexp-list ignore-case))
+         (cape--async-complete-with-action table str pred action regexps ignore-case))
        table))))
 
-(defun cape--async-complete-with-action (table str pred action regexp-list ignore-case)
+(defun cape--async-complete-with-action (table str pred action regexps ignore-case)
   (let ((completion-ignore-case ignore-case)
-        (completion-regexp-list regexp-list))
+        (completion-regexp-list regexps))
     (complete-with-action action table str pred)))
 
 ;;;; Capfs
@@ -900,9 +900,6 @@ This feature is experimental."
         (let* ((end (point)) (beg (- end (length initial-input))))
           (list beg end
                 (funcall
-                 ;; NOTE: `completion-ignore-case' and `completion-regexp-list'
-                 ;; are problematic, since they must be captured in the future
-                 ;; closure! See the comment I made on the github PR.
                  (if (cape--company-call backend 'ignore-case)
                      #'cape--async-table-case-fold
                    #'identity)
