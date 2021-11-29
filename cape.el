@@ -820,7 +820,7 @@ Every function of the CAPF is allowed to return an async future."
   (lambda ()
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(cape--async-function table)
+       `(,beg ,end ,(cape--async-table table)
               ,@(mapcar (lambda (prop) (cape--async-function (plist-get plist prop)))
                         (list :annotation-function :affixation-function
                               :company-doc-buffer :company-location
