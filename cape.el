@@ -342,7 +342,7 @@
       (complete-with-action action table str pred))))
 
 (cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
-  "Create (asynchronous) completion TABLE with properties.
+  "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
 SORT should be nil to disable sorting."
   (if (or (not table) (and (not category) sort))
@@ -355,6 +355,25 @@ SORT should be nil to disable sorting."
         (if (eq action 'metadata)
             metadata
           (complete-with-action action table str pred))))))
+
+(cl-defun cape--async-table-with-properties (table &key category (sort t) &allow-other-keys)
+  "Create asynchronous completion TABLE with properties.
+CATEGORY is the optional completion category.
+SORT should be nil to disable sorting."
+  (if (or (not table) (and (not category) sort))
+      table
+    (let ((metadata `(metadata
+                      ,@(and category `((category . ,category)))
+                      ,@(and (not sort) '((display-sort-function . identity)
+                                          (cycle-sort-function . identity))))))
+      (lambda (str pred action regexp-list ignore-case)
+        (if (eq action 'metadata)
+            metadata
+          (cape--async-complete-with-action table str pred action regexp-list ignore-case))))))
+
+(defun cape--async-table-case-fold (table &optional dont-fold)
+  (lambda (str pred action regexp-list _ignore-case)
+    (cape--async-complete-with-action table str pred action regexp-list (not dont-fold))))
 
 (defun cape--input-valid-p (old-input new-input cmp)
   "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
@@ -373,7 +392,7 @@ The CMP argument determines how the new input is compared to the old input.
         ('substring (string-match-p (regexp-quote old-input) new-input)))))
 
 (defun cape--cached-table (beg end fun valid)
-  "Create caching (asynchronous) completion table.
+  "Create caching completion table.
 BEG and END are the input bounds.
 FUN is the function which computes the candidates.
 VALID is the input comparator, see `cape--input-valid-p'."
@@ -386,18 +405,32 @@ VALID is the input comparator, see `cape--input-valid-p'."
         (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
           (setq table (funcall fun new-input)
                 input new-input)))
-      ;; We map here to support asynchronous futures.
-      (let ((cic completion-ignore-case)
-            (crl completion-regexp-list))
-        (cape--async-map
-         (lambda (tab)
-           (setq table tab)
-           ;; NOTE: Here we capture the dynamic variables in the closure,
-           ;; such that local modifications of the variables are not ignored!
-           (let ((completion-ignore-case cic)
-                 (completion-regexp-list crl))
-             (complete-with-action action table str pred)))
-         table)))))
+      (complete-with-action action table str pred))))
+
+(defun cape--async-cached-table (beg end fun valid)
+  "Create caching asynchronous completion table.
+BEG and END are the input bounds.
+FUN is the function which computes the candidates.
+VALID is the input comparator, see `cape--input-valid-p'."
+  (let ((input 'init)
+        (beg (copy-marker beg))
+        (end (copy-marker end t))
+        (table nil))
+    (lambda (str pred action regexp-list ignore-case)
+      (let ((new-input (buffer-substring-no-properties beg end)))
+        (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
+          (setq table (funcall fun new-input)
+                input new-input)))
+      (cape--async-map
+       (lambda (tab)
+         (setq table tab)
+         (cape--async-complete-with-action table str pred action regexp-list ignore-case))
+       table))))
+
+(defun cape--async-complete-with-action (table str pred action regexp-list ignore-case)
+  (let ((completion-ignore-case ignore-case)
+        (completion-regexp-list regexp-list))
+    (complete-with-action action table str pred)))
 
 ;;;; Capfs
 
@@ -871,17 +904,17 @@ This feature is experimental."
                  ;; are problematic, since they must be captured in the future
                  ;; closure! See the comment I made on the github PR.
                  (if (cape--company-call backend 'ignore-case)
-                     #'completion-table-case-fold
+                     #'cape--async-table-case-fold
                    #'identity)
-                 (cape--table-with-properties
-                  (cape--cached-table beg end
-                                      (if (cape--company-call backend 'duplicates)
-                                          (lambda (input)
-                                            (cape--async-map
-                                             #'delete-dups
-                                             (cape--company-convert backend 'candidates input)))
-                                        (apply-partially #'cape--company-convert backend 'candidates))
-                                      (if (cape--company-call backend 'no-cache initial-input) 'never valid))
+                 (cape--async-table-with-properties
+                  (cape--async-cached-table beg end
+                                            (if (cape--company-call backend 'duplicates)
+                                                (lambda (input)
+                                                  (cape--async-map
+                                                   #'delete-dups
+                                                   (cape--company-convert backend 'candidates input)))
+                                              (apply-partially #'cape--company-convert backend 'candidates))
+                                            (if (cape--company-call backend 'no-cache initial-input) 'never valid))
                   :category backend
                   :sort (not (cape--company-call backend 'sorted))))
                 :exclusive 'no
