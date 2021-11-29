@@ -387,11 +387,17 @@ VALID is the input comparator, see `cape--input-valid-p'."
           (setq table (funcall fun new-input)
                 input new-input)))
       ;; We map here to support asynchronous futures.
-      (cape--async-map
-       (lambda (tab)
-         (setq table tab)
-         (complete-with-action action table str pred))
-       table))))
+      (let ((cic completion-ignore-case)
+            (crl completion-regexp-list))
+        (cape--async-map
+         (lambda (tab)
+           (setq table tab)
+           ;; NOTE: Here we capture the dynamic variables in the closure,
+           ;; such that local modifications of the variables are not ignored!
+           (let ((completion-ignore-case cic)
+                 (completion-regexp-list crl))
+             (complete-with-action action table str pred)))
+         table)))))
 
 ;;;; Capfs
 
