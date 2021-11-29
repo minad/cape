@@ -311,6 +311,7 @@
 
 (defmacro cape--silent (&rest body)
   "Silence BODY."
+  (declare (indent 0))
   `(cl-letf ((inhibit-message t)
              (message-log-max nil)
              ((symbol-function #'minibuffer-message) #'ignore))
@@ -504,10 +505,10 @@ If INTERACTIVE is nil the function acts like a capf."
 (defun cape--dabbrev-list (word)
   "Find all dabbrev expansions for WORD."
   (cape--silent
-   (cape--dabbrev-reset)
-   (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
-            for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
-            if (>= (length w) min-len) collect w)))
+    (cape--dabbrev-reset)
+    (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
+             for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
+             if (>= (length w) min-len) collect w)))
 
 ;;;;; cape-ispell
 
@@ -549,10 +550,10 @@ If INTERACTIVE is nil the function acts like a capf."
   "Dictionary words."
   (or cape--dict-words
       (setq cape--dict-words
-             (split-string (with-temp-buffer
-                             (insert-file-contents-literally cape-dict-file)
-                             (buffer-string))
-                           "\n" 'omit-nulls))))
+            (split-string (with-temp-buffer
+                            (insert-file-contents-literally cape-dict-file)
+                            (buffer-string))
+                          "\n" 'omit-nulls))))
 
 ;;;###autoload
 (defun cape-dict (&optional interactive)
@@ -722,9 +723,9 @@ If INTERACTIVE is nil the function acts like a capf."
                    (copy-sequence cache-candidates))
                   (_
                    (completion--some
-                      (lambda (table)
-                        (complete-with-action action table str pred))
-                      tables))))
+                    (lambda (table)
+                      (complete-with-action action table str pred))
+                    tables))))
               :exclusive 'no
               :company-prefix-length prefix-len
               :company-doc-buffer (funcall extra-fun :company-doc-buffer)
