@@ -42,8 +42,8 @@
   "Dictionary word list file."
   :type 'string)
 
-(defcustom cape-company-timeout 5.0
-  "Company asynchronous timeout."
+(defcustom cape-async-timeout 5.0
+  "Asynchronous timeout."
   :type '(choice nil float))
 
 (defcustom cape-dabbrev-min-length 4
@@ -736,37 +736,99 @@ If INTERACTIVE is nil the function acts like a capf."
               :annotation-function (funcall extra-fun :annotation-function)
               :exit-function (lambda (x _status) (funcall (funcall extra-fun :exit-function) x)))))))
 
-(defun cape--company-call (&rest app)
-  "Apply APP and handle future return values."
+(defun cape--async-apply (fun args &optional nocancel)
+  "Call FUN with ARGS and handle future return values.
+If NOCANCEL is non-nil the futures cannot be cancelled."
   ;; Backends are non-interruptible. Disable interrupts!
   (let ((toi throw-on-input)
         (throw-on-input nil))
-    (pcase (apply app)
+    (pcase (apply fun args)
       ;; Handle async future return values.
       (`(:async . ,fetch)
        (let ((res 'cape--waiting)
-             (start (time-to-seconds)))
+             (start (time-to-seconds))
+             cancel)
          (unwind-protect
              (progn
-               (funcall fetch (lambda (arg)
+               (setq cancel
+                     (funcall fetch
+                              (lambda (arg)
                                 (when (eq res 'cape--waiting)
                                   (push 'cape--done unread-command-events))
-                                (setq res arg)))
+                                (setq res arg))))
                ;; Force synchronization.
                (while (eq res 'cape--waiting)
                  ;; When we've got input, interrupt the computation.
                  (when (and unread-command-events toi)
                    (throw toi nil))
-                 (when (and cape-company-timeout
-                            (> (- (time-to-seconds) start) cape-company-timeout))
-                   (error "Cape company backend async timeout"))
+                 (when (and cape-async-timeout
+                            (> (- (time-to-seconds) start) cape-async-timeout))
+                   (error "Cape async timeout"))
                  (sit-for 0.1 'noredisplay)))
+           ;; Cancel the future if it didn't finish.
+           (when (and (not nocancel) (eq res 'cape--waiting) (functionp cancel))
+             (ignore-errors (funcall cancel)))
            ;; Remove cape--done introduced by future callback
            (setq unread-command-events
                  (delq 'cape--done unread-command-events)))
          res))
       ;; Plain old synchronous return value.
       (res res))))
+
+(defun cape--async-function (fun)
+  "Convert asynchronous FUN to interruptible function."
+  (lambda (&rest args)
+    (cape--async-apply fun args)))
+
+(defun cape--async-call (fun &rest args)
+  "Call asynchronous FUN with ARGS."
+  (cape--async-apply fun args))
+
+(defun cape--async-map (fun future)
+  "Map FUN over FUTURE."
+  (pcase future
+    (`(:async . ,fetch)
+     (cons :async
+           (lambda (callback)
+             (funcall fetch
+                      (lambda (res)
+                        (funcall callback (funcall fun res)))))))
+    (res (funcall fun res))))
+
+(defun cape--async-table (table)
+  "Convert asynchronous TABLE to interruptible TABLE."
+  (lambda (str pred action)
+    (if (eq action 'metadata)
+        (cape--async-map
+         (lambda (md)
+           (setq md (cdr md))
+           (when md
+             `(metadata
+               ,@(when-let (fun (cdr (assq 'annotation-function md)))
+                   `((annotation-function . ,(cape--async-function fun))))
+               ,@(when-let (fun (cdr (assq 'affixation-function md)))
+                   `((affixation-function . ,(cape--async-function fun))))
+               ,@md)))
+         (cape--async-call table str pred action))
+      (cape--async-call table str pred action))))
+
+;;;###autoload
+(defun cape-async-capf (capf)
+  "Convert asynchronous CAPF to interruptible capf.
+Every function of the CAPF is allowed to return an async future."
+  (lambda ()
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       `(,beg ,end ,(cape--async-function table)
+              ,@(mapcar (lambda (prop) (cape--async-function (plist-get plist prop)))
+                        (list :annotation-function :affixation-function
+                              :company-doc-buffer :company-location
+                              :company-docsig :company-deprecated :company-kind))
+              ,@plist)))))
+
+(defun cape--company-call (fun &rest args)
+  "Call FUN with ARGS and handle future return values."
+  (cape--async-apply fun args 'nocancel))
 
 ;;;###autoload
 (defun cape-company-to-capf (backend &optional valid)
@@ -790,6 +852,7 @@ This feature is experimental."
                  (if (cape--company-call backend 'ignore-case)
                      #'completion-table-case-fold
                    #'identity)
+                 ;; TODO generate an async completion table here!
                  (cape--table-with-properties
                   (cape--cached-table beg end
                                       (if (cape--company-call backend 'duplicates)
