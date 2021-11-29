@@ -428,11 +428,18 @@ VALID is the input comparator, see `cape--input-valid-p'."
        table))))
 
 (defun cape--async-complete-with-action (table action filter)
-  (let ((completion-ignore-case (plist-get filter :ignore-case))
-        (completion-regexp-list (plist-get filter :regexp-list)))
-    (complete-with-action action table
-                          (plist-get filter :prefix)
-                          (plist-get filter :predicate))))
+  (cond
+   ((functionp table) (funcall table action filter))
+   ((eq (car-safe action) 'boundaries) nil)
+   ((eq action 'metadata) nil)
+   (t (let ((completion-ignore-case (plist-get filter :ignore-case))
+            (completion-regexp-list (plist-get filter :regexp-list))
+            (prefix (plist-get filter :prefix))
+            (pred (plist-gt filter :predicate)))
+        (cond
+         ((null action) (try-completion prefix table pred))
+         ((eq action t) (all-completions prefix table pred))
+         (t (test-completion prefix table pred)))))))
 
 ;;;; Capfs
 
