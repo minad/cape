@@ -833,6 +833,9 @@ Every function of the CAPF is allowed to return an async future."
   "Call FUN with ARGS and handle future return values."
   (cape--async-apply fun args 'nocancel))
 
+;; TODO instead of turning a company backend into a capf,
+;; turn into into an async capf, in order to take advantage
+;; of the asynchrous company features.
 ;;;###autoload
 (defun cape-company-to-capf (backend &optional valid)
   "Convert Company BACKEND function to Capf.
