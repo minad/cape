@@ -876,12 +876,14 @@ The PREDICATE is passed the candidate symbol or string."
        `(,beg ,end ,(cape--silent-table table) ,@plist)))))
 
 ;;;###autoload
-(defun cape-capf-case-fold (capf)
-  "Create a new CAPF which is case insensitive."
+(defun cape-capf-case-fold (capf &optional dont-fold)
+  "Create a new CAPF which is case insensitive.
+If DONT-FOLD is non-nil, return a completion table that is
+case sensitive instead."
   (lambda ()
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(completion-table-case-fold table) ,@plist)))))
+       `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist)))))
 
 ;;;###autoload
 (defun cape-noninterruptible-capf (capf)
