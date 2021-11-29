@@ -366,14 +366,14 @@ SORT should be nil to disable sorting."
                       ,@(and category `((category . ,category)))
                       ,@(and (not sort) '((display-sort-function . identity)
                                           (cycle-sort-function . identity))))))
-      (lambda (str pred action regexps ignore-case)
+      (lambda (action filter)
         (if (eq action 'metadata)
             metadata
-          (cape--async-complete-with-action table str pred action regexps ignore-case))))))
+          (cape--async-complete-with-action table action filter))))))
 
 (defun cape--async-table-case-fold (table &optional dont-fold)
-  (lambda (str pred action regexps _ignore-case)
-    (cape--async-complete-with-action table str pred action regexps (not dont-fold))))
+  (lambda (action filter)
+    (cape--async-complete-with-action table action `(:ignore-case ,(not dont-fold) ,@filter))))
 
 (defun cape--input-valid-p (old-input new-input cmp)
   "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
@@ -416,7 +416,7 @@ VALID is the input comparator, see `cape--input-valid-p'."
         (beg (copy-marker beg))
         (end (copy-marker end t))
         (table nil))
-    (lambda (str pred action regexps ignore-case)
+    (lambda (action filter)
       (let ((new-input (buffer-substring-no-properties beg end)))
         (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
           (setq table (funcall fun new-input)
@@ -424,13 +424,15 @@ VALID is the input comparator, see `cape--input-valid-p'."
       (cape--async-map
        (lambda (tab)
          (setq table tab)
-         (cape--async-complete-with-action table str pred action regexps ignore-case))
+         (cape--async-complete-with-action table action filter))
        table))))
 
-(defun cape--async-complete-with-action (table str pred action regexps ignore-case)
-  (let ((completion-ignore-case ignore-case)
-        (completion-regexp-list regexps))
-    (complete-with-action action table str pred)))
+(defun cape--async-complete-with-action (table action filter)
+  (let ((completion-ignore-case (plist-get filter :ignore-case))
+        (completion-regexp-list (plist-get filter :regexp-list)))
+    (complete-with-action action table
+                          (plist-get filter :prefix)
+                          (plist-get filter :predicate))))
 
 ;;;; Capfs
 
@@ -838,19 +840,25 @@ If INTERACTIVE is nil the function acts like a capf."
 (defun cape--async-table (table)
   "Convert asynchronous TABLE to interruptible TABLE."
   (lambda (str pred action)
-    (if (eq action 'metadata)
-        (cape--async-map
-         (lambda (md)
-           (setq md (cdr md))
-           (when md
-             `(metadata
-               ,@(when-let (fun (cdr (assq 'annotation-function md)))
-                   `((annotation-function . ,(cape--async-function fun))))
-               ,@(when-let (fun (cdr (assq 'affixation-function md)))
-                   `((affixation-function . ,(cape--async-function fun))))
-               ,@md)))
-         (cape--async-call table str pred action))
-      (cape--async-call table str pred action))))
+    (let ((result
+           (cape--async-call table action
+                             (list :prefix str
+                                   :predicate pred
+                                   :regexp-list completion-regexp-list
+                                   :ignore-case completion-ignore-case))))
+      (if (eq action 'metadata)
+          (cape--async-map
+           (lambda (md)
+             (setq md (cdr md))
+             (when md
+               `(metadata
+                 ,@(when-let (fun (cdr (assq 'annotation-function md)))
+                     `((annotation-function . ,(cape--async-function fun))))
+                 ,@(when-let (fun (cdr (assq 'affixation-function md)))
+                     `((affixation-function . ,(cape--async-function fun))))
+                 ,@md)))
+           result)
+        result))))
 
 ;;;###autoload
 (defun cape-async-capf (capf)
