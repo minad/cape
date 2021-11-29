@@ -430,16 +430,12 @@ VALID is the input comparator, see `cape--input-valid-p'."
 (defun cape--async-complete-with-action (table action filter)
   (cond
    ((functionp table) (funcall table action filter))
-   ((eq (car-safe action) 'boundaries) nil)
    ((eq action 'metadata) nil)
+   ((eq (car-safe action) 'boundaries) nil)
    (t (let ((completion-ignore-case (plist-get filter :ignore-case))
-            (completion-regexp-list (plist-get filter :regexp-list))
-            (prefix (plist-get filter :prefix))
-            (pred (plist-gt filter :predicate)))
-        (cond
-         ((null action) (try-completion prefix table pred))
-         ((eq action t) (all-completions prefix table pred))
-         (t (test-completion prefix table pred)))))))
+            (completion-regexp-list (plist-get filter :regexp-list)))
+        (funcall action (plist-get filter :prefix)
+                 table (plist-gt filter :predicate))))))
 
 ;;;; Capfs
 
@@ -848,7 +844,12 @@ If INTERACTIVE is nil the function acts like a capf."
   "Convert asynchronous TABLE to interruptible TABLE."
   (lambda (str pred action)
     (let ((result
-           (cape--async-call table action
+           (cape--async-call table
+                             (pcase-exhaustive action
+                               ('nil    #'try-completion)
+                               ('t      #'all-completions)
+                               ('lambda #'test-completion)
+                               ((or 'metadata `(boundaries . ,_)) action))
                              (list :prefix str
                                    :predicate pred
                                    :regexp-list completion-regexp-list
