@@ -44,7 +44,7 @@
 
 (defcustom cape-company-timeout 5.0
   "Company asynchronous timeout."
-  :type 'float)
+  :type '(choice nil float))
 
 (defcustom cape-dabbrev-min-length 4
   "Minimum length of dabbrev expansions."
@@ -742,25 +742,27 @@ If INTERACTIVE is nil the function acts like a capf."
         (throw-on-input nil))
     (pcase (apply app)
       ;; Handle async future return values.
-      (`(:async . ,future)
+      (`(:async . ,fetch)
        (let ((res 'cape--waiting)
              (start (time-to-seconds)))
          (unwind-protect
              (progn
-               (funcall future (lambda (arg)
-                                 (when (eq res 'cape--waiting)
-                                   (push 'cape--done unread-command-events))
-                                 (setq res arg)))
+               (funcall fetch (lambda (arg)
+                                (when (eq res 'cape--waiting)
+                                  (push 'cape--done unread-command-events))
+                                (setq res arg)))
                ;; Force synchronization.
                (while (eq res 'cape--waiting)
                  ;; When we've got input, interrupt the computation.
                  (when (and unread-command-events toi)
                    (throw toi nil))
-                 (when (> (- (time-to-seconds) start) cape-company-timeout)
+                 (when (and cape-company-timeout
+                            (> (- (time-to-seconds) start) cape-company-timeout))
                    (error "Cape company backend async timeout"))
                  (sit-for 0.1 'noredisplay)))
            ;; Remove cape--done introduced by future callback
-           (setq unread-command-events (delq 'cape--done unread-command-events)))
+           (setq unread-command-events
+                 (delq 'cape--done unread-command-events)))
          res))
       ;; Plain old synchronous return value.
       (res res))))
