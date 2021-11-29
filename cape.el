@@ -736,11 +736,14 @@ If INTERACTIVE is nil the function acts like a capf."
               :annotation-function (funcall extra-fun :annotation-function)
               :exit-function (lambda (x _status) (funcall (funcall extra-fun :exit-function) x)))))))
 
+(defvar cape-async-throw-on-input nil
+  "If set to a symbol throw on input from async capf.")
+
 (defun cape--async-apply (fun args &optional nocancel)
   "Call FUN with ARGS and handle future return values.
 If NOCANCEL is non-nil the futures cannot be cancelled."
   ;; Backends are non-interruptible. Disable interrupts!
-  (let ((toi throw-on-input)
+  (let ((toi (or cape-async-throw-on-input throw-on-input))
         (throw-on-input nil))
     (pcase (apply fun args)
       ;; Handle async future return values.
