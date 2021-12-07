@@ -392,6 +392,35 @@ VALID is the input comparator, see `cape--input-valid-p'."
 
 ;;;; Capfs
 
+;;;;; cape-char
+
+(defvar cape--char-properties
+  (list :annotation-function #'cape--char-annotation
+        :exit-function #'cape--char-replace
+        :company-kind (lambda (_) 'text))
+  "Completion extra properties for `cape-char'.")
+
+(defun cape--char-replace (name _status)
+  "Replace character with NAME."
+  (when-let (char (gethash name ucs-names))
+    (delete-region (- (point) (length name)) (point))
+    (insert (char-to-string char))))
+
+(defun cape--char-annotation (name)
+  "Return annotation for character with NAME."
+  (when-let (char (gethash name ucs-names))
+    (format " %c" char)))
+
+;;;###autoload
+(defun cape-char (&optional interactive)
+  "Complete character at point.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--interactive #'cape-char)
+    `(,(point) ,(point) ,(ucs-names)
+      :exclusive no ,@cape--char-properties)))
+
 ;;;;; cape-file
 
 (defvar cape--file-properties

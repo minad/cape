@@ -55,7 +55,8 @@ this package should be upstreamed into Emacs itself.
            ("C-c p a" . cape-abbrev)
            ("C-c p i" . cape-ispell)
            ("C-c p l" . cape-line)
-           ("C-c p w" . cape-dict))
+           ("C-c p w" . cape-dict)
+           ("C-c p c" . cape-char))
     :init
     ;; Add `completion-at-point-functions', used by `completion-at-point'.
     (add-to-list 'completion-at-point-functions #'cape-file)
