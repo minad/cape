@@ -567,6 +567,71 @@ If INTERACTIVE is nil the function acts like a capf."
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
         :exclusive no ,@cape--dict-properties))))
 
+;;;;; cape-tex and cape-sgml
+
+(defmacro cape--quail-define (name method prefix)
+  "Define quail translation variable with NAME.
+METHOD is the input method.
+PREFIX is the prefix regular expression."
+  (describe-input-method method)
+  (let ((capf (intern (format "cape-%s" name)))
+        (list (intern (format "cape--%s-list" name)))
+        (ann (intern (format "cape--%s-annotation" name)))
+        (exit (intern (format "cape--%s-exit" name)))
+        (properties (intern (format "cape--%s-properties" name)))
+        (translation
+         (with-current-buffer "*Help*"
+           (let ((str (replace-regexp-in-string
+                       "\n\n\\(\n\\|.\\)*" ""
+                       (replace-regexp-in-string
+                        "\\`\\(\n\\|.\\)*?----\n" ""
+                        (replace-regexp-in-string
+                         "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
+                         (buffer-substring-no-properties (point-min) (point-max))))))
+                 (pos 0)
+                 (list nil)
+                 (regexp (format "\\(%s[^ \t\n]+\\)[ \t\n]+\\([^ \t\n]+\\)" prefix)))
+             (while (string-match regexp str pos)
+               (let ((char (match-string 2 str))
+                     (name (if (equal method "sgml")
+                               (string-remove-suffix ";" (match-string 1 str))
+                             (match-string 1 str))))
+                 (push (cons name char) list)
+                 (setq pos (match-end 0))))
+             (kill-buffer-and-window)
+             (sort list (lambda (x y) (string< (car x) (car y))))))))
+    `(progn
+       (defvar ,list ',translation)
+       (defun ,ann (name)
+         (concat " " (cdr (assoc name ,list))))
+       (defun ,exit (name status)
+         (unless (eq status 'exact)
+           (when-let (str (cdr (assoc name ,list)))
+             (delete-region (- (point) (length name)) (point))
+             (insert str))))
+       (defvar ,properties
+         (list :annotation-function #',ann
+               :exit-function #',exit
+               :company-kind (lambda (_) 'text)))
+       (defun ,capf (&optional interactive)
+         (interactive (list t))
+         (if interactive
+             ;; NOTE: Disable cycling since replacement breaks it.
+             (let (completion-cycle-threshold)
+               (cape--interactive #',capf))
+           (require 'thingatpt)
+           (let ((bounds (if (thing-at-point-looking-at ,(format "%s[^ \n\t]*" prefix))
+                             (cons (match-beginning 0) (match-end 0))
+                           (cons (point) (point)))))
+             (append
+              (list (car bounds) (cdr bounds)
+                    (cape--table-with-properties ,list :category ',capf)
+                    :exclusive 'no)
+              ,properties)))))))
+
+(cape--quail-define tex "TeX" "[\\\\^_]")
+(cape--quail-define sgml "sgml" "&")
+
 ;;;;; cape-abbrev
 
 (defun cape--abbrev-list ()
@@ -583,9 +648,14 @@ If INTERACTIVE is nil the function acts like a capf."
                 (abbrev--symbol abbrev global-abbrev-table)))
            30 0 nil t)))
 
+(defun cape--abbrev-exit (_str status)
+  "Expand expansion if STATUS is not exact."
+   (unless (eq status 'exact)
+     (expand-abbrev)))
+
 (defvar cape--abbrev-properties
   (list :annotation-function #'cape--abbrev-annotation
-        :exit-function (lambda (&rest _) (expand-abbrev))
+        :exit-function #'cape--abbrev-exit
         :company-kind (lambda (_) 'snippet))
   "Completion extra properties for `cape-abbrev'.")
 
@@ -595,7 +665,9 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-abbrev)
+      ;; NOTE: Disable cycling since abbreviation replacement breaks it.
+      (let (completion-cycle-threshold)
+        (cape--interactive #'cape-abbrev))
     (when-let (abbrevs (cape--abbrev-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)

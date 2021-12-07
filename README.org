@@ -31,6 +31,19 @@ packages or configurations, since it completes elisp symbols anywere.
 On the more experimental side, Cape has the super power to transform Company
 backends into Capfs and merge multiple Capfs into a Super-Capf!
 
+* Available Capfs
+
+* ~cape-dabbrev~: Complete word from current buffers
+* ~cape-file~: Complete file name
+* ~cape-keyword~: Complete programming language keyword
+* ~cape-symbol~: Complete Elisp symbol
+* ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~)
+* ~cape-ispell~: Complete word from Ispell dictionary
+* ~cape-dict~: Complete word from dictionary file
+* ~cape-line~: Complete entire line from file
+* ~cape-tex~: Complete unicode char from TeX command, e.g. ~\hbar~,
+* ~cape-sgml~: Complete unicode char from Sgml entity, e.g., ~&alpha~.
+
 * Configuration
 
 Cape is available from MELPA. In the long term some of the Capfs provided by
@@ -55,12 +68,16 @@ this package should be upstreamed into Emacs itself.
            ("C-c p a" . cape-abbrev)
            ("C-c p i" . cape-ispell)
            ("C-c p l" . cape-line)
-           ("C-c p w" . cape-dict))
+           ("C-c p w" . cape-dict)
+           ("C-c p \\" . cape-tex)
+           ("C-c p &" . cape-sgml))
     :init
     ;; Add `completion-at-point-functions', used by `completion-at-point'.
     (add-to-list 'completion-at-point-functions #'cape-file)
+    (add-to-list 'completion-at-point-functions #'cape-tex)
     (add-to-list 'completion-at-point-functions #'cape-dabbrev)
     (add-to-list 'completion-at-point-functions #'cape-keyword)
+    ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
     ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
     ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
     ;;(add-to-list 'completion-at-point-functions #'cape-dict)
