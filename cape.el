@@ -623,7 +623,7 @@ PREFIX is the prefix regular expression."
        (defun ,exit (name status)
          (unless (eq status 'exact)
            (when-let (str (cdr (assoc name ,list)))
-             (delete-region (- (point) (length name)) (point))
+             (delete-region (max (point-min) (- (point) (length name))) (point))
              (insert str))))
        (defvar ,properties
          (list :annotation-function #',ann
