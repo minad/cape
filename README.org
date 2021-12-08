@@ -33,16 +33,16 @@ backends into Capfs and merge multiple Capfs into a Super-Capf!
 
 * Available Capfs
 
-* ~cape-dabbrev~: Complete word from current buffers
-* ~cape-file~: Complete file name
-* ~cape-keyword~: Complete programming language keyword
-* ~cape-symbol~: Complete Elisp symbol
-* ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~)
-* ~cape-ispell~: Complete word from Ispell dictionary
-* ~cape-dict~: Complete word from dictionary file
-* ~cape-line~: Complete entire line from file
-* ~cape-tex~: Complete unicode char from TeX command, e.g. ~\hbar~.
-* ~cape-sgml~: Complete unicode char from Sgml entity, e.g., ~&alpha~.
++ ~cape-dabbrev~: Complete word from current buffers
++ ~cape-file~: Complete file name
++ ~cape-keyword~: Complete programming language keyword
++ ~cape-symbol~: Complete Elisp symbol
++ ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~)
++ ~cape-ispell~: Complete word from Ispell dictionary
++ ~cape-dict~: Complete word from dictionary file
++ ~cape-line~: Complete entire line from file
++ ~cape-tex~: Complete unicode char from TeX command, e.g. ~\hbar~.
++ ~cape-sgml~: Complete unicode char from Sgml entity, e.g., ~&alpha~.
 
 * Configuration
 
