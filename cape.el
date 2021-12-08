@@ -568,9 +568,9 @@ If INTERACTIVE is nil the function acts like a capf."
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
         :exclusive no ,@cape--dict-properties))))
 
-;;;;; cape-tex and cape-sgml
+;;;;; cape-tex, cape-sgml, cape-rfc1345
 
-(defmacro cape--quail-define (name method prefix)
+(defmacro cape--char-define (name method prefix)
   "Define quail translation variable with NAME.
 METHOD is the input method.
 PREFIX is the prefix regular expression."
@@ -591,7 +591,7 @@ PREFIX is the prefix regular expression."
                          (buffer-substring-no-properties (point-min) (point-max))))))
                  (pos 0)
                  (list nil)
-                 (regexp (format "\\(%s[^ \t\n]+\\)[ \t\n]+\\([^ \t\n]+\\)" prefix)))
+                 (regexp (format "\\(?:^\\|[\t\n ]\\)\\(%s[^ \t\n]+\\)[ \t\n]+\\([^ \t\n]+\\)" prefix)))
              (while (string-match regexp str pos)
                (let ((char (match-string 2 str))
                      (name (if (equal method "sgml")
@@ -636,8 +636,10 @@ the function acts like a capf." method)
 
 ;;;###autoload (autoload 'cape-tex "cape" nil t)
 ;;;###autoload (autoload 'cape-sgml "cape" nil t)
-(cape--quail-define tex "TeX" "[\\\\^_]")
-(cape--quail-define sgml "sgml" "&")
+;;;###autoload (autoload 'cape-rfc1345 "cape" nil t)
+(cape--char-define tex "TeX" "[\\\\^_]")
+(cape--char-define sgml "sgml" "&")
+(cape--char-define rfc1345 "rfc1345" "&")
 
 ;;;;; cape-abbrev
 
