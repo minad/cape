@@ -615,6 +615,10 @@ PREFIX is the prefix regular expression."
                :exit-function #',exit
                :company-kind (lambda (_) 'text)))
        (defun ,capf (&optional interactive)
+         ,(format "Complete unicode character at point.
+Uses the same input format as the %s input method,
+see `describe-input-method'. If INTERACTIVE is nil
+the function acts like a capf." method)
          (interactive (list t))
          (if interactive
              ;; NOTE: Disable cycling since replacement breaks it.
@@ -630,6 +634,8 @@ PREFIX is the prefix regular expression."
                     :exclusive 'no)
               ,properties)))))))
 
+;;;###autoload (autoload 'cape-tex "cape" nil t)
+;;;###autoload (autoload 'cape-sgml "cape" nil t)
 (cape--quail-define tex "TeX" "[\\\\^_]")
 (cape--quail-define sgml "sgml" "&")
 
