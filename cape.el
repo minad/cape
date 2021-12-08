@@ -412,7 +412,8 @@ If INTERACTIVE is nil the function acts like a capf."
       (when (or (not cape-file-directory-must-exist)
                 (and (string-match-p "/" file) (file-exists-p (file-name-directory file))))
         `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
-          :company-prefix-length ,(and (not (equal file "/")) (string-suffix-p "/" file))
+          ,@(and (not (equal file "/")) (string-suffix-p "/" file)
+                 '(:company-prefix-length t))
           :exclusive no ,@cape--file-properties)))))
 
 ;;;;; cape-symbol

@@ -41,7 +41,7 @@ backends into Capfs and merge multiple Capfs into a Super-Capf!
 * ~cape-ispell~: Complete word from Ispell dictionary
 * ~cape-dict~: Complete word from dictionary file
 * ~cape-line~: Complete entire line from file
-* ~cape-tex~: Complete unicode char from TeX command, e.g. ~\hbar~,
+* ~cape-tex~: Complete unicode char from TeX command, e.g. ~\hbar~.
 * ~cape-sgml~: Complete unicode char from Sgml entity, e.g., ~&alpha~.
 
 * Configuration
