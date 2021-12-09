@@ -629,7 +629,11 @@ PREFIX is the prefix regular expression."
            (format " %c" char)))
        (defun ,docsig (name)
          (when-let (char (cdr (assoc name ,list)))
-           (get-char-code-property char 'name)))
+           (format "%s (%s)"
+                   (get-char-code-property char 'name)
+                   (char-code-property-description
+                    'general-category
+                    (get-char-code-property char 'general-category)))))
        (defun ,exit (name status)
          (unless (eq status 'exact)
            (when-let (char (cdr (assoc name ,list)))
