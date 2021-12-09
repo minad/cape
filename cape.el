@@ -884,12 +884,8 @@ If INTERACTIVE is nil the function acts like a capf."
   "Convert Company BACKEND function to Capf.
 VALID is the input comparator, see `cape--input-valid-p'.
 This feature is experimental."
-  (unless (symbolp backend)
-    (error "Backend must be a symbol"))
-  (let ((init (intern (format "cape--company-init:%s" backend))))
+  (let ((init (make-variable-buffer-local (make-symbol "cape--company-init"))))
     (lambda ()
-      (unless (boundp init)
-        (make-variable-buffer-local init))
       (unless (symbol-value init)
         (cape--company-call backend 'init)
         (set init t))
