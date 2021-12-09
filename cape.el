@@ -593,40 +593,51 @@ PREFIX is the prefix regular expression."
   (let ((capf (intern (format "cape-%s" name)))
         (list (intern (format "cape--%s-list" name)))
         (ann (intern (format "cape--%s-annotation" name)))
+        (docsig (intern (format "cape--%s-docsig" name)))
         (exit (intern (format "cape--%s-exit" name)))
         (properties (intern (format "cape--%s-properties" name)))
         (translation
          (with-current-buffer "*Help*"
-           (let ((str (replace-regexp-in-string
-                       "\n\n\\(\n\\|.\\)*" ""
-                       (replace-regexp-in-string
-                        "\\`\\(\n\\|.\\)*?----\n" ""
-                        (replace-regexp-in-string
-                         "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
-                         (buffer-substring-no-properties (point-min) (point-max))))))
-                 (pos 0)
-                 (list nil)
-                 (regexp (format "\\(?:^\\|[\t\n ]\\)\\(%s[^ \t\n]+\\)[ \t\n]+\\([^ \t\n]+\\)" prefix)))
-             (while (string-match regexp str pos)
-               (let ((char (match-string 2 str))
-                     (name (if (equal method "sgml")
-                               (string-remove-suffix ";" (match-string 1 str))
-                             (match-string 1 str))))
-                 (push (cons name char) list)
-                 (setq pos (match-end 0))))
+           (let ((lines
+                  (split-string
+                   (replace-regexp-in-string
+                    "\n\n\\(\n\\|.\\)*" ""
+                    (replace-regexp-in-string
+                     "\\`\\(\n\\|.\\)*?----\n" ""
+                     (replace-regexp-in-string
+                      "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
+                      (buffer-string))))
+                   "\n"))
+                 (list nil))
+             (dolist (line lines)
+               (let ((beg 0) (len (length line)))
+                 (while (< beg len)
+                     (let* ((ename (next-single-property-change beg 'face line len))
+                            (echar (next-single-property-change ename 'face line len)))
+                       (when (and (get-text-property beg 'face line) (< ename len) (<= echar len))
+                         (let ((name (string-trim (substring-no-properties line beg ename)))
+                               (char (string-trim (substring-no-properties line ename echar))))
+                           (when (= (length char) 1)
+                             (push (cons name (aref char 0)) list))))
+                       (setq beg echar)))))
              (kill-buffer-and-window)
              (sort list (lambda (x y) (string< (car x) (car y))))))))
     `(progn
        (defvar ,list ',translation)
        (defun ,ann (name)
-         (concat " " (cdr (assoc name ,list))))
+         (when-let (char (cdr (assoc name ,list)))
+           (format " %c" char)))
+       (defun ,docsig (name)
+         (when-let (char (cdr (assoc name ,list)))
+           (get-char-code-property char 'name)))
        (defun ,exit (name status)
          (unless (eq status 'exact)
-           (when-let (str (cdr (assoc name ,list)))
+           (when-let (char (cdr (assoc name ,list)))
              (delete-region (max (point-min) (- (point) (length name))) (point))
-             (insert str))))
+             (insert (char-to-string char)))))
        (defvar ,properties
          (list :annotation-function #',ann
+               :company-docsig #',docsig
                :exit-function #',exit
                :company-kind (lambda (_) 'text)))
        (defun ,capf (&optional interactive)
