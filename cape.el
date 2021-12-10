@@ -609,6 +609,7 @@ PREFIX is the prefix regular expression."
                         "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
                         (buffer-string))))
                      "\n"))
+                   (regexp (concat "\\`" prefix))
                    (list nil))
                (dolist (line lines)
                  (let ((beg 0) (len (length line)))
@@ -618,7 +619,7 @@ PREFIX is the prefix regular expression."
                        (when (and (get-text-property beg 'face line) (< ename len) (<= echar len))
                          (let ((name (string-trim (substring-no-properties line beg ename)))
                                (char (string-trim (substring-no-properties line ename echar))))
-                           (when (= (length char) 1)
+                           (when (and (string-match-p regexp name) (= (length char) 1))
                              (push (cons name (aref char 0)) list))))
                        (setq beg echar)))))
                (kill-buffer)
