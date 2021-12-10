@@ -645,12 +645,13 @@ PREFIX is the prefix regular expression."
            (list :annotation-function #',ann
                  :company-docsig #',docsig
                  :exit-function #',exit
-                 :company-kind (lambda (_) 'text)))
+                 :company-kind (lambda (_) 'text))
+           ,(format "Completion extra properties for `%s'." name))
          (defun ,capf (&optional interactive)
            ,(format "Complete unicode character at point.
 Uses the same input format as the %s input method,
-see `describe-input-method'. If INTERACTIVE is nil
-the function acts like a capf." method)
+see (describe-input-method %S). If INTERACTIVE
+is nil the function acts like a capf." method method)
            (interactive (list t))
            (if interactive
                ;; NOTE: Disable cycling since replacement breaks it.
