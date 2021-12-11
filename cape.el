@@ -584,88 +584,97 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;;; cape-tex, cape-sgml, cape-rfc1345
 
+;; Declare as pure function which is evaluated at compile time. We don't use a
+;; macro for this computation since packages like `helpful' will
+;; `macroexpand-all' the expensive `cape--define-char' macro calls.
+(eval-when-compile
+  (defun cape--char-translation (method prefix)
+    "Return character translation alist for METHOD.
+PREFIX is the prefix regular expression."
+    (declare (pure t))
+    (save-window-excursion
+      (describe-input-method method)
+      (with-current-buffer "*Help*"
+        (let ((lines
+               (split-string
+                (replace-regexp-in-string
+                 "\n\n\\(\n\\|.\\)*" ""
+                 (replace-regexp-in-string
+                  "\\`\\(\n\\|.\\)*?----\n" ""
+                  (replace-regexp-in-string
+                   "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
+                   (buffer-string))))
+                "\n"))
+              (regexp (concat "\\`" prefix))
+              (list nil))
+          (dolist (line lines)
+            (let ((beg 0) (len (length line)))
+              (while (< beg len)
+                (let* ((ename (next-single-property-change beg 'face line len))
+                       (echar (next-single-property-change ename 'face line len)))
+                  (when (and (get-text-property beg 'face line) (< ename len) (<= echar len))
+                    (let ((name (string-trim (substring-no-properties line beg ename)))
+                          (char (string-trim (substring-no-properties line ename echar))))
+                      (when (and (string-match-p regexp name) (= (length char) 1))
+                        (push (cons name (aref char 0)) list))))
+                  (setq beg echar)))))
+          (kill-buffer)
+          (sort list (lambda (x y) (string< (car x) (car y)))))))))
+
 (declare-function thing-at-point-looking-at "thingatpt")
 (defmacro cape--char-define (name method prefix)
-  "Define quail translation variable with NAME.
+  "Define character translation capf.
+NAME is the name of the capf.
 METHOD is the input method.
 PREFIX is the prefix regular expression."
-  (save-window-excursion
-    (describe-input-method method)
-    (let ((capf (intern (format "cape-%s" name)))
-          (list (intern (format "cape--%s-list" name)))
-          (ann (intern (format "cape--%s-annotation" name)))
-          (docsig (intern (format "cape--%s-docsig" name)))
-          (exit (intern (format "cape--%s-exit" name)))
-          (properties (intern (format "cape--%s-properties" name)))
-          (translation
-           (with-current-buffer "*Help*"
-             (let ((lines
-                    (split-string
-                     (replace-regexp-in-string
-                      "\n\n\\(\n\\|.\\)*" ""
-                      (replace-regexp-in-string
-                       "\\`\\(\n\\|.\\)*?----\n" ""
-                       (replace-regexp-in-string
-                        "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
-                        (buffer-string))))
-                     "\n"))
-                   (regexp (concat "\\`" prefix))
-                   (list nil))
-               (dolist (line lines)
-                 (let ((beg 0) (len (length line)))
-                   (while (< beg len)
-                     (let* ((ename (next-single-property-change beg 'face line len))
-                            (echar (next-single-property-change ename 'face line len)))
-                       (when (and (get-text-property beg 'face line) (< ename len) (<= echar len))
-                         (let ((name (string-trim (substring-no-properties line beg ename)))
-                               (char (string-trim (substring-no-properties line ename echar))))
-                           (when (and (string-match-p regexp name) (= (length char) 1))
-                             (push (cons name (aref char 0)) list))))
-                       (setq beg echar)))))
-               (kill-buffer)
-               (sort list (lambda (x y) (string< (car x) (car y))))))))
-      `(progn
-         (defvar ,list ',translation)
-         (defun ,ann (name)
+  (let ((capf (intern (format "cape-%s" name)))
+        (list (intern (format "cape--%s-list" name)))
+        (ann (intern (format "cape--%s-annotation" name)))
+        (docsig (intern (format "cape--%s-docsig" name)))
+        (exit (intern (format "cape--%s-exit" name)))
+        (properties (intern (format "cape--%s-properties" name))))
+    `(progn
+       (defvar ,list (cape--char-translation ,method ,prefix))
+       (defun ,ann (name)
+         (when-let (char (cdr (assoc name ,list)))
+           (format " %c" char)))
+       (defun ,docsig (name)
+         (when-let (char (cdr (assoc name ,list)))
+           (format "%s (%s)"
+                   (get-char-code-property char 'name)
+                   (char-code-property-description
+                    'general-category
+                    (get-char-code-property char 'general-category)))))
+       (defun ,exit (name status)
+         (unless (eq status 'exact)
            (when-let (char (cdr (assoc name ,list)))
-             (format " %c" char)))
-         (defun ,docsig (name)
-           (when-let (char (cdr (assoc name ,list)))
-             (format "%s (%s)"
-                     (get-char-code-property char 'name)
-                     (char-code-property-description
-                      'general-category
-                      (get-char-code-property char 'general-category)))))
-         (defun ,exit (name status)
-           (unless (eq status 'exact)
-             (when-let (char (cdr (assoc name ,list)))
-               (delete-region (max (point-min) (- (point) (length name))) (point))
-               (insert (char-to-string char)))))
-         (defvar ,properties
-           (list :annotation-function #',ann
-                 :company-docsig #',docsig
-                 :exit-function #',exit
-                 :company-kind (lambda (_) 'text))
-           ,(format "Completion extra properties for `%s'." name))
-         (defun ,capf (&optional interactive)
-           ,(format "Complete unicode character at point.
+             (delete-region (max (point-min) (- (point) (length name))) (point))
+             (insert (char-to-string char)))))
+       (defvar ,properties
+         (list :annotation-function #',ann
+               :company-docsig #',docsig
+               :exit-function #',exit
+               :company-kind (lambda (_) 'text))
+         ,(format "Completion extra properties for `%s'." name))
+       (defun ,capf (&optional interactive)
+         ,(format "Complete unicode character at point.
 Uses the same input format as the %s input method,
 see (describe-input-method %S). If INTERACTIVE
 is nil the function acts like a capf." method method)
-           (interactive (list t))
-           (if interactive
-               ;; NOTE: Disable cycling since replacement breaks it.
-               (let (completion-cycle-threshold)
-                 (cape--interactive #',capf))
-             (require 'thingatpt)
-             (let ((bounds (if (thing-at-point-looking-at ,(format "%s[^ \n\t]*" prefix))
-                               (cons (match-beginning 0) (match-end 0))
-                             (cons (point) (point)))))
-               (append
-                (list (car bounds) (cdr bounds)
-                      (cape--table-with-properties ,list :category ',capf)
-                      :exclusive 'no)
-                ,properties))))))))
+         (interactive (list t))
+         (if interactive
+             ;; NOTE: Disable cycling since replacement breaks it.
+             (let (completion-cycle-threshold)
+               (cape--interactive #',capf))
+           (require 'thingatpt)
+           (let ((bounds (if (thing-at-point-looking-at ,(format "%s[^ \n\t]*" prefix))
+                             (cons (match-beginning 0) (match-end 0))
+                           (cons (point) (point)))))
+             (append
+              (list (car bounds) (cdr bounds)
+                    (cape--table-with-properties ,list :category ',capf)
+                    :exclusive 'no)
+              ,properties)))))))
 
 ;;;###autoload (autoload 'cape-tex "cape" nil t)
 ;;;###autoload (autoload 'cape-sgml "cape" nil t)
