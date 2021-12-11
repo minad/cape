@@ -29,7 +29,9 @@ The command ~cape-symbol~ is particularily useful for documentation of Elisp
 packages or configurations, since it completes elisp symbols anywere.
 
 On the more experimental side, Cape has the super power to transform Company
-backends into Capfs and merge multiple Capfs into a Super-Capf!
+backends into Capfs and merge multiple Capfs into a Super-Capf! These
+transformers allow you to still take advantage of Company backends even if you
+are not using Company as frontend.
 
 * Available Capfs
 
@@ -141,6 +143,21 @@ example completion backend, which can be used with both ~completion-at-point~
   (setq company-backends '(emoji-backend))
 #+end_src
 
+It is possible to merge/group multiple Company backends and use them as a single
+Capf using the ~company--multi-backend-adapter~ function from Company. The adapter
+transforms multiple Company backends into a single Company backend, which can
+then be used as a Capf via ~cape-company-to-capf~.
+
+#+begin_src emacs-lisp
+  (require 'company)
+  ;; Use the company-dabbrev and company-elisp backends together.
+  (setq completion-at-point-functions
+        (list
+         (cape-company-to-capf
+          (apply-partially #'company--multi-backend-adapter
+                           '(company-dabbrev company-elisp)))))
+#+end_src
+
 ** Super-Capf - Merging multiple Capfs
 
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
@@ -156,6 +173,9 @@ and ~completion-table-in-turn~.
   (setq-local completion-at-point-functions
               (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
 #+end_src
+
+See also the aforementioned ~~company--multi-backend-adapter~~ from Company, which
+allows you to merge multiple Company backends.
 
 ** Capf-Buster - Cache busting
 
