@@ -466,8 +466,10 @@ If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-symbol)
-    (let ((bounds (cape--bounds 'symbol)))
-      `(,(car bounds) ,(cdr bounds)
+    (pcase-let ((`(,beg . ,end) (cape--bounds 'symbol)))
+      (when (eq (char-after beg) ?')
+        (setq beg (1+ beg) end (max beg end)))
+      `(,beg ,end
         ,(cape--table-with-properties obarray :category 'symbol)
         :exclusive no ,@cape--symbol-properties))))
 
@@ -1011,6 +1013,21 @@ case sensitive instead."
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end ,(cape--noninterruptible-table table) ,@plist)))))
+
+;;;###autoload
+(defun cape-repair-misbehaving-capf (capf)
+  "Repair a misbehaving CAPF."
+  (catch 'cape--misbehaving-capf
+    (save-mark-and-excursion
+      (atomic-change-group
+        (pcase (funcall capf)
+          ((and res `(,beg ,end ,_table . ,_plist)
+                (guard (integer-or-marker-p beg))
+                (guard (integer-or-marker-p end)))
+           (ignore beg end)
+           res)
+          (_
+           (throw 'cape--misbehaving-capf nil)))))))
 
 ;;;###autoload
 (defun cape-interactive-capf (capf)

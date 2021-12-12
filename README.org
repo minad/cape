@@ -194,6 +194,20 @@ achieve a similarly refreshing strategy.
               (list (cape-capf-buster #'some-caching-capf)))
 #+end_src
 
+** Repair misbehaving Capfs
+
+Unfortunately some completion of point functions from Emacs show misbehavior.
+This is not a term I've made up, but minibuffer.el distinguishes old-style
+("misbehaving") Capfs and modern-style Capfs. The misbehaving Capfs do not
+return a completion table but just perform completion right away. Such behavior
+is particularily harmful for completion UIs like Company or Corfu in
+idle/auto-completion mode. There is at least one completion function, which
+affects the Eshell:
+
+#+begin_src emacs-lisp
+  (advice-add #'pcomplete-completions-at-point :around #'cape-repair-misbehaving-capf)
+#+end_src
+
 ** Other Capf transformers
 
 - ~cape-silent-capf~: Wrap a chatty Capf and silence it.
