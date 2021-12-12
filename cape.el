@@ -1017,17 +1017,16 @@ case sensitive instead."
 ;;;###autoload
 (defun cape-repair-misbehaving-capf (capf)
   "Repair a misbehaving CAPF."
-  (catch 'cape--misbehaving-capf
+  (catch 'cape--capf-result
     (save-mark-and-excursion
       (atomic-change-group
-        (pcase (funcall capf)
-          ((and res `(,beg ,end ,_table . ,_plist)
-                (guard (integer-or-marker-p beg))
-                (guard (integer-or-marker-p end)))
-           (ignore beg end)
-           res)
-          (_
-           (throw 'cape--misbehaving-capf nil)))))))
+        (throw 'cape--capf-result
+               (pcase (funcall capf)
+                 ((and res `(,beg ,end ,_table . ,_plist)
+                       (guard (integer-or-marker-p beg))
+                       (guard (integer-or-marker-p end)))
+                  (ignore beg end)
+                  res)))))))
 
 ;;;###autoload
 (defun cape-interactive-capf (capf)
