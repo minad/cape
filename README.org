@@ -204,11 +204,16 @@ This is not a term I've made up, but minibuffer.el distinguishes old-style
 return a completion table but just perform completion right away. Such behavior
 is particularily harmful for completion UIs like Company or Corfu in
 idle/auto-completion mode. There is at least one completion function, which
-affects the Eshell:
+affects shell completions: ~pcomplete-completions-at-point~.
 
 #+begin_src emacs-lisp
   (advice-add 'pcomplete-completions-at-point :around #'cape-repair-misbehaving-capf)
 #+end_src
+
+By wrapping it with ~cape-repair-misbehaving-capf~ we can repair the occasional
+misbehavior of the Capf. In the long term the underlying issue should of course
+be fixed in ~pcomplete-completions-at-point~ but in the meantime we can live with
+a localized fix.
 
 ** Other Capf transformers
 
