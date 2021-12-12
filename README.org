@@ -205,7 +205,7 @@ idle/auto-completion mode. There is at least one completion function, which
 affects the Eshell:
 
 #+begin_src emacs-lisp
-  (advice-add #'pcomplete-completions-at-point :around #'cape-repair-misbehaving-capf)
+  (advice-add 'pcomplete-completions-at-point :around #'cape-repair-misbehaving-capf)
 #+end_src
 
 ** Other Capf transformers
