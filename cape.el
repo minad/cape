@@ -1020,15 +1020,16 @@ case sensitive instead."
   (save-mark-and-excursion
     (let ((beg (copy-marker (point)))
           (end (copy-marker (point) t)))
-    (unwind-protect
-        (pcase (funcall capf)
-          ((and res `(,beg ,end ,_table . ,_plist)
-                (guard (integer-or-marker-p beg))
-                (guard (integer-or-marker-p end)))
-           (ignore beg end)
-           res))
-      (when (/= beg end)
-        (delete-region beg end))))))
+      (with-silent-modifications
+        (unwind-protect
+            (pcase (funcall capf)
+              ((and res `(,beg ,end ,_table . ,_plist)
+                    (guard (integer-or-marker-p beg))
+                    (guard (integer-or-marker-p end)))
+               (ignore beg end)
+               res))
+          (when (/= beg end)
+            (delete-region beg end)))))))
 
 ;;;###autoload
 (defun cape-interactive-capf (capf)
