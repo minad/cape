@@ -196,6 +196,8 @@ achieve a similarly refreshing strategy.
 
 ** Repair misbehaving Capfs
 
+/Sweep misbehaving Capfs under the Cape!/
+
 Unfortunately some completion of point functions from Emacs show misbehavior.
 This is not a term I've made up, but minibuffer.el distinguishes old-style
 ("misbehaving") Capfs and modern-style Capfs. The misbehaving Capfs do not
