@@ -1015,23 +1015,6 @@ case sensitive instead."
        `(,beg ,end ,(cape--noninterruptible-table table) ,@plist)))))
 
 ;;;###autoload
-(defun cape-repair-misbehaving-capf (capf)
-  "Repair a misbehaving CAPF."
-  (save-mark-and-excursion
-    (let ((beg (copy-marker (point)))
-          (end (copy-marker (point) t)))
-      (with-silent-modifications
-        (unwind-protect
-            (pcase (funcall capf)
-              ((and res `(,beg ,end ,_table . ,_plist)
-                    (guard (integer-or-marker-p beg))
-                    (guard (integer-or-marker-p end)))
-               (ignore beg end)
-               res))
-          (when (/= beg end)
-            (delete-region beg end)))))))
-
-;;;###autoload
 (defun cape-interactive-capf (capf)
   "Create interactive completion function from CAPF."
   (lambda (&optional interactive)
