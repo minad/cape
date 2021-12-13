@@ -337,11 +337,8 @@
 
 (defun cape--interactive (capf)
   "Complete with CAPF."
-  (pcase (funcall capf)
-    (`(,beg ,end ,table . ,extra)
-     (let ((completion-extra-properties extra))
-       (completion-in-region beg end table (plist-get extra :predicate))))
-    (_ (user-error "%s: No completions" capf))))
+  (let ((completion-at-point-functions (list capf)))
+    (or (completion-at-point) (user-error "%s: No completions" capf))))
 
 (defun cape--noninterruptible-table (table)
   "Create non-interruptible completion TABLE."
