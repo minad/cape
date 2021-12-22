@@ -163,10 +163,20 @@ then be used as a Capf via ~cape-company-to-capf~.
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
 
 Cape supports merging multiple Capfs using the function ~cape-super-capf~. This
-feature is experimental. Completion table merging works only for tables which
-are sufficiently well-behaved and tables which do not define completion
-boundaries. ~cape-super-capf~ has the same restrictions as ~completion-table-merge~
-and ~completion-table-in-turn~.
+feature is experimental and should only be used in special scenarios.
+
+Note that ~cape-super-capf~ is not needed if you want to use multiple Capfs which
+are tried one by one, e.g., it is perfectly possible to use ~cape-file~ together
+with the lsp-mode Capf or other programming mode Capfs by adding ~cape-file~ to
+the ~completion-at-point-functions~ list. The file completion will be available in
+comments and string literals. ~cape-super-capf~ is only needed if you want to
+combine multiple Capfs, such that the candidates from multiple sources appear
+/together/ in the completion list at the same time.
+
+Completion table merging works only for tables which are sufficiently
+well-behaved and tables which do not define completion boundaries.
+~cape-super-capf~ has the same restrictions as ~completion-table-merge~ and
+~completion-table-in-turn~.
 
 #+begin_src emacs-lisp
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
@@ -174,7 +184,7 @@ and ~completion-table-in-turn~.
               (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
 #+end_src
 
-See also the aforementioned ~~company--multi-backend-adapter~~ from Company, which
+See also the aforementioned ~company--multi-backend-adapter~ from Company, which
 allows you to merge multiple Company backends.
 
 ** Capf-Buster - Cache busting
