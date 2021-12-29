@@ -627,6 +627,7 @@ NAME is the name of the capf.
 METHOD is the input method.
 PREFIX is the prefix regular expression."
   (let ((capf (intern (format "cape-%s" name)))
+        (prefix-required (intern (format "cape-%s-prefix-required" name)))
         (list (intern (format "cape--%s-list" name)))
         (ann (intern (format "cape--%s-annotation" name)))
         (docsig (intern (format "cape--%s-docsig" name)))
@@ -634,6 +635,9 @@ PREFIX is the prefix regular expression."
         (properties (intern (format "cape--%s-properties" name))))
     `(progn
        (defvar ,list (cape--char-translation ,method ,prefix))
+       (defcustom ,prefix-required t
+         ,(format "Initial prefix is required for `%s' to trigger." capf)
+         :type 'boolean)
        (defun ,ann (name)
          (when-let (char (cdr (assoc name ,list)))
            (format " %c" char)))
@@ -663,12 +667,14 @@ is nil the function acts like a capf." method method)
          (interactive (list t))
          (if interactive
              ;; NOTE: Disable cycling since replacement breaks it.
-             (let (completion-cycle-threshold)
+             (let (completion-cycle-threshold ,prefix-required)
                (cape--interactive #',capf))
            (require 'thingatpt)
-           (let ((bounds (if (thing-at-point-looking-at ,(format "%s[^ \n\t]*" prefix))
-                             (cons (match-beginning 0) (match-end 0))
-                           (cons (point) (point)))))
+           (when-let (bounds
+                      (cond
+                       ((thing-at-point-looking-at ,(format "%s[^ \n\t]*" prefix))
+                        (cons (match-beginning 0) (match-end 0)))
+                       ((not ,prefix-required) (cons (point) (point)))))
              (append
               (list (car bounds) (cdr bounds)
                     (cape--table-with-properties ,list :category ',capf)
