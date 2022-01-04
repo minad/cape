@@ -45,6 +45,8 @@
   (require 'cl-lib)
   (require 'subr-x))
 
+(autoload 'thing-at-point-looking-at "thingatpt")
+
 ;;;; Customization
 
 (defgroup cape nil
@@ -491,16 +493,18 @@ If INTERACTIVE is nil the function acts like a capf."
   (if interactive
       (let ((cape-dabbrev-min-length 0))
         (cape--interactive #'cape-dabbrev))
-    (when-let (bounds (bounds-of-thing-at-point 'word))
-      `(,(car bounds) ,(cdr bounds)
-             ,(cape--table-with-properties
-               ;; Use equal, if candidates must be longer than cape-dabbrev-min-length.
-               (cape--cached-table (car bounds) (cdr bounds)
-                                   #'cape--dabbrev-list
-                                   (if (> cape-dabbrev-min-length 0)
-                                       'equal 'prefix))
-                 :category 'cape-dabbrev)
-             :exclusive no ,@cape--dabbrev-properties))))
+    (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
+      (let ((beg (match-beginning 0))
+            (end (match-end 0)))
+        `(,beg ,end
+          ,(cape--table-with-properties
+            ;; Use equal, if candidates must be longer than cape-dabbrev-min-length.
+            (cape--cached-table beg end
+                                #'cape--dabbrev-list
+                                (if (> cape-dabbrev-min-length 0)
+                                    'equal 'prefix))
+            :category 'cape-dabbrev)
+          :exclusive no ,@cape--dabbrev-properties)))))
 
 (defun cape--dabbrev-list (word)
   "Find all dabbrev expansions for WORD."
@@ -609,7 +613,6 @@ PREFIX is the prefix regular expression."
           (kill-buffer)
           (sort list (lambda (x y) (string< (car x) (car y)))))))))
 
-(declare-function thing-at-point-looking-at "thingatpt")
 (defmacro cape--char-define (name method prefix)
   "Define character translation capf.
 NAME is the name of the capf.
@@ -658,7 +661,6 @@ is nil the function acts like a capf." method method)
              ;; NOTE: Disable cycling since replacement breaks it.
              (let (completion-cycle-threshold ,prefix-required)
                (cape--interactive #',capf))
-           (require 'thingatpt)
            (when-let (bounds
                       (cond
                        ((thing-at-point-looking-at ,(format "%s[^ \n\t]*" prefix))
