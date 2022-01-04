@@ -64,10 +64,6 @@
   "Minimum length of dabbrev expansions."
   :type 'integer)
 
-(defcustom cape-dabbrev-forbid-space t
-  "Forbid space in dabbrev expansions."
-  :type 'boolean)
-
 (defcustom cape-dabbrev-check-other-buffers t
   "Buffers to check for dabbrev."
   :type 'boolean)
@@ -486,7 +482,6 @@ If INTERACTIVE is nil the function acts like a capf."
 (declare-function dabbrev--ignore-case-p "dabbrev")
 (declare-function dabbrev--find-all-expansions "dabbrev")
 (declare-function dabbrev--reset-global-variables "dabbrev")
-(declare-function dabbrev--abbrev-at-point "dabbrev")
 
 ;;;###autoload
 (defun cape-dabbrev (&optional interactive)
@@ -494,39 +489,26 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (let ((cape-dabbrev-min-length 0)
-            cape-dabbrev-forbid-space)
+      (let ((cape-dabbrev-min-length 0))
         (cape--interactive #'cape-dabbrev))
-    (require 'dabbrev)
-    (cape--dabbrev-reset)
-    (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point)))
-          (beg (line-beginning-position))
-          (end (line-end-position)))
-      (when (and abbrev
-                 (not (and cape-dabbrev-forbid-space (string-match-p "\\s-" abbrev)))
-                 (save-excursion
-                   (setq beg (search-backward abbrev beg 'noerror)
-                         end (search-forward abbrev end 'noerror))
-                   (and beg end)))
-        `(,beg ,end
-               ,(cape--table-with-properties
-                 ;; Use equal, if candidates must be longer than cape-dabbrev-min-length.
-                 (cape--cached-table beg end #'cape--dabbrev-list
-                                     (if (> cape-dabbrev-min-length 0)
-                                         'equal 'prefix))
+    (when-let (bounds (bounds-of-thing-at-point 'word))
+      `(,(car bounds) ,(cdr bounds)
+             ,(cape--table-with-properties
+               ;; Use equal, if candidates must be longer than cape-dabbrev-min-length.
+               (cape--cached-table (car bounds) (cdr bounds)
+                                   #'cape--dabbrev-list
+                                   (if (> cape-dabbrev-min-length 0)
+                                       'equal 'prefix))
                  :category 'cape-dabbrev)
-               :exclusive no ,@cape--dabbrev-properties)))))
-
-(defun cape--dabbrev-reset ()
-  "Reset dabbrev state."
-  (let ((dabbrev-check-all-buffers cape-dabbrev-check-other-buffers)
-        (dabbrev-check-other-buffers cape-dabbrev-check-other-buffers))
-    (dabbrev--reset-global-variables)))
+             :exclusive no ,@cape--dabbrev-properties))))
 
 (defun cape--dabbrev-list (word)
   "Find all dabbrev expansions for WORD."
+  (require 'dabbrev)
   (cape--silent
-    (cape--dabbrev-reset)
+    (let ((dabbrev-check-all-buffers cape-dabbrev-check-other-buffers)
+          (dabbrev-check-other-buffers cape-dabbrev-check-other-buffers))
+      (dabbrev--reset-global-variables))
     (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
              for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
              if (>= (length w) min-len) collect w)))
