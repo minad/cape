@@ -64,6 +64,10 @@
   "Minimum length of dabbrev expansions."
   :type 'integer)
 
+(defcustom cape-dabbrev-forbid-space t
+  "Forbid space in dabbrev expansions."
+  :type 'boolean)
+
 (defcustom cape-dabbrev-check-other-buffers t
   "Buffers to check for dabbrev."
   :type 'boolean)
@@ -490,17 +494,20 @@ If INTERACTIVE is nil the function acts like a capf."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (let ((cape-dabbrev-min-length 0))
+      (let ((cape-dabbrev-min-length 0)
+            cape-dabbrev-forbid-space)
         (cape--interactive #'cape-dabbrev))
     (require 'dabbrev)
     (cape--dabbrev-reset)
-    (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point))) beg end)
-      (when (and abbrev (not (string-match-p "\\s-" abbrev)))
-        (save-excursion
-          (search-backward abbrev)
-          (setq beg (point))
-          (search-forward abbrev)
-          (setq end (point)))
+    (let ((abbrev (ignore-errors (dabbrev--abbrev-at-point)))
+          (beg (line-beginning-position))
+          (end (line-end-position)))
+      (when (and abbrev
+                 (not (and cape-dabbrev-forbid-space (string-match-p "\\s-" abbrev)))
+                 (save-excursion
+                   (setq beg (search-backward abbrev beg 'noerror)
+                         end (search-forward abbrev end 'noerror))
+                   (and beg end)))
         `(,beg ,end
                ,(cape--table-with-properties
                  ;; Use equal, if candidates must be longer than cape-dabbrev-min-length.
