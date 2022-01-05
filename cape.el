@@ -681,18 +681,27 @@ is nil the function acts like a capf." method method)
 
 ;;;;; cape-abbrev
 
+(defun cape--abbrev-tables ()
+  "Return list of all active abbrev tables, including parents."
+  ;; Emacs 28: See abbrev--suggest-get-active-tables-including-parents.
+  (let ((tables (abbrev--active-tables)))
+    (append tables (cl-loop for table in tables
+                            append (abbrev-table-get table :parents)))))
+
 (defun cape--abbrev-list ()
   "Abbreviation list."
-  (delete "" (nconc (all-completions "" global-abbrev-table)
-                    (all-completions "" local-abbrev-table))))
+  (delete "" (cl-loop for table in (cape--abbrev-tables)
+                      nconc (all-completions "" table))))
 
 (defun cape--abbrev-annotation (abbrev)
   "Annotate ABBREV with expansion."
   (concat " "
           (truncate-string-to-width
-           (symbol-value
-            (or (abbrev--symbol abbrev local-abbrev-table)
-                (abbrev--symbol abbrev global-abbrev-table)))
+           (format
+            "%s"
+            (symbol-value
+             (cl-loop for table in (cape--abbrev-tables)
+                      thereis (abbrev--symbol abbrev table))))
            30 0 nil t)))
 
 (defun cape--abbrev-exit (_str status)
