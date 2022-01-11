@@ -805,9 +805,9 @@ If INTERACTIVE is nil the function acts like a capf."
                    (cache-ht (make-hash-table :test #'equal))
                    (extra-fun
                     (lambda (prop)
-                      (lambda (x)
-                        (when-let (fun (plist-get (gethash x cache-ht) prop))
-                          (funcall fun x)))))
+                      (lambda (cand &rest args)
+                        (when-let (fun (plist-get (gethash cand cache-ht) prop))
+                          (apply fun cand args)))))
                    (tables nil)
                    (prefix-len nil))
         (cl-loop for (beg2 end2 . rest) in results do
@@ -864,7 +864,7 @@ If INTERACTIVE is nil the function acts like a capf."
               :company-deprecated (funcall extra-fun :company-deprecated)
               :company-kind (funcall extra-fun :company-kind)
               :annotation-function (funcall extra-fun :annotation-function)
-              :exit-function (lambda (x _status) (funcall (funcall extra-fun :exit-function) x)))))))
+              :exit-function (lambda (x s) (funcall (funcall extra-fun :exit-function) x s)))))))
 
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
