@@ -11,7 +11,6 @@
 #+html: <a href="http://elpa.gnu.org/devel/cape.html"><img alt="GNU-devel ELPA" src="https://elpa.gnu.org/devel/cape.svg"/></a>
 #+html: <a href="https://melpa.org/#/cape"><img alt="MELPA" src="https://melpa.org/packages/cape-badge.svg"/></a>
 #+html: <a href="https://stable.melpa.org/#/cape"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/cape-badge.svg"/></a>
-#+html: <img src="https://upload.wikimedia.org/wikipedia/en/3/35/Supermanflying.png" align="right">
 
 * Introduction
 
@@ -20,6 +19,8 @@ combination with my [[https://github.com/minad/corfu][Corfu]] completion UI or t
 completion backends used by ~completion-at-point~ are so called
 ~completion-at-point-functions~ (Capfs). In principle, the Capfs provided by Cape
 can also be used by [[https://github.com/company-mode/company-mode][Company]].
+
+#+html: <img src="https://github.com/minad/cape/blob/logo/cape.png?raw=true" align="right" width="30%">
 
 You can register the ~cape-*~ functions in the ~completion-at-point-functions~ list.
 This makes the backends available for completion, which is usually invoked by
