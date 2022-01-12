@@ -28,7 +28,7 @@ trigger the respective completion at point. You can bind them directly to a key
 in your user configuration. Notable commands/capfs are ~cape-line~ for completion
 of a line from the current buffer and ~cape-file~ for completion of a file name.
 The command ~cape-symbol~ is particularily useful for documentation of Elisp
-packages or configurations, since it completes elisp symbols anywere.
+packages or configurations, since it completes elisp symbols anywhere.
 
 On the more experimental side, Cape has the super power to transform Company
 backends into Capfs and merge multiple Capfs into a Super-Capf! These
