@@ -910,19 +910,23 @@ This feature is experimental."
         (set init t))
       (when-let* ((prefix (cape--company-call backend 'prefix))
                   (initial-input (if (stringp prefix) prefix (car-safe prefix))))
-        (let* ((end (point)) (beg (- end (length initial-input))))
+        (let* ((end (point)) (beg (- end (length initial-input)))
+               (dups (cape--company-call backend 'duplicates))
+               candidates)
           (list beg end
                 (funcall
                  (if (cape--company-call backend 'ignore-case)
                      #'completion-table-case-fold
                    #'identity)
                  (cape--table-with-properties
-                  (cape--cached-table beg end
-                                      (if (cape--company-call backend 'duplicates)
-                                          (lambda (input)
-                                            (delete-dups (cape--company-call backend 'candidates input)))
-                                        (apply-partially #'cape--company-call backend 'candidates))
-                                      (if (cape--company-call backend 'no-cache initial-input) 'never valid))
+                  (cape--cached-table
+                   beg end
+                   (lambda (input)
+                     (setq candidates (cape--company-call backend 'candidates input))
+                     (when dups (setq candidates (delete-dups candidates)))
+                     candidates)
+                   (if (cape--company-call backend 'no-cache initial-input)
+                       'never valid))
                   :category backend
                   :sort (not (cape--company-call backend 'sorted))))
                 :exclusive 'no
@@ -933,7 +937,10 @@ This feature is experimental."
                 :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
                 :company-kind (lambda (x) (cape--company-call backend 'kind x))
                 :annotation-function (lambda (x) (cape--company-call backend 'annotation x))
-                :exit-function (lambda (x _status) (cape--company-call backend 'post-completion x))))))))
+                :exit-function
+                (lambda (x _status)
+                  (cape--company-call backend 'post-completion
+                                      (or (car (member x candidates)) x)))))))))
 
 ;;;###autoload
 (defun cape-capf-buster (capf &optional valid)
