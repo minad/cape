@@ -892,8 +892,12 @@ If INTERACTIVE is nil the function acts like a capf."
                    (error "Cape company backend async timeout"))
                  (sit-for 0.1 'noredisplay)))
            ;; Remove cape--done introduced by future callback
+           ;; XXX NOTE: For some reason Emacs sometimes converts
+           ;; cape--done to (t . cape--done).
            (setq unread-command-events
-                 (delq 'cape--done unread-command-events)))
+                 (delq 'cape--done
+                       (delete '(t . cape--done)
+                               unread-command-events))))
          res))
       ;; Plain old synchronous return value.
       (res res))))
