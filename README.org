@@ -76,6 +76,8 @@ this package should be upstreamed into Emacs itself.
            ("C-c p l" . cape-line)
            ("C-c p w" . cape-dict)
            ("C-c p \\" . cape-tex)
+           ("C-c p _" . cape-tex)
+           ("C-c p ^" . cape-tex)
            ("C-c p &" . cape-sgml)
            ("C-c p r" . cape-rfc1345))
     :init
