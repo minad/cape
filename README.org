@@ -52,8 +52,9 @@ are not using Company as frontend.
 
 * Configuration
 
-Cape is available from MELPA. In the long term some of the Capfs provided by
-this package should be upstreamed into Emacs itself.
+Cape is available on GNU ELPA and MELPA. You can install the package with
+~package-install~. In the long term some of the Capfs provided by this package
+could be upstreamed into Emacs itself.
 
 #+begin_src emacs-lisp
   ;; Enable Corfu completion UI
