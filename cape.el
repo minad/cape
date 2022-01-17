@@ -582,9 +582,9 @@ If INTERACTIVE is nil the function acts like a capf."
 ;; macro for this computation since packages like `helpful' will
 ;; `macroexpand-all' the expensive `cape--define-char' macro calls.
 (eval-when-compile
-  (defun cape--char-translation (method prefix)
+  (defun cape--char-translation (method regexp)
     "Return character translation alist for METHOD.
-PREFIX is the prefix regular expression."
+REGEXP is the regular expression matching the names."
     (declare (pure t))
     (save-window-excursion
       (describe-input-method method)
@@ -599,7 +599,6 @@ PREFIX is the prefix regular expression."
                    "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
                    (buffer-string))))
                 "\n"))
-              (regexp (concat "\\`" prefix))
               (list nil))
           (dolist (line lines)
             (let ((beg 0) (len (length line)))
@@ -615,11 +614,11 @@ PREFIX is the prefix regular expression."
           (kill-buffer)
           (sort list (lambda (x y) (string< (car x) (car y)))))))))
 
-(defmacro cape--char-define (name method prefix)
+(defmacro cape--char-define (name method &rest prefix)
   "Define character translation capf.
 NAME is the name of the capf.
 METHOD is the input method.
-PREFIX is the prefix regular expression."
+PREFIX are the prefix characters."
   (let ((capf (intern (format "cape-%s" name)))
         (prefix-required (intern (format "cape-%s-prefix-required" name)))
         (list (intern (format "cape--%s-list" name)))
@@ -628,7 +627,9 @@ PREFIX is the prefix regular expression."
         (exit (intern (format "cape--%s-exit" name)))
         (properties (intern (format "cape--%s-properties" name))))
     `(progn
-       (defvar ,list (cape--char-translation ,method ,prefix))
+       (defvar ,list (cape--char-translation
+                      ,method
+                      ,(concat "\\`" (regexp-opt (mapcar #'char-to-string prefix)))))
        (defcustom ,prefix-required t
          ,(format "Initial prefix is required for `%s' to trigger." capf)
          :type 'boolean)
@@ -662,10 +663,13 @@ is nil the function acts like a capf." method method)
          (if interactive
              ;; NOTE: Disable cycling since replacement breaks it.
              (let (completion-cycle-threshold ,prefix-required)
+               (when (memq last-input-event ',prefix)
+                 (self-insert-command 1 last-input-event))
                (cape--interactive #',capf))
            (when-let (bounds
                       (cond
-                       ((thing-at-point-looking-at ,(format "%s[^ \n\t]*" prefix))
+                       ((thing-at-point-looking-at
+                         ,(concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
                         (cons (match-beginning 0) (match-end 0)))
                        ((not ,prefix-required) (cons (point) (point)))))
              (append
@@ -677,9 +681,9 @@ is nil the function acts like a capf." method method)
 ;;;###autoload (autoload 'cape-tex "cape" nil t)
 ;;;###autoload (autoload 'cape-sgml "cape" nil t)
 ;;;###autoload (autoload 'cape-rfc1345 "cape" nil t)
-(cape--char-define tex "TeX" "[\\\\^_]")
-(cape--char-define sgml "sgml" "&")
-(cape--char-define rfc1345 "rfc1345" "&")
+(cape--char-define tex "TeX" ?\\ ?^ ?_)
+(cape--char-define sgml "sgml" ?&)
+(cape--char-define rfc1345 "rfc1345" ?&)
 
 ;;;;; cape-abbrev
 
