@@ -895,9 +895,11 @@ If INTERACTIVE is nil the function acts like a capf."
                             (> (- (time-to-seconds) start) cape-company-timeout))
                    (error "Cape company backend async timeout"))
                  (sit-for 0.1 'noredisplay)))
-           ;; Remove cape--done introduced by future callback
-           ;; XXX NOTE: For some reason Emacs sometimes converts
-           ;; cape--done to (t . cape--done).
+           ;; Remove cape--done introduced by future callback.
+           ;; NOTE: `sit-for' converts cape--done to (t . cape--done).
+           ;; It seems that `sit-for' does not use a robust method to
+           ;; reinject inputs, maybe the implementation will change in
+           ;; the future.
            (setq unread-command-events
                  (delq 'cape--done
                        (delete '(t . cape--done)
