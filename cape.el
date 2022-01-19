@@ -708,8 +708,8 @@ is nil the function acts like a capf." method method)
 
 (defun cape--abbrev-exit (_str status)
   "Expand expansion if STATUS is not exact."
-   (unless (eq status 'exact)
-     (expand-abbrev)))
+  (unless (eq status 'exact)
+    (expand-abbrev)))
 
 (defvar cape--abbrev-properties
   (list :annotation-function #'cape--abbrev-annotation
@@ -950,10 +950,17 @@ This feature is experimental."
                                       (or (car (member x candidates)) x)))))))))
 
 ;;;###autoload
-(defun cape-capf-buster (capf &optional valid)
-  "Return transformed CAPF where the cache is busted on input change.
-VALID is the input comparator, see `cape--input-valid-p'."
-  (lambda ()
+(defun cape-interactive-capf (capf)
+  "Create interactive completion function from CAPF."
+  (lambda (&optional interactive)
+    (interactive (list t))
+    (if interactive (cape--interactive capf) (funcall capf))))
+
+;;;###autoload
+(defun cape-wrap-buster (capf &optional valid)
+  "Call CAPF and return a completion table with cache busting.
+The cache is busted when the input changes, where VALID is the input
+comparator, see `cape--input-valid-p'."
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end
@@ -969,76 +976,81 @@ VALID is the input comparator, see `cape--input-valid-p'."
                           ;; An interruption should not happen between the setqs.
                           (setq table new-table input new-input)))))
                    (complete-with-action action table str pred)))
-              ,@plist)))))
+              ,@plist))))
 
 ;;;###autoload
-(defun cape-capf-with-properties (capf &rest properties)
-  "Return a new CAPF with additional completion PROPERTIES.
+(defun cape-wrap-properties (capf &rest properties)
+  "Call CAPF and add additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function and
 the various :company-* extensions. Furthermore a boolean :sort flag and a
 completion :category symbol can be specified."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end
-              ,(apply #'cape--table-with-properties table properties)
-              ,@properties ,@plist)))))
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end
+            ,(apply #'cape--table-with-properties table properties)
+            ,@properties ,@plist))))
 
 ;;;###autoload
-(defun cape-capf-with-predicate (capf predicate)
-  "Return a new CAPF with an additional candidate PREDICATE.
+(defun cape-wrap-predicate (capf predicate)
+  "Call CAPF and add an additional candidate PREDICATE.
 The PREDICATE is passed the candidate symbol or string."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,table
-              :predicate
-              ,(if-let (pred (plist-get plist :predicate))
-                   ;; First argument is key, second is value for hash tables.
-                   ;; The first argument can be a cons cell for alists. Then
-                   ;; the candidate itself is either a string or a symbol. We
-                   ;; normalize the calling convention here such that PREDICATE
-                   ;; always receives a string or a symbol.
-                   (lambda (&rest args)
-                     (when (apply pred args)
-                       (setq args (car args))
-                       (funcall predicate (if (consp args) (car args) args))))
-                 (lambda (key &optional _val)
-                   (funcall predicate (if (consp key) (car key) key))))
-              ,@plist)))))
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,table
+            :predicate
+            ,(if-let (pred (plist-get plist :predicate))
+                 ;; First argument is key, second is value for hash tables.
+                 ;; The first argument can be a cons cell for alists. Then
+                 ;; the candidate itself is either a string or a symbol. We
+                 ;; normalize the calling convention here such that PREDICATE
+                 ;; always receives a string or a symbol.
+                 (lambda (&rest args)
+                   (when (apply pred args)
+                     (setq args (car args))
+                     (funcall predicate (if (consp args) (car args) args))))
+               (lambda (key &optional _val)
+                 (funcall predicate (if (consp key) (car key) key))))
+            ,@plist))))
 
 ;;;###autoload
-(defun cape-silent-capf (capf)
-  "Create a new CAPF which is silent (no messages, no errors)."
-  (lambda ()
-    (pcase (cape--silent (funcall capf))
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(cape--silent-table table) ,@plist)))))
+(defun cape-wrap-silent (capf)
+  "Call CAPF and silence it (no messages, no errors)."
+  (pcase (cape--silent (funcall capf))
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--silent-table table) ,@plist))))
 
 ;;;###autoload
-(defun cape-capf-case-fold (capf &optional dont-fold)
-  "Create a new CAPF which is case insensitive.
-If DONT-FOLD is non-nil, return a completion table that is
-case sensitive instead."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist)))))
+(defun cape-wrap-case-fold (capf &optional dont-fold)
+  "Call CAPF and return a case insenstive completion table.
+If DONT-FOLD is non-nil return a case sensitive table instead."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist))))
 
 ;;;###autoload
-(defun cape-noninterruptible-capf (capf)
-  "Create a new CAPF which is non-interruptible silent by input."
-  (lambda ()
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end ,(cape--noninterruptible-table table) ,@plist)))))
+(defun cape-wrap-noninterruptible (capf)
+  "Call CAPF and return a non-interruptible completion table."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
 
-;;;###autoload
-(defun cape-interactive-capf (capf)
-  "Create interactive completion function from CAPF."
-  (lambda (&optional interactive)
-    (interactive (list t))
-    (if interactive (cape--interactive capf) (funcall capf))))
+(defmacro cape--capf-wrapper (wrapper)
+  "Create a capf transformer for WRAPPER."
+  `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
+     (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
+
+;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
+;;;###autoload (autoload 'cape-capf-case-fold "cape")
+;;;###autoload (autoload 'cape-capf-silent "cape")
+;;;###autoload (autoload 'cape-capf-predicate "cape")
+;;;###autoload (autoload 'cape-capf-properties "cape")
+;;;###autoload (autoload 'cape-capf-buster "cape")
+(cape--capf-wrapper noninterruptible)
+(cape--capf-wrapper case-fold)
+(cape--capf-wrapper silent)
+(cape--capf-wrapper predicate)
+(cape--capf-wrapper properties)
+(cape--capf-wrapper buster)
 
 (provide 'cape)
 ;;; cape.el ends here

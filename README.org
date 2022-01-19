@@ -212,12 +212,12 @@ achieve a similarly refreshing strategy.
 
 ** Other Capf transformers
 
-- ~cape-silent-capf~: Wrap a chatty Capf and silence it.
-- ~cape-noninterruptible-capf~: Protect a Capf which does not like to be interrupted.
 - ~cape-interactive-capf~: Create a Capf which can be called interactively.
-- ~cape-capf-case-fold~: Create a Capf which is case insensitive.
-- ~cape-capf-with-properties~: Add completion properties to a Capf.
-- ~cape-capf-with-predicate~: Add candidate predicate to a Capf.
+- ~cape-wrap-silent~, ~cape-capf-silent~: Wrap a chatty Capf and silence it.
+- ~cape-wrap-noninterruptible~, ~cape-capf-noninterruptible:~ Protect a Capf which does not like to be interrupted.
+- ~cape-wrap-case-fold~, ~cape-capf-case-fold~: Create a Capf which is case insensitive.
+- ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
+- ~cape-wrap-predicate~, ~cape-capf-predicate~: Add candidate predicate to a Capf.
 
 * Contributions
 
