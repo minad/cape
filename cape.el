@@ -1034,6 +1034,24 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
 
+;;;###autoload
+(defun cape-wrap-purify (capf)
+  "Call CAPF and ensure that it does not modify the buffer."
+  ;; bug#50470: Fix Capfs which illegally modify the buffer or which
+  ;; illegally call `completion-in-region'. The workaround here has been
+  ;; proposed @jakanakaevangeli in bug#50470 and is used in
+  ;; @jakanakaevangeli's capf-autosuggest package.
+  (catch 'cape--illegal-completion-in-region
+    (condition-case nil
+        (let ((buffer-read-only t)
+              (inhibit-read-only nil)
+              (completion-in-region-function
+               (lambda (beg end coll pred)
+                 (throw 'cape--illegal-completion-in-region
+                        (list beg end coll :predicate pred)))))
+          (funcall capf))
+      (buffer-read-only nil))))
+
 (defmacro cape--capf-wrapper (wrapper)
   "Create a capf transformer for WRAPPER."
   `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
@@ -1051,6 +1069,7 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
 (cape--capf-wrapper predicate)
 (cape--capf-wrapper properties)
 (cape--capf-wrapper buster)
+(cape--capf-wrapper purify)
 
 (provide 'cape)
 ;;; cape.el ends here
