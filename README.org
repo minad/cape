@@ -212,6 +212,19 @@ achieve a similarly refreshing strategy.
               (list (cape-capf-buster #'some-caching-capf)))
 #+end_src
 
+** completing-read adapter
+
+/Wrap your completion command in a Cape and turn it into a Capf!/
+
+Sometimes it is useful to reuse existing completion commands, which call
+~completing-read~ to generate candidates for completion at point. One such example
+is the command ~consult-history~.
+
+#+begin_src emacs-lisp
+  (defalias 'eshell-buffer-name-capf (cape-interactive-capf (cape-completing-read-to-capf #'consult-history)))
+#+end_src
+
+
 ** Other Capf transformers
 
 - ~cape-interactive-capf~: Create a Capf which can be called interactively.

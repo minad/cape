@@ -950,6 +950,17 @@ This feature is experimental."
                                       (or (car (member x candidates)) x)))))))))
 
 ;;;###autoload
+(defun cape-completing-read-to-capf (command)
+  "Convert a completion COMMAND to a Capf."
+  (lambda ()
+    (catch 'cape--result
+      (cl-letf (((symbol-function #'completing-read)
+                 (lambda (_prompt table &rest _)
+                   (throw 'cape--result (list (point) (point) table :exclusive 'no)))))
+        (call-interactively command))
+      nil)))
+
+;;;###autoload
 (defun cape-interactive-capf (capf)
   "Create interactive completion function from CAPF."
   (lambda (&optional interactive)
