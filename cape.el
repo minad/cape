@@ -496,11 +496,12 @@ If INTERACTIVE is nil the function acts like a capf."
             (end (match-end 0)))
         `(,beg ,end
           ,(cape--table-with-properties
-            ;; Use equal, if candidates must be longer than cape-dabbrev-min-length.
             (cape--cached-table beg end
                                 #'cape--dabbrev-list
-                                (if (> cape-dabbrev-min-length 0)
-                                    'equal 'prefix))
+                                ;; TODO: Use equal, if candidates must be longer than cape-dabbrev-min-length.
+                                ;;(if (> cape-dabbrev-min-length 0) 'equal 'prefix)
+                                ;; Problem is that when entering more input, candidates get lost!
+                                'prefix)
             :category 'cape-dabbrev)
           :exclusive no ,@cape--dabbrev-properties)))))
 
