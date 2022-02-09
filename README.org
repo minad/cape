@@ -224,5 +224,5 @@ achieve a similarly refreshing strategy.
 
 * Contributions
 
-Since this package is part of [[http://elpa.gnu.org/packages/marginalia.html][GNU ELPA]] contributions require a copyright
+Since this package is part of [[http://elpa.gnu.org/packages/cape.html][GNU ELPA]] contributions require a copyright
 assignment to the FSF.
