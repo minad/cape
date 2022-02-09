@@ -184,7 +184,7 @@ well-behaved and tables which do not define completion boundaries.
 ~cape-super-capf~ has the same restrictions as ~completion-table-merge~ and
 ~completion-table-in-turn~. As a simple rule of thumb, ~cape-super-capf~ works only
 well for static completion functions like ~cape-dabbrev~, ~cape-keyword~,
-~cape-ispell,~ etc., but not for complex multi-step completions like ~cape-file~.
+~cape-ispell~, etc., but not for complex multi-step completions like ~cape-file~.
 
 #+begin_src emacs-lisp
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
