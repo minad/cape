@@ -887,7 +887,7 @@ If INTERACTIVE is nil the function acts like a capf."
                    (let ((input-method-function nil))
                      (read-event nil t))
                    (when (eq res 'cape--waiting)
-                     (throw toi nil)))
+                     (throw toi t)))
                (setq unread-command-events
                      (delq 'cape--done unread-command-events)))
            (funcall fetch (lambda (arg) (setq res arg)))
