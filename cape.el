@@ -557,7 +557,7 @@ If INTERACTIVE is nil the function acts like a capf."
   (or cape--dict-words
       (setq cape--dict-words
             (split-string (with-temp-buffer
-                            (insert-file-contents-literally cape-dict-file)
+                            (insert-file-contents cape-dict-file)
                             (buffer-string))
                           "\n" 'omit-nulls))))
 
