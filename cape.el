@@ -352,6 +352,15 @@
     (cape--silent
       (complete-with-action action table str pred))))
 
+(defun cape--nonessential-table (table)
+  "Mark completion TABLE as `non-essential'."
+  (lambda (str pred action)
+    (let ((non-essential t))
+      (let ((result (funcall table str pred action)))
+        (when (and (eq action 'completion--unquote) (functionp (cadr result)))
+          (cl-callf cape--nonessential-table (cadr result)))
+        result))))
+
 (cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
@@ -416,13 +425,15 @@ VALID is the input comparator, see `cape--input-valid-p'."
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (let (cape-file-directory-must-exist)
+      (let ((cape-file-directory-must-exist))
         (cape--interactive #'cape-file))
     (let* ((bounds (cape--bounds 'filename))
+           (non-essential t)
            (file (buffer-substring (car bounds) (cdr bounds))))
       (when (or (not cape-file-directory-must-exist)
                 (and (string-match-p "/" file) (file-exists-p (file-name-directory file))))
-        `(,(car bounds) ,(cdr bounds) ,#'read-file-name-internal
+        `(,(car bounds) ,(cdr bounds)
+          ,(cape--nonessential-table #'read-file-name-internal)
           ,@(and (not (equal file "/")) (string-suffix-p "/" file)
                  '(:company-prefix-length t))
           :exclusive no ,@cape--file-properties)))))
