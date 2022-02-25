@@ -758,7 +758,8 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-keyword (&optional interactive)
-  "Complete word at point.
+  "Complete programming language keyword at point.
+See the variable `cape-keywords'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
