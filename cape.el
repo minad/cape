@@ -549,7 +549,7 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-ispell (&optional interactive)
-  "Complete word with Ispell at point.
+  "Complete word at point with Ispell.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
