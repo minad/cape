@@ -425,6 +425,7 @@ VALID is the input comparator, see `cape--input-valid-p'."
 ;;;###autoload
 (defun cape-file (&optional interactive)
   "Complete file name at point.
+See the user option `cape-file-directory-must-exist'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
@@ -472,7 +473,7 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-symbol (&optional interactive)
-  "Complete symbol at point.
+  "Complete Elisp symbol at point.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
@@ -548,7 +549,7 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-ispell (&optional interactive)
-  "Complete with Ispell at point.
+  "Complete word with Ispell at point.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
