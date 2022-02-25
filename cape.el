@@ -579,7 +579,8 @@ If INTERACTIVE is nil the function acts like a capf."
 
 ;;;###autoload
 (defun cape-dict (&optional interactive)
-  "Complete word at point.
+  "Complete word from dictionary at point.
+See the custom option `cape-dict-file'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
