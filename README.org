@@ -170,6 +170,7 @@ then be used as a Capf via ~cape-company-to-capf~.
 
 Cape supports merging multiple Capfs using the function ~cape-super-capf~. This
 feature is experimental and should only be used in special scenarios.
+*Don't use cape-super-capf if you are not 100% sure that you need it!*
 
 Note that ~cape-super-capf~ is not needed if you want to use multiple Capfs which
 are tried one by one, e.g., it is perfectly possible to use ~cape-file~ together
