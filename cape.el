@@ -868,7 +868,7 @@ If INTERACTIVE is nil the function acts like a capf."
                                                  (puthash cand plist ht)
                                                (setcar cell nil)))
                                     (setq candidates (nconc candidates cands))))
-                         (setq cache-filter (list str (copy-sequence completion-regexp-list) completion-ignore-case)
+                         (setq cache-filter filter
                                cache-candidates (delq nil candidates)
                                cache-ht ht))))
                    (copy-sequence cache-candidates))
