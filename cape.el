@@ -323,6 +323,7 @@ auto completion does not pop up too aggressively."
     (cperl-mode perl-mode)
     (jde-mode java-mode)
     (ess-julia-mode julia-mode)
+    (phps-mode php-mode)
     (enh-ruby-mode ruby-mode))
   "Alist of major modes and keywords."
   :type 'alist)
