@@ -963,7 +963,11 @@ This feature is experimental."
                 :company-docsig (lambda (x) (cape--company-call backend 'meta x))
                 :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
                 :company-kind (lambda (x) (cape--company-call backend 'kind x))
-                :annotation-function (lambda (x) (cape--company-call backend 'annotation x))
+                :annotation-function (lambda (x)
+                                       (when-let (ann (cape--company-call backend 'annotation x))
+                                         (if (string-match-p "^[ \t]" ann)
+                                             ann
+                                           (concat " " ann))))
                 :exit-function
                 (lambda (x _status)
                   (cape--company-call backend 'post-completion
