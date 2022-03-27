@@ -74,8 +74,8 @@ If t, check all other buffers (subject to dabbrev ignore rules).
 Any other non-nil value only checks some other buffers, as per
 `dabbrev-select-buffers-function'."
   :type '(choice (const :tag "off" nil)
-		 (const :tag "some" 'some)
-		 (other :tag "all" t)))
+                 (const :tag "some" 'some)
+                 (other :tag "all" t)))
 
 (defcustom cape-file-directory-must-exist t
   "The parent directory must exist for file completion."
@@ -1067,6 +1067,17 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
      `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
 
 ;;;###autoload
+(defun cape-wrap-prefix-length (capf length)
+  "Call CAPF and ensure that prefix length is greater or equal than LENGTH.
+If the prefix is long enough, enforce auto completion."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     (when (>= (- end beg) length)
+       `(,beg ,end ,table
+         :company-prefix-length t
+         ,@plist)))))
+
+;;;###autoload
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not modify the buffer."
   ;; bug#50470: Fix Capfs which illegally modify the buffer or which
@@ -1102,6 +1113,7 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
 (cape--capf-wrapper properties)
 (cape--capf-wrapper buster)
 (cape--capf-wrapper purify)
+(cape--capf-wrapper prefix-length)
 
 (provide 'cape)
 ;;; cape.el ends here

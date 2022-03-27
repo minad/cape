@@ -222,6 +222,7 @@ achieve a similarly refreshing strategy.
 - ~cape-wrap-case-fold~, ~cape-capf-case-fold~: Create a Capf which is case insensitive.
 - ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
 - ~cape-wrap-predicate~, ~cape-capf-predicate~: Add candidate predicate to a Capf.
+- ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix length.
 
 * Contributions
 
