@@ -68,8 +68,14 @@ auto completion does not pop up too aggressively."
   :type 'integer)
 
 (defcustom cape-dabbrev-check-other-buffers t
-  "Buffers to check for dabbrev."
-  :type 'boolean)
+  "Buffers to check for dabbrev.
+
+If t, check all other buffers (subject to dabbrev ignore rules).
+Any other non-nil value only checks some other buffers, as per
+`dabbrev-select-buffers-function'."
+  :type '(choice (const :tag "off" nil)
+		 (const :tag "some" 'some)
+		 (other :tag "all" t)))
 
 (defcustom cape-file-directory-must-exist t
   "The parent directory must exist for file completion."
@@ -529,8 +535,8 @@ If INTERACTIVE is nil the function acts like a capf."
   "Find all dabbrev expansions for WORD."
   (require 'dabbrev)
   (cape--silent
-    (let ((dabbrev-check-all-buffers cape-dabbrev-check-other-buffers)
-          (dabbrev-check-other-buffers cape-dabbrev-check-other-buffers))
+    (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
+          (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
       (dabbrev--reset-global-variables))
     (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
              for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
