@@ -1067,6 +1067,19 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
      `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
 
 ;;;###autoload
+(defun cape-wrap-trigger-chars (capf chars)
+  "Call CAPF and enforce completion after trigger CHARS."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     (when (stringp chars)
+       (setq chars (string-to-list chars)))
+     (when (or (memq (char-before beg) chars)
+               (memq (char-after beg) chars))
+       `(,beg ,end ,table
+         :company-prefix-length t
+         ,@plist)))))
+
+;;;###autoload
 (defun cape-wrap-prefix-length (capf length)
   "Call CAPF and ensure that prefix length is greater or equal than LENGTH.
 If the prefix is long enough, enforce auto completion."
@@ -1116,6 +1129,8 @@ If the prefix is long enough, enforce auto completion."
 (cape--capf-wrapper purify)
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 (cape--capf-wrapper silent)
+;;;###autoload (autoload 'cape-capf-trigger-chars "cape")
+(cape--capf-wrapper trigger-chars)
 
 (provide 'cape)
 ;;; cape.el ends here
