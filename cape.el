@@ -1062,7 +1062,7 @@ If DONT-FOLD is non-nil return a case sensitive table instead."
 ;;;###autoload
 (defun cape-wrap-noninterruptible (capf)
   "Call CAPF and return a non-interruptible completion table."
-  (pcase (funcall capf)
+  (pcase (let (throw-on-input) (funcall capf))
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
 
