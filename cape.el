@@ -607,7 +607,7 @@ If INTERACTIVE is nil the function acts like a capf."
 ;; `macroexpand-all' the expensive `cape--define-char' macro calls.
 (eval-when-compile
   (defun cape--char-translation (method regexp)
-    "Return character translation alist for METHOD.
+    "Return character translation hash for METHOD.
 REGEXP is the regular expression matching the names."
     (declare (pure t))
     (save-window-excursion
@@ -623,7 +623,7 @@ REGEXP is the regular expression matching the names."
                    "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
                    (buffer-string))))
                 "\n"))
-              (list nil))
+              (hash (make-hash-table :test #'equal)))
           (dolist (line lines)
             (let ((beg 0) (len (length line)))
               (while (< beg len)
@@ -633,10 +633,10 @@ REGEXP is the regular expression matching the names."
                     (let ((name (string-trim (substring-no-properties line beg ename)))
                           (char (string-trim (substring-no-properties line ename echar))))
                       (when (and (string-match-p regexp name) (= (length char) 1))
-                        (push (cons name (aref char 0)) list))))
+                        (puthash name (aref char 0) hash))))
                   (setq beg echar)))))
           (kill-buffer)
-          (sort list (lambda (x y) (string< (car x) (car y)))))))))
+          hash)))))
 
 (defmacro cape--char-define (name method &rest prefix)
   "Define character translation capf.
@@ -645,23 +645,23 @@ METHOD is the input method.
 PREFIX are the prefix characters."
   (let ((capf (intern (format "cape-%s" name)))
         (prefix-required (intern (format "cape-%s-prefix-required" name)))
-        (list (intern (format "cape--%s-list" name)))
+        (hash (intern (format "cape--%s-hash" name)))
         (ann (intern (format "cape--%s-annotation" name)))
         (docsig (intern (format "cape--%s-docsig" name)))
         (exit (intern (format "cape--%s-exit" name)))
         (properties (intern (format "cape--%s-properties" name))))
     `(progn
-       (defvar ,list (cape--char-translation
+       (defvar ,hash (cape--char-translation
                       ,method
                       ,(concat "\\`" (regexp-opt (mapcar #'char-to-string prefix)))))
        (defcustom ,prefix-required t
          ,(format "Initial prefix is required for `%s' to trigger." capf)
          :type 'boolean)
        (defun ,ann (name)
-         (when-let (char (cdr (assoc name ,list)))
+         (when-let (char (gethash name ,hash))
            (format " %c" char)))
        (defun ,docsig (name)
-         (when-let (char (cdr (assoc name ,list)))
+         (when-let (char (gethash name ,hash))
            (format "%s (%s)"
                    (get-char-code-property char 'name)
                    (char-code-property-description
@@ -669,7 +669,7 @@ PREFIX are the prefix characters."
                     (get-char-code-property char 'general-category)))))
        (defun ,exit (name status)
          (unless (eq status 'exact)
-           (when-let (char (cdr (assoc name ,list)))
+           (when-let (char (gethash name ,hash))
              (delete-region (max (point-min) (- (point) (length name))) (point))
              (insert (char-to-string char)))))
        (defvar ,properties
@@ -698,7 +698,7 @@ is nil the function acts like a capf." method method)
                        ((not ,prefix-required) (cons (point) (point)))))
              (append
               (list (car bounds) (cdr bounds)
-                    (cape--table-with-properties ,list :category ',capf)
+                    (cape--table-with-properties ,hash :category ',capf)
                     :exclusive 'no)
               ,properties)))))))
 
