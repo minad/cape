@@ -81,6 +81,14 @@ Any other non-nil value only checks some other buffers, as per
   "The parent directory must exist for file completion."
   :type 'integer)
 
+(defcustom cape-line-buffer-function #'cape--buffers-major-mode
+  "Function which returns list of buffers.
+The buffers are scanned for completion candidates by `cape-line'."
+  :type '(choice (const :tag "Current buffer" current-buffer)
+                 (const :tag "All buffers" buffer-list)
+                 (const :tag "Buffers with same major mode" cape--buffers-major-mode)
+                 (function :tag "Custom function")))
+
 (defcustom cape-keywords
   ;; This variable was taken from company-keywords.el.
   ;; Please contribute corrections or additions to both Cape and Company.
@@ -791,28 +799,40 @@ If INTERACTIVE is nil the function acts like a capf."
 (defvar cape--line-properties nil
   "Completion extra properties for `cape-line'.")
 
+(defun cape--buffers-major-mode ()
+  "Return buffers with same major mode as current buffer."
+  (cl-loop for buf in (buffer-list)
+           if (eq major-mode (buffer-local-value 'major-mode buf))
+           collect buf))
+
 (defun cape--line-list ()
   "Return all lines from buffer."
-  (let ((beg (point-min))
-        (max (point-max))
-        (pt (point))
-        (ht (make-hash-table :test #'equal))
-        end lines)
-    (save-excursion
-      (while (< beg max)
-        (goto-char beg)
-        (setq end (line-end-position))
-        (unless (<= beg pt end)
-          (let ((line (buffer-substring-no-properties beg end)))
-            (unless (or (string-blank-p line) (gethash line ht))
-              (puthash line t ht)
-              (push line lines))))
-        (setq beg (1+ end))))
+  (let ((ht (make-hash-table :test #'equal))
+        (curr-buf (current-buffer))
+        (buffers (funcall cape-line-buffer-function))
+        lines)
+    (dolist (buf (if (listp buffers) buffers (list buffers)))
+      (with-current-buffer buf
+        (let ((beg (point-min))
+              (max (point-max))
+              (pt (if (eq curr-buf buf) (point) -1))
+              end)
+          (save-excursion
+            (while (< beg max)
+              (goto-char beg)
+              (setq end (line-end-position))
+              (unless (<= beg pt end)
+                (let ((line (buffer-substring-no-properties beg end)))
+                  (unless (or (string-blank-p line) (gethash line ht))
+                    (puthash line t ht)
+                    (push line lines))))
+              (setq beg (1+ end)))))))
     (nreverse lines)))
 
 ;;;###autoload
 (defun cape-line (&optional interactive)
-  "Complete current line from other lines in buffer.
+  "Complete current line from other lines.
+The buffers returned by `cape-line-buffer-function' are scanned for lines.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
