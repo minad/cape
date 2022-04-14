@@ -66,6 +66,7 @@ could be upstreamed into Emacs itself.
   ;; Add extensions
   (use-package cape
     ;; Bind dedicated completion commands
+    ;; Alternative prefix keys: C-c p, M-p, M-+, ...
     :bind (("C-c p p" . completion-at-point) ;; capf
            ("C-c p t" . complete-tag)        ;; etags
            ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
@@ -84,9 +85,9 @@ could be upstreamed into Emacs itself.
     :init
     ;; Add `completion-at-point-functions', used by `completion-at-point'.
     (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions #'cape-tex)
     (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-    (add-to-list 'completion-at-point-functions #'cape-keyword)
+    ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
+    ;;(add-to-list 'completion-at-point-functions #'cape-tex)
     ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
     ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
     ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
