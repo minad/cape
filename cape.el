@@ -74,7 +74,7 @@ If t, check all other buffers (subject to dabbrev ignore rules).
 Any other non-nil value only checks some other buffers, as per
 `dabbrev-select-buffers-function'."
   :type '(choice (const :tag "off" nil)
-                 (const :tag "some" 'some)
+                 (const :tag "some" some)
                  (other :tag "all" t)))
 
 (defcustom cape-file-directory-must-exist t
