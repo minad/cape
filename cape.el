@@ -274,17 +274,14 @@ If INTERACTIVE is nil the function acts like a capf."
       (let ((cape-dabbrev-min-length 0))
         (cape--interactive #'cape-dabbrev))
     (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
-      (let ((beg (match-beginning 0))
-            (end (match-end 0)))
+      (let* ((beg (match-beginning 0))
+             (end (match-end 0))
+             (table (cape--table-with-properties
+                     (cape--cached-table beg end #'cape--dabbrev-list 'prefix)
+                     :category 'cape-dabbrev)))
         `(,beg ,end
-          ,(cape--table-with-properties
-            (cape--cached-table beg end
-                                #'cape--dabbrev-list
-                                ;; TODO: Use equal, if candidates must be longer than cape-dabbrev-min-length.
-                                ;;(if (> cape-dabbrev-min-length 0) 'equal 'prefix)
-                                ;; Problem is that when entering more input, candidates get lost!
-                                'prefix)
-            :category 'cape-dabbrev)
+          ,(lambda (str pred action)
+             (or (eq action 'lambda) (funcall table str pred action)))
           :exclusive no ,@cape--dabbrev-properties)))))
 
 (defun cape--dabbrev-list (word)
