@@ -108,6 +108,11 @@ The buffers are scanned for completion candidates by `cape-line'."
   (let ((completion-at-point-functions (list capf)))
     (or (completion-at-point) (user-error "%s: No completions" capf))))
 
+(defun cape--accept-all-table (table)
+  "Create completion TABLE which accepts all input."
+  (lambda (str pred action)
+    (or (eq action 'lambda) (complete-with-action action table str pred))))
+
 (defun cape--noninterruptible-table (table)
   "Create non-interruptible completion TABLE."
   (lambda (str pred action)
@@ -728,11 +733,20 @@ If the prefix is long enough, enforce auto completion."
           (funcall capf))
       (buffer-read-only nil))))
 
+;;;###autoload
+(defun cape-wrap-accept-all (capf)
+  "Call CAPF and return a completion table which accepts every input."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
+
 (defmacro cape--capf-wrapper (wrapper)
   "Create a capf transformer for WRAPPER."
   `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
      (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
 
+;;;###autoload (autoload 'cape-capf-accept-all "cape")
+(cape--capf-wrapper accept-all)
 ;;;###autoload (autoload 'cape-capf-buster "cape")
 (cape--capf-wrapper buster)
 ;;;###autoload (autoload 'cape-capf-case-fold "cape")
