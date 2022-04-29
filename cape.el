@@ -185,6 +185,35 @@ VALID is the input comparator, see `cape--input-valid-p'."
 
 ;;;; Capfs
 
+;;;;; cape-history
+
+(declare-function ring-elements "ring")
+
+(defvar cape--history-properties
+  (list :company-kind (lambda (_) 'text))
+  "Completion extra properties for `cape-history'.")
+
+(defun cape-history (&optional interactive)
+  "Complete from Eshell, Comint or minibuffer history.
+If INTERACTIVE is nil the function acts like a capf."
+  (interactive (list t))
+  (if interactive
+      (cape--interactive #'cape-history)
+    (let ((history
+           (cond
+            ((derived-mode-p 'eshell-mode)
+             (bound-and-true-p eshell-history-ring))
+            ((derived-mode-p 'comint-mode)
+             (bound-and-true-p comint-history-ring))
+            ((and (minibufferp) (not (eq minibuffer-history-variable t)))
+             (symbol-value minibuffer-history-variable)))))
+      (when (ring-p history)
+        (setq history (ring-elements history)))
+      (when history
+        `(,(line-beginning-position) ,(point)
+          ,(cape--table-with-properties history :sort nil)
+          :exclusive no ,@cape--history-properties)))))
+
 ;;;;; cape-file
 
 (defvar cape--file-properties
