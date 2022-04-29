@@ -101,7 +101,8 @@ PREFIX are the prefix characters."
          (list :annotation-function #',ann
                :company-docsig #',docsig
                :exit-function #',exit
-               :company-kind (lambda (_) 'text))
+               :company-kind (lambda (_) 'text)
+               :exclusive 'no)
          ,(format "Completion extra properties for `%s'." name))
        (defun ,capf (&optional interactive)
          ,(format "Complete unicode character at point.
@@ -123,8 +124,7 @@ is nil the function acts like a capf." method method)
                        ((not ,prefix-required) (cons (point) (point)))))
              (append
               (list (car bounds) (cdr bounds)
-                    (cape--table-with-properties ,hash :category ',capf)
-                    :exclusive 'no)
+                    (cape--table-with-properties ,hash :category ',capf))
               ,properties)))))))
 
 ;;;###autoload (autoload 'cape-tex "cape-char" nil t)

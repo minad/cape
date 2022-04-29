@@ -285,7 +285,8 @@
 
 (defvar cape--keyword-properties
   (list :annotation-function (lambda (_) " Keyword")
-        :company-kind (lambda (_) 'keyword))
+        :company-kind (lambda (_) 'keyword)
+        :exclusive 'no)
   "Completion extra properties for `cape-keyword'.")
 
 ;;;###autoload
@@ -300,7 +301,7 @@ If INTERACTIVE is nil the function acts like a capf."
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--table-with-properties keywords :category 'cape-keyword)
-          :exclusive no ,@cape--keyword-properties)))))
+          ,@cape--keyword-properties)))))
 
 (provide 'cape-keyword)
 ;;; cape-keyword.el ends here
