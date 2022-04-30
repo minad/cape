@@ -197,7 +197,8 @@ VALID is the input comparator, see `cape--input-valid-p'."
 
 (defun cape-history (&optional interactive)
   "Complete from Eshell, Comint or minibuffer history.
-If INTERACTIVE is nil the function acts like a capf."
+See also `consult-history' for a more flexible variant based on
+`completing-read'. If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-history)
@@ -228,7 +229,7 @@ If INTERACTIVE is nil the function acts like a capf."
 (defun cape-file (&optional interactive)
   "Complete file name at point.
 See the user option `cape-file-directory-must-exist'.
-If INTERACTIVE is nil the function acts like a capf."
+If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (let ((cape-file-directory-must-exist))
@@ -277,7 +278,7 @@ If INTERACTIVE is nil the function acts like a capf."
 ;;;###autoload
 (defun cape-symbol (&optional interactive)
   "Complete Elisp symbol at point.
-If INTERACTIVE is nil the function acts like a capf."
+If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-symbol)
@@ -307,7 +308,7 @@ If INTERACTIVE is nil the function acts like a capf."
   "Complete with Dabbrev at point.
 See the user options `cape-dabbrev-min-length' and
 `cape-dabbrev-check-other-buffers'.
-If INTERACTIVE is nil the function acts like a capf."
+If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (let ((cape-dabbrev-min-length 0))
@@ -355,7 +356,7 @@ If INTERACTIVE is nil the function acts like a capf."
 ;;;###autoload
 (defun cape-ispell (&optional interactive)
   "Complete word at point with Ispell.
-If INTERACTIVE is nil the function acts like a capf."
+If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-ispell)
@@ -388,7 +389,7 @@ If INTERACTIVE is nil the function acts like a capf."
 (defun cape-dict (&optional interactive)
   "Complete word from dictionary at point.
 See the custom option `cape-dict-file'.
-If INTERACTIVE is nil the function acts like a capf."
+If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-dict)
@@ -437,7 +438,7 @@ If INTERACTIVE is nil the function acts like a capf."
 ;;;###autoload
 (defun cape-abbrev (&optional interactive)
   "Complete abbreviation at point.
-If INTERACTIVE is nil the function acts like a capf."
+If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       ;; NOTE: Disable cycling since abbreviation replacement breaks it.
@@ -488,7 +489,7 @@ If INTERACTIVE is nil the function acts like a capf."
 (defun cape-line (&optional interactive)
   "Complete current line from other lines.
 The buffers returned by `cape-line-buffer-function' are scanned for lines.
-If INTERACTIVE is nil the function acts like a capf."
+If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-line)
