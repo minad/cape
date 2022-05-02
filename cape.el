@@ -559,7 +559,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                    (copy-sequence cache-candidates))
                   (_
                    (completion--some
-                    (lambda (table)
+                    (pcase-lambda (`(,table . ,_plist))
                       (complete-with-action action table str pred))
                     tables))))
               :exclusive 'no
