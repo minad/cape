@@ -195,6 +195,7 @@ VALID is the input comparator, see `cape--input-valid-p'."
         :exclusive 'no)
   "Completion extra properties for `cape-history'.")
 
+;;;###autoload
 (defun cape-history (&optional interactive)
   "Complete from Eshell, Comint or minibuffer history.
 See also `consult-history' for a more flexible variant based on
