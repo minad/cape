@@ -560,8 +560,14 @@ If INTERACTIVE is nil the function acts like a Capf."
                    (copy-sequence cache-candidates))
                   (_
                    (completion--some
-                    (pcase-lambda (`(,table . ,_plist))
-                      (complete-with-action action table str pred))
+                    (pcase-lambda (`(,table . ,plist))
+		      (let* ((pr (plist-get plist :predicate))
+			     (pred (if pr
+				       (if pred (lambda (x) ; satisfy both
+						  (and (funcall pred x) (funcall pr x)))
+					 pr)
+				     pred)))
+			(complete-with-action action table str pred)))
                     tables))))
               :exclusive 'no
               :company-prefix-length prefix-len
