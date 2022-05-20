@@ -577,7 +577,7 @@ If INTERACTIVE is nil the function acts like a Capf."
               :company-deprecated (funcall extra-fun :company-deprecated)
               :company-kind (funcall extra-fun :company-kind)
               :annotation-function (funcall extra-fun :annotation-function)
-              :exit-function (lambda (x s) (funcall (funcall extra-fun :exit-function) x s)))))))
+              :exit-function (funcall extra-fun :exit-function))))))
 
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
