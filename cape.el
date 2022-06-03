@@ -78,6 +78,10 @@ Any other non-nil value only checks some other buffers, as per
                  (const :tag "some" some)
                  (other :tag "all" t)))
 
+(defcustom cape-file-directory nil
+  "Base directory used by `cape-file."
+  :type '(choice (const nil) string function))
+
 (defcustom cape-file-directory-must-exist t
   "The parent directory must exist for file completion."
   :type 'integer)
@@ -128,12 +132,14 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 (defun cape--nonessential-table (table)
   "Mark completion TABLE as `non-essential'."
-  (lambda (str pred action)
-    (let ((non-essential t))
-      (let ((result (funcall table str pred action)))
-        (when (and (eq action 'completion--unquote) (functionp (cadr result)))
-          (cl-callf cape--nonessential-table (cadr result)))
-        result))))
+  (let ((dir default-directory))
+    (lambda (str pred action)
+      (let ((default-directory dir)
+            (non-essential t))
+        (let ((result (funcall table str pred action)))
+          (when (and (eq action 'completion--unquote) (functionp (cadr result)))
+            (cl-callf cape--nonessential-table (cadr result)))
+          result)))))
 
 (cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
@@ -235,7 +241,11 @@ If INTERACTIVE is nil the function acts like a Capf."
   (if interactive
       (let ((cape-file-directory-must-exist))
         (cape--interactive #'cape-file))
-    (let* ((bounds (cape--bounds 'filename))
+    (let* ((default-directory (pcase cape-file-directory
+                                ('nil default-directory)
+                                ((pred stringp) cape-file-directory)
+                                (_ (funcall cape-file-directory))))
+           (bounds (cape--bounds 'filename))
            (non-essential t)
            (file (buffer-substring (car bounds) (cdr bounds))))
       (when (or (not cape-file-directory-must-exist)
