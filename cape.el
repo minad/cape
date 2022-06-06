@@ -257,7 +257,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                      (file-exists-p (file-name-directory file))))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--nonessential-table #'read-file-name-internal)
-          ,@(when (or org (and (not (equal file "/")) (string-suffix-p "/" file)))
+          ,@(when (or org (string-match-p "./\\'" file))
               '(:company-prefix-length t))
           ,@cape--file-properties)))))
 
