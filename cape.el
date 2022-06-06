@@ -248,8 +248,8 @@ If INTERACTIVE is nil the function acts like a Capf."
            (bounds (cape--bounds 'filename))
            (non-essential t)
            (file (buffer-substring (car bounds) (cdr bounds)))
-           (org (and (derived-mode-p 'org-mode)
-                     (string-prefix-p "file:" file))))
+           ;; Support org links globally, see `org-open-at-point-global'.
+           (org (string-prefix-p "file:" file)))
       (when org (setf (car bounds) (+ 5 (car bounds))))
       (when (or org
                 (not cape-file-directory-must-exist)
