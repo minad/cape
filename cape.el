@@ -247,13 +247,18 @@ If INTERACTIVE is nil the function acts like a Capf."
                                 (_ (funcall cape-file-directory))))
            (bounds (cape--bounds 'filename))
            (non-essential t)
-           (file (buffer-substring (car bounds) (cdr bounds))))
-      (when (or (not cape-file-directory-must-exist)
-                (and (string-match-p "/" file) (file-exists-p (file-name-directory file))))
+           (file (buffer-substring (car bounds) (cdr bounds)))
+           (org (and (derived-mode-p 'org-mode)
+                     (string-prefix-p "file:" file))))
+      (when org (setf (car bounds) (+ 5 (car bounds))))
+      (when (or org
+                (not cape-file-directory-must-exist)
+                (and (string-match-p "/" file)
+                     (file-exists-p (file-name-directory file))))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--nonessential-table #'read-file-name-internal)
-          ,@(and (not (equal file "/")) (string-suffix-p "/" file)
-                 '(:company-prefix-length t))
+          ,@(when (or org (and (not (equal file "/")) (string-suffix-p "/" file)))
+              '(:company-prefix-length t))
           ,@cape--file-properties)))))
 
 ;;;;; cape-symbol
