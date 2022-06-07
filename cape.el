@@ -564,15 +564,16 @@ If INTERACTIVE is nil the function acts like a Capf."
                                          (cands (funcall sort (all-completions str table pr))))
                                     (cl-loop for cell on cands
                                              for cand = (car cell) do
-                                             (if (and (eq (gethash cand ht t) t)
-                                                      (or (not pred) (funcall pred cand)))
+                                             (if (eq (gethash cand ht t) t)
                                                  (puthash cand plist ht)
                                                (setcar cell nil)))
                                     (setq candidates (nconc candidates cands))))
                          (setq cache-filter filter
                                cache-candidates (delq nil candidates)
                                cache-ht ht))))
-                   (copy-sequence cache-candidates))
+                   (if pred
+                       (cl-loop for x in cache-candidates if (funcall pred x) collect x)
+                     (copy-sequence cache-candidates)))
                   (_
                    (completion--some
                     (pcase-lambda (`(,table . ,plist))
