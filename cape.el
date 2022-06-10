@@ -521,13 +521,11 @@ If INTERACTIVE is nil the function acts like a Capf."
   (lambda ()
     (when-let (results (delq nil (mapcar #'funcall capfs)))
       (pcase-let* ((`((,beg ,end . ,_)) results)
-                   (cache-candidates nil)
-                   (cache-filter nil)
-                   (cache-ht (make-hash-table :test #'equal))
+                   (cand-ht (make-hash-table :test #'equal))
                    (extra-fun
                     (lambda (prop)
                       (lambda (cand &rest args)
-                        (when-let (fun (plist-get (gethash cand cache-ht) prop))
+                        (when-let (fun (plist-get (gethash cand cand-ht) prop))
                           (apply fun cand args)))))
                    (tables nil)
                    (prefix-len nil))
@@ -552,28 +550,26 @@ If INTERACTIVE is nil the function acts like a Capf."
                               (display-sort-function . identity)
                               (cycle-sort-function . identity)))
                   ('t
-                   (let ((filter (list str (copy-sequence completion-regexp-list) completion-ignore-case)))
-                     (unless (equal filter cache-filter)
-                       (let ((ht (make-hash-table :test #'equal))
-                             (candidates nil))
-                         (cl-loop for (table . plist) in tables do
-                                  (let* ((pr (plist-get plist :predicate))
-                                         (md (completion-metadata "" table pr))
-                                         (sort (or (completion-metadata-get md 'display-sort-function)
-                                                   #'identity))
-                                         (cands (funcall sort (all-completions str table pr))))
-                                    (cl-loop for cell on cands
-                                             for cand = (car cell) do
-                                             (if (eq (gethash cand ht t) t)
-                                                 (puthash cand plist ht)
-                                               (setcar cell nil)))
-                                    (setq candidates (nconc candidates cands))))
-                         (setq cache-filter filter
-                               cache-candidates (delq nil candidates)
-                               cache-ht ht))))
-                   (if pred
-                       (cl-loop for x in cache-candidates if (funcall pred x) collect x)
-                     (copy-sequence cache-candidates)))
+                   (let ((ht (make-hash-table :test #'equal))
+                         (candidates nil))
+                     (cl-loop for (table . plist) in tables do
+                              (let* ((pr (if-let (pr (plist-get plist :predicate))
+                                             (if pred
+                                                 (lambda (x) (and (funcall pred x) (funcall pr x)))
+                                               pr)
+                                           pred))
+                                     (md (completion-metadata "" table pr))
+                                     (sort (or (completion-metadata-get md 'display-sort-function)
+                                               #'identity))
+                                     (cands (funcall sort (all-completions str table pr))))
+                                (cl-loop for cell on cands
+                                         for cand = (car cell) do
+                                         (if (eq (gethash cand ht t) t)
+                                             (puthash cand plist ht)
+                                           (setcar cell nil)))
+                                (setq candidates (nconc candidates cands))))
+                     (setq cand-ht ht)
+                     candidates))
                   (_
                    (completion--some
                     (pcase-lambda (`(,table . ,plist))
