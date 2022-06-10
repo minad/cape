@@ -555,7 +555,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                      (cl-loop for (table . plist) in tables do
                               (let* ((pr (if-let (pr (plist-get plist :predicate))
                                              (if pred
-                                                 (lambda (x) (and (funcall pred x) (funcall pr x)))
+                                                 (lambda (x) (and (funcall pr x) (funcall pred x)))
                                                pr)
                                            pred))
                                      (md (completion-metadata "" table pr))
@@ -569,7 +569,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                                            (setcar cell nil)))
                                 (setq candidates (nconc candidates cands))))
                      (setq cand-ht ht)
-                     candidates))
+                     (delq nil candidates)))
                   (_
                    (completion--some
                     (pcase-lambda (`(,table . ,plist))
@@ -577,7 +577,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                        action table str
                        (if-let (pr (plist-get plist :predicate))
                            (if pred
-                               (lambda (x) (and (funcall pred x) (funcall pr x)))
+                               (lambda (x) (and (funcall pr x) (funcall pred x)))
                              pr)
                          pred)))
                     tables))))
