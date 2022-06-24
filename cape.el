@@ -414,6 +414,44 @@ If INTERACTIVE is nil the function acts like a Capf."
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
         ,@cape--dict-properties))))
 
+;;;;; cape-bbdb
+
+(declare-function bbdb-records "bbdb")
+(declare-function bbdb-record-field "bbdb")
+
+(defvar cape--bbdb-properties
+  (list :annotation-function (lambda (_) " BBDB")
+        :company-kind (lambda (_) 'text)
+        :exclusive 'no)
+  "Completion extra properties for `cape-bbdb'.")
+
+(defvar cape--bbdb-records nil)
+(defun cape--bbdb-records ()
+  "BBDB records formated like FIRSTNAME LASTNAME <email@example.com>."
+  (or cape--bbdb-records
+      (setq cape--bbdb-records
+            (mapcar #'cape--bbdb-record-format (bbdb-records)))))
+
+(defun cape--bbdb-record-format (record)
+  "Formats a BBDB record into a string like FIRSTNAME LASTNAME <email@example.com>."
+  (format "%s %s"
+          (bbdb-record-field record 'name)
+          (apply #'concat
+                 (mapcar (lambda (e) (concat "<" e ">"))
+                         (bbdb-record-field record 'mail)))))
+
+;;;###autoload
+(defun cape-bbdb (&optional interactive)
+  "Complete name from BBDB and insert with email.
+If INTERACTIVE is nil the function acts like a Capf."
+  (interactive (list t))
+  (if interactive
+      (cape--interactive #'cape-bbdb)
+    (let ((bounds (cape--bounds 'word)))
+      `(,(car bounds) ,(cdr bounds)
+        ,(cape--table-with-properties (cape--bbdb-records) :category 'cape-bbdb)
+        ,@cape--bbdb-properties))))
+
 ;;;;; cape-abbrev
 
 (defun cape--abbrev-tables ()
