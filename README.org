@@ -50,6 +50,7 @@ are not using Company as frontend.
 + ~cape-tex~: Complete unicode char from TeX command, e.g. ~\hbar~.
 + ~cape-sgml~: Complete unicode char from Sgml entity, e.g., ~&alpha~.
 + ~cape-rfc1345~: Complete unicode char using RFC 1345 mnemonics.
++ ~cape-bbdb~: Complete name and email from BBDB.
 
 * Configuration
 
