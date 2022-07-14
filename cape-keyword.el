@@ -37,12 +37,12 @@
      "dynamic_cast" "else" "enum" "explicit" "export" "extern" "false" "final"
      "float" "for" "friend" "goto" "if" "import" "inline" "int" "long" "module"
      "mutable" "namespace" "new" "noexcept" "not" "not_eq" "nullptr" "operator"
-     "or" "or_eq" "override" "private" "protected" "public" "reflexpr" "register"
-     "reinterpret_cast" "requires" "return" "short" "signed" "sizeof" "static"
-     "static_assert" "static_cast" "struct" "switch" "synchronized" "template"
-     "this" "thread_local" "throw" "true" "try" "typedef" "typeid" "typename"
-     "union" "unsigned" "using" "virtual" "void" "volatile" "wchar_t" "while"
-     "xor" "xor_eq")
+     "or" "or_eq" "override" "private" "protected" "public" "reflexpr"
+     "register" "reinterpret_cast" "requires" "return" "short" "signed" "sizeof"
+     "static" "static_assert" "static_cast" "struct" "switch" "synchronized"
+     "template" "this" "thread_local" "throw" "true" "try" "typedef" "typeid"
+     "typename" "union" "unsigned" "using" "virtual" "void" "volatile" "wchar_t"
+     "while" "xor" "xor_eq")
     (c-mode ;; https://en.cppreference.com/w/c/keyword
      "_Alignas" "_Alignof" "_Atomic" "_Bool" "_Complex" "_Generic" "_Imaginary"
      "_Noreturn" "_Static_assert" "_Thread_local"
@@ -138,13 +138,14 @@
      "tiny" "transfer" "transpose" "trim" "true" "type" "ubound" "unpack"
      "use" "value" "verify" "volatile" "wait" "where" "while" "with" "write")
     (go-mode ;; https://golang.org/ref/spec#Keywords, https://golang.org/pkg/builtin/
-     "append" "bool" "break" "byte" "cap" "case" "chan" "close" "complex" "complex128"
-     "complex64" "const" "continue" "copy" "default" "defer" "delete" "else" "error"
-     "fallthrough" "false" "float32" "float64" "for" "func" "go" "goto" "if" "imag"
-     "import" "int" "int16" "int32" "int64" "int8" "interface" "len" "make"
-     "map" "new" "nil" "package" "panic" "print" "println" "range" "real" "recover"
-     "return" "rune" "select" "string" "struct" "switch" "true" "type" "uint" "uint16"
-     "uint32" "uint64" "uint8" "uintptr" "var")
+     "append" "bool" "break" "byte" "cap" "case" "chan" "close" "complex"
+     "complex128" "complex64" "const" "continue" "copy" "default" "defer"
+     "delete" "else" "error" "fallthrough" "false" "float32" "float64" "for"
+     "func" "go" "goto" "if" "imag" "import" "int" "int16" "int32" "int64"
+     "int8" "interface" "len" "make" "map" "new" "nil" "package" "panic" "print"
+     "println" "range" "real" "recover" "return" "rune" "select" "string"
+     "struct" "switch" "true" "type" "uint" "uint16" "uint32" "uint64" "uint8"
+     "uintptr" "var")
     (java-mode
      "abstract" "assert" "boolean" "break" "byte" "case" "catch" "char" "class"
      "continue" "default" "do" "double" "else" "enum" "extends" "final"
@@ -166,8 +167,17 @@
      "package" "private" "protected" "public" "return" "super" "this" "throw"
      "trait" "true" "try" "typealias" "val" "var" "when" "while")
     (lua-mode ;; https://www.lua.org/manual/5.3/manual.html
-     "and" "break" "do" "else" "elseif" "end" "false" "for" "function" "goto" "if"
-     "in" "local" "nil" "not" "or" "repeat" "return" "then" "true" "until" "while")
+     "and" "break" "do" "else" "elseif" "end" "false" "for" "function" "goto"
+     "if" "in" "local" "nil" "not" "or" "repeat" "return" "then" "true" "until"
+     "while")
+    (nim-mode ;; https://nim-lang.org/docs/manual.html#lexical-analysis-identifiers-amp-keywords
+     "addr" "and" "as" "asm" "bind" "block" "break" "case" "cast" "concept"
+     "const" "continue" "converter" "defer" "discard" "distinct" "div" "do"
+     "elif" "else" "end" "enum" "except" "export" "finally" "for" "from" "func"
+     "if" "import" "in" "include" "interface" "is" "isnot" "iterator" "let"
+     "macro" "method" "mixin" "mod" "nil" "not" "notin" "object" "of" "or" "out"
+     "proc" "ptr" "raise" "ref" "return" "shl" "shr" "static" "template" "try"
+     "tuple" "type" "using" "var" "when" "while" "xor" "yield")
     (objc-mode
      "@catch" "@class" "@encode" "@end" "@finally" "@implementation"
      "@interface" "@private" "@protected" "@protocol" "@public"
@@ -224,10 +234,10 @@
      "import" "in" "is" "lambda" "nonlocal" "not" "or" "pass" "print" "raise"
      "return" "try" "while" "with" "yield")
     (ruby-mode
-     "BEGIN" "END" "alias" "and"  "begin" "break" "case" "class" "def" "defined?"
-     "do" "else" "elsif"  "end" "ensure" "false" "for" "if" "in" "module"
-     "next" "nil" "not" "or" "redo" "rescue" "retry" "return" "self" "super"
-     "then" "true" "undef" "unless" "until" "when" "while" "yield")
+     "BEGIN" "END" "alias" "and" "begin" "break" "case" "class" "def" "defined?"
+     "do" "else" "elsif" "end" "ensure" "false" "for" "if" "in" "module" "next"
+     "nil" "not" "or" "redo" "rescue" "retry" "return" "self" "super" "then"
+     "true" "undef" "unless" "until" "when" "while" "yield")
     (rust-mode ;; https://doc.rust-lang.org/grammar.html#keywords
      "Self" "as" "box" "break" "const" "continue" "crate" "else" "enum" "extern"
      "false" "fn" "for" "if" "impl" "in" "let" "loop" "macro" "match" "mod"
@@ -241,17 +251,17 @@
      "var" "while" "with" "yield")
     (swift-mode
      "Protocol" "Self" "Type" "and" "as" "assignment" "associatedtype"
-     "associativity" "available" "break" "case" "catch" "class" "column" "continue"
-     "convenience" "default" "defer" "deinit" "didSet" "do" "dynamic" "dynamicType"
-     "else" "elseif" "endif" "enum" "extension" "fallthrough" "false" "file"
-     "fileprivate" "final" "for" "func" "function" "get" "guard" "higherThan" "if"
-     "import" "in" "indirect" "infix" "init" "inout" "internal" "is" "lazy" "left"
-     "let" "line" "lowerThan" "mutating" "nil" "none" "nonmutating" "open"
-     "operator" "optional" "override" "postfix" "precedence" "precedencegroup"
-     "prefix" "private" "protocol" "public" "repeat" "required" "rethrows" "return"
-     "right" "selector" "self" "set" "static" "struct" "subscript" "super" "switch"
-     "throw" "throws" "true" "try" "typealias" "unowned" "var" "weak" "where"
-     "while" "willSet")
+     "associativity" "available" "break" "case" "catch" "class" "column"
+     "continue" "convenience" "default" "defer" "deinit" "didSet" "do" "dynamic"
+     "dynamicType" "else" "elseif" "endif" "enum" "extension" "fallthrough"
+     "false" "file" "fileprivate" "final" "for" "func" "function" "get" "guard"
+     "higherThan" "if" "import" "in" "indirect" "infix" "init" "inout"
+     "internal" "is" "lazy" "left" "let" "line" "lowerThan" "mutating" "nil"
+     "none" "nonmutating" "open" "operator" "optional" "override" "postfix"
+     "precedence" "precedencegroup" "prefix" "private" "protocol" "public"
+     "repeat" "required" "rethrows" "return" "right" "selector" "self" "set"
+     "static" "struct" "subscript" "super" "switch" "throw" "throws" "true"
+     "try" "typealias" "unowned" "var" "weak" "where" "while" "willSet")
     (julia-mode
      "abstract" "break" "case" "catch" "const" "continue" "do" "else" "elseif"
      "end" "eval" "export" "false" "finally" "for" "function" "global" "if"
