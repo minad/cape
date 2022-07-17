@@ -113,33 +113,39 @@ The buffers are scanned for completion candidates by `cape-line'."
   (let ((completion-at-point-functions (list capf)))
     (or (completion-at-point) (user-error "%s: No completions" capf))))
 
+(defmacro cape--wrapped-table (wrap body)
+  "Create wrapped completion table, handle `completion--unquote'.
+WRAP is the wrapper function.
+BODY is the wrapping expression."
+  (declare (indent 1))
+  `(lambda (str pred action)
+     (,@body
+      (let ((result (complete-with-action action table str pred)))
+        (when (and (eq action 'completion--unquote) (functionp (cadr result)))
+          (cl-callf ,wrap (cadr result)))
+        result))))
+
 (defun cape--accept-all-table (table)
   "Create completion TABLE which accepts all input."
-  (lambda (str pred action)
-    (or (eq action 'lambda) (complete-with-action action table str pred))))
+  (cape--wrapped-table cape--accept-all-table
+    (or (eq action 'lambda))))
 
 (defun cape--noninterruptible-table (table)
   "Create non-interruptible completion TABLE."
-  (lambda (str pred action)
-    (let (throw-on-input)
-      (complete-with-action action table str pred))))
+  (cape--wrapped-table cape--noninterruptible-table
+    (let (throw-on-input))))
 
 (defun cape--silent-table (table)
   "Create a new completion TABLE which is silent (no messages, no errors)."
-  (lambda (str pred action)
-    (cape--silent
-      (complete-with-action action table str pred))))
+  (cape--wrapped-table cape--silent-table
+    (cape--silent)))
 
 (defun cape--nonessential-table (table)
   "Mark completion TABLE as `non-essential'."
   (let ((dir default-directory))
-    (lambda (str pred action)
+    (cape--wrapped-table cape--nonessential-table
       (let ((default-directory dir)
-            (non-essential t))
-        (let ((result (funcall table str pred action)))
-          (when (and (eq action 'completion--unquote) (functionp (cadr result)))
-            (cl-callf cape--nonessential-table (cadr result)))
-          result)))))
+            (non-essential t))))))
 
 (cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
