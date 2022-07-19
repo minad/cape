@@ -44,12 +44,13 @@
      "typename" "union" "unsigned" "using" "virtual" "void" "volatile" "wchar_t"
      "while" "xor" "xor_eq")
     (c-mode ;; https://en.cppreference.com/w/c/keyword
-     "_Alignas" "_Alignof" "_Atomic" "_Bool" "_Complex" "_Generic" "_Imaginary"
-     "_Noreturn" "_Static_assert" "_Thread_local" "auto" "break" "case" "char"
-     "const" "continue" "default" "do" "double" "else" "enum" "extern" "float"
-     "for" "goto" "if" "inline" "int" "long" "register" "restrict" "return"
-     "short" "signed" "sizeof" "static" "struct" "switch" "typedef" "union"
-     "unsigned" "void" "volatile" "while")
+     "_Alignas" "_Alignof" "_Atomic" "_Bool" "_Complex" "_Decimal128"
+     "_Decimal32" "_Decimal64" "_Generic" "_Imaginary" "_Noreturn"
+     "_Static_assert" "_Thread_local" "__asm__" "asm" "auto" "break" "case"
+     "char" "const" "continue" "default" "do" "double" "else" "enum" "extern"
+     "float" "for" "goto" "if" "inline" "int" "long" "register" "restrict"
+     "return" "short" "signed" "sizeof" "static" "struct" "switch" "typedef"
+     "union" "unsigned" "void" "volatile" "while")
     (csharp-mode
      "abstract" "add" "alias" "as" "base" "bool" "break" "byte" "case" "catch"
      "char" "checked" "class" "const" "continue" "decimal" "default" "delegate"
