@@ -12,13 +12,10 @@
 #+html: <a href="https://melpa.org/#/cape"><img alt="MELPA" src="https://melpa.org/packages/cape-badge.svg"/></a>
 #+html: <a href="https://stable.melpa.org/#/cape"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/cape-badge.svg"/></a>
 
-* Introduction
-
-Cape provides a bunch of Completion At Point Extensions which can be used in
-combination with my [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. The
-completion backends used by ~completion-at-point~ are so called
-~completion-at-point-functions~ (Capfs). In principle, the Capfs provided by Cape
-can also be used by [[https://github.com/company-mode/company-mode][Company]].
+Cape provides Completion At Point Extensions which can be used in combination
+with the [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. The completion
+backends used by ~completion-at-point~ are so called ~completion-at-point-functions~
+(Capfs). In principle, the Capfs provided by Cape can also be used by [[https://github.com/company-mode/company-mode][Company]].
 
 #+html: <img src="https://github.com/minad/cape/blob/logo/cape.png?raw=true" align="right" width="30%">
 
@@ -35,6 +32,8 @@ On the more experimental side, Cape has the super power to transform Company
 backends into Capfs and merge multiple Capfs into a Super-Capf! These
 transformers allow you to still take advantage of Company backends even if you
 are not using Company as frontend.
+
+#+toc: headlines 8
 
 * Available Capfs
 
