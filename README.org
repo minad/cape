@@ -194,6 +194,11 @@ well for static completion functions like ~cape-dabbrev~, ~cape-keyword~,
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
   (setq-local completion-at-point-functions
               (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
+
+  ;; Alternative: Define named Capf instead of using the anonymous Capf directly
+  (defalias 'cape-dabbrev+dict+keyword
+    (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword))
+  (setq-local completion-at-point-functions (list #'cape-dabbrev+dict+keyword))
 #+end_src
 
 See also the aforementioned ~company--multi-backend-adapter~ from Company, which
@@ -221,7 +226,8 @@ achieve a similarly refreshing strategy.
 Cape provides a set of additional Capf transformation functions, which are
 mostly meant to used by experts to fine tune the Capf behavior and Capf
 interaction. These can either be used as advices (=cape-wrap-*)= or to create a
-new Capf from an existing Capf (=cape-capf-*=).
+new Capf from an existing Capf (=cape-capf-*=). You can bind the Capfs created by
+the Capf transformers with =defalias= to a function symbol.
 
 - ~cape-interactive-capf~: Create a Capf which can be called interactively.
 - ~cape-wrap-accept-all~, ~cape-capf-accept-all~: Create a Capf which accepts every input as valid.
@@ -248,7 +254,11 @@ personal configuration.
   (setq-local completion-at-point-functions
               (list (cape-capf-prefix-length #'cape-dabbrev 2)))
 
-  ;; Example 3: Define a defensive Dabbrev Capf, which accepts all inputs.
+  ;; Example 3: Named Capf
+  (defalias 'cape-dabbrev-min-2 (cape-capf-prefix-length #'cape-dabbrev 2))
+  (setq-local completion-at-point-functions (list #'cape-dabbrev-min-2))
+
+  ;; Example 4: Define a defensive Dabbrev Capf, which accepts all inputs.
   ;; If you use Corfu and `corfu-auto=t', the first candidate won't be auto
   ;; selected even if `corfu-preselect-first=t'! You can use this instead of
   ;; `cape-dabbrev'.
@@ -256,13 +266,13 @@ personal configuration.
     (cape-wrap-accept-all #'cape-dabbrev))
   (add-to-list 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
 
-  ;; Example 4: Define interactive Capf which can be bound to a key.
+  ;; Example 5: Define interactive Capf which can be bound to a key.
   ;; Here we wrap the `elisp-completion-at-point' such that we can
   ;; complete Elisp code explicitly in arbitrary buffers.
   (global-set-key (kbd "C-c p e")
                   (cape-interactive-capf #'elisp-completion-at-point))
 
-  ;; Example 5: Ignore :keywords in Elisp completion.
+  ;; Example 6: Ignore :keywords in Elisp completion.
   (defun ignore-elisp-keywords (sym)
     (not (keywordp sym)))
   (setq-local completion-at-point-functions
