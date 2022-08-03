@@ -28,10 +28,9 @@ of a line from the current buffer and ~cape-file~ for completion of a file name.
 The command ~cape-symbol~ is particularly useful for documentation of Elisp
 packages or configurations, since it completes Elisp symbols anywhere.
 
-On the more experimental side, Cape has the super power to transform Company
-backends into Capfs and merge multiple Capfs into a Super-Capf! These
-transformers allow you to still take advantage of Company backends even if you
-are not using Company as frontend.
+Cape has the super power to transform Company backends into Capfs and merge
+multiple Capfs into a Super-Capf! These transformers allow you to still take
+advantage of Company backends even if you are not using Company as frontend.
 
 #+toc: headlines 8
 
@@ -105,11 +104,10 @@ could be upstreamed into Emacs itself.
 
 /Wrap your Company backend in a Cape and turn it into a Capf!/
 
-Cape provides an adapter for Company backends ~cape-company-to-capf~. The adapter
+Cape provides the adapter ~cape-company-to-capf~ for Company backends. The adapter
 transforms Company backends to Capfs which are understood by the built-in Emacs
 completion mechanism. The function is approximately the inverse of the
-~company-capf~ backend from Company. The adapter is still experimental and may
-have certain edge cases. The adapter can be used as follows:
+~company-capf~ backend from Company. The adapter can be used as follows:
 
 #+begin_src emacs-lisp
   ;; Use Company backends as Capfs.
@@ -118,11 +116,11 @@ have certain edge cases. The adapter can be used as follows:
       (list #'company-files #'company-ispell #'company-dabbrev)))
 #+end_src
 
-Note that the adapter does not require Company to be installed. Backends
-implementing the Company specification do not necessarily have to depend on
-Company, however in practice most backends do. The following shows a small
-example completion backend, which can be used with both ~completion-at-point~
-(Corfu, default completion) and Company.
+Note that the adapter does not require Company to be installed or enabled.
+Backends implementing the Company specification do not necessarily have to
+depend on Company, however in practice most backends do. The following shows a
+small example completion backend, which can be used with both
+~completion-at-point~ (Corfu, default completion) and Company.
 
 #+begin_src emacs-lisp
   (defvar emojis
