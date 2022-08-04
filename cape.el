@@ -259,7 +259,8 @@ If INTERACTIVE is nil the function acts like a Capf."
       (when org (setf (car bounds) (+ 5 (car bounds))))
       (when (or org
                 (not cape-file-directory-must-exist)
-                (string-match-p "/" file))
+                (and (string-match-p "/" file)
+                     (file-exists-p (file-name-directory file))))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--nonessential-table #'read-file-name-internal)
           ,@(when (or org (string-match-p "./" file))
