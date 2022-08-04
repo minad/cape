@@ -84,7 +84,7 @@ Any other non-nil value only checks some other buffers, as per
 
 (defcustom cape-file-directory-must-exist t
   "The parent directory must exist for file completion."
-  :type 'integer)
+  :type 'boolean)
 
 (defcustom cape-line-buffer-function #'cape--buffers-major-mode
   "Function which returns list of buffers.
@@ -233,7 +233,7 @@ See also `consult-history' for a more flexible variant based on
 ;;;;; cape-file
 
 (defvar cape--file-properties
-  (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Folder" " File"))
+  (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Dir" " File"))
         :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file))
         :exclusive 'no)
   "Completion extra properties for `cape-file'.")
@@ -245,7 +245,7 @@ See the user option `cape-file-directory-must-exist'.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (let ((cape-file-directory-must-exist))
+      (let (cape-file-directory-must-exist)
         (cape--interactive #'cape-file))
     (let* ((default-directory (pcase cape-file-directory
                                 ('nil default-directory)
@@ -259,11 +259,10 @@ If INTERACTIVE is nil the function acts like a Capf."
       (when org (setf (car bounds) (+ 5 (car bounds))))
       (when (or org
                 (not cape-file-directory-must-exist)
-                (and (string-match-p "/" file)
-                     (file-exists-p (file-name-directory file))))
+                (string-match-p "/" file))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--nonessential-table #'read-file-name-internal)
-          ,@(when (or org (string-match-p "./\\'" file))
+          ,@(when (or org (string-match-p "./" file))
               '(:company-prefix-length t))
           ,@cape--file-properties)))))
 
