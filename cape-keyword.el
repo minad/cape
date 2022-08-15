@@ -51,6 +51,14 @@
      "float" "for" "goto" "if" "inline" "int" "long" "register" "restrict"
      "return" "short" "signed" "sizeof" "static" "struct" "switch" "typedef"
      "union" "unsigned" "void" "volatile" "while")
+    (crystal-mode ;; https://github.com/crystal-lang/crystal-book "abstract"
+     "alias" "annotation" "as" "as?" "asm" "begin" "break" "case" "class" "def"
+     "do" "else" "elsif" "end" "ensure" "enum" "extend" "false" "for" "fun" "if"
+     "in" "include" "instance_sizeof" "is_a?" "lib" "macro" "module" "next"
+     "nil" "nil?" "of" "offsetof" "out" "pointerof" "private" "protected"
+     "require" "rescue" "responds_to?" "return" "select" "self" "sizeof"
+     "struct" "super" "then" "true" "type" "typeof" "uninitialized" "union"
+     "unless" "until" "verbatim" "when" "while" "with" "yield")
     (csharp-mode
      "abstract" "add" "alias" "as" "base" "bool" "break" "byte" "case" "catch"
      "char" "checked" "class" "const" "continue" "decimal" "default" "delegate"
