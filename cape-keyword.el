@@ -85,6 +85,10 @@
      "super" "switch" "synchronized" "template" "this" "throw" "true" "try"
      "typedef" "typeid" "typeof" "ubyte" "ucent" "uint" "ulong" "union"
      "unittest" "ushort" "version" "void" "volatile" "wchar" "while" "with")
+    (erlang-mode ;; https://www.erlang.org/docs/20/reference_manual/introduction.html
+     "after" "and" "andalso" "band" "begin" "bnot" "bor" "bsl" "bsr" "bxor"
+     "case" "catch" "cond" "div" "end" "fun" "if" "let" "not" "of" "or" "orelse"
+     "receive" "rem" "try" "when" "xor")
     (f90-mode ;; f90.el
      "abs" "abstract" "achar" "acos" "adjustl" "adjustr" "aimag" "aint" "align"
      "all" "all_prefix" "all_scatter" "all_suffix" "allocatable" "allocate"
