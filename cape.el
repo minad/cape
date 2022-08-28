@@ -57,7 +57,7 @@
   :group 'convenience
   :prefix "cape-")
 
-(defcustom cape-dict-file "/etc/dictionaries-common/words"
+(defcustom cape-dict-file "/usr/share/dict/words"
   "Dictionary word list file."
   :type 'string)
 
