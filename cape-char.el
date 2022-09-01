@@ -29,7 +29,7 @@
 ;; Declare as pure function which is evaluated at compile time. We don't use a
 ;; macro for this computation since packages like `helpful' will
 ;; `macroexpand-all' the expensive `cape-char--define' macro calls.
-(eval-when-compile
+(eval-and-compile
   (defun cape-char--translation (method regexp)
     "Return character translation hash for METHOD.
 REGEXP is the regular expression matching the names."
@@ -62,7 +62,7 @@ REGEXP is the regular expression matching the names."
           (kill-buffer)
           hash)))))
 
-(defmacro cape-char--define (name method &rest prefix)
+(defmacro cape-char-define (name method &rest prefix)
   "Define character translation capf.
 NAME is the name of the capf.
 METHOD is the input method.
@@ -130,9 +130,9 @@ is nil the function acts like a capf." method method)
 ;;;###autoload (autoload 'cape-tex "cape-char" nil t)
 ;;;###autoload (autoload 'cape-sgml "cape-char" nil t)
 ;;;###autoload (autoload 'cape-rfc1345 "cape-char" nil t)
-(cape-char--define tex "TeX" ?\\ ?^ ?_)
-(cape-char--define sgml "sgml" ?&)
-(cape-char--define rfc1345 "rfc1345" ?&)
+(cape-char-define tex "TeX" ?\\ ?^ ?_)
+(cape-char-define sgml "sgml" ?&)
+(cape-char-define rfc1345 "rfc1345" ?&)
 
 (provide 'cape-char)
 ;;; cape-char.el ends here
