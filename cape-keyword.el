@@ -15,7 +15,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -71,7 +71,7 @@
      "this" "throw" "true" "try" "typeof" "uint" "ulong" "unchecked" "unsafe"
      "ushort" "using" "value" "var" "virtual" "void" "volatile" "where" "while"
      "yield")
-    (d-mode ;; http://www.digitalmars.com/d/2.0/lex.html
+    (d-mode ;; https://www.digitalmars.com/d/2.0/lex.html
      "abstract" "alias" "align" "asm"
      "assert" "auto" "body" "bool" "break" "byte" "case" "cast" "catch"
      "cdouble" "cent" "cfloat" "char" "class" "const" "continue" "creal"
