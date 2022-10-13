@@ -355,7 +355,7 @@
 (defun cape--keyword-list ()
   "Return keywords for current major mode."
   (when-let (kw (alist-get major-mode cape-keyword-list))
-    (if (symbolp (cadr kw)) (alist-get (cadr kw) cape-keyword-list) kw)))
+    (if (symbolp (car kw)) (alist-get (car kw) cape-keyword-list) kw)))
 
 (defvar cape--keyword-properties
   (list :annotation-function (lambda (_) " Keyword")
