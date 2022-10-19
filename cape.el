@@ -96,7 +96,8 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 (defcustom cape-symbol-wrapper
   '((org-mode . ?=)
-    (markdown-mode . ?`))
+    (markdown-mode . ?`)
+    (rst-mode . "``"))
   "Wrapper characters for symbols."
   :type '(alist :key-type symbol :value-type (choice character string)))
 
