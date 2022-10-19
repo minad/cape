@@ -308,8 +308,11 @@ STATUS is the exit status."
   "Return kind of SYM."
   (setq sym (intern-soft sym))
   (cond
-   ((or (macrop sym) (special-form-p sym)) " Macro")
+   ((special-form-p sym) " Special")
+   ((macrop sym) " Macro")
+   ((commandp sym) " Command")
    ((fboundp sym) " Function")
+   ((custom-variable-p sym) " Custom")
    ((boundp sym) " Variable")
    ((featurep sym) " Feature")
    ((facep sym) " Face")
