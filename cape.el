@@ -94,6 +94,12 @@ The buffers are scanned for completion candidates by `cape-line'."
                  (const :tag "Buffers with same major mode" cape--buffers-major-mode)
                  (function :tag "Custom function")))
 
+(defcustom cape-symbol-wrapper
+  '((org-mode . ?=)
+    (markdown-mode . ?`))
+  "Wrapper characters for symbols."
+  :type '(alist :key-type symbol :value-type (choice character string)))
+
 ;;;; Helpers
 
 (defmacro cape--silent (&rest body)
@@ -271,9 +277,21 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 (defvar cape--symbol-properties
   (list :annotation-function #'cape--symbol-annotation
+        :exit-function #'cape--symbol-exit
         :company-kind #'cape--symbol-kind
         :exclusive 'no)
   "Completion extra properties for `cape-symbol'.")
+
+(defun cape--symbol-exit (name status)
+  "Wrap symbol NAME with `cape-symbol-wrapper' buffers.
+STATUS is the exit status."
+  (when-let (((not (eq status 'exact)))
+             (c (cl-loop for (m . c) in cape-symbol-wrapper
+                         if (derived-mode-p m) return c)))
+    (save-excursion
+      (backward-char (length name))
+      (insert c))
+    (insert c)))
 
 (defun cape--symbol-kind (sym)
   "Return kind of SYM."
