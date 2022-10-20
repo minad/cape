@@ -40,6 +40,7 @@ advantage of Company backends even if you are not using Company as frontend.
 + ~cape-file~: Complete file name
 + ~cape-history~: Complete from Eshell, Comint or minibuffer history
 + ~cape-keyword~: Complete programming language keyword
++ ~cape-keyword-web~: Complete web keyword (works with ~html-mode~, ~css-mode~ and ~web-mode~)
 + ~cape-symbol~: Complete Elisp symbol
 + ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~)
 + ~cape-ispell~: Complete word from Ispell dictionary
