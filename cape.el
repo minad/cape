@@ -208,6 +208,8 @@ VALID is the input comparator, see `cape--input-valid-p'."
 ;;;;; cape-history
 
 (declare-function ring-elements "ring")
+(declare-function eshell-bol "eshell")
+(declare-function comint-bol "comint")
 
 (defvar cape--history-properties
   (list :company-kind (lambda (_) 'text)
@@ -222,20 +224,24 @@ See also `consult-history' for a more flexible variant based on
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-history)
-    (let ((history
-           (cond
-            ((derived-mode-p 'eshell-mode)
-             (bound-and-true-p eshell-history-ring))
-            ((derived-mode-p 'comint-mode)
-             (bound-and-true-p comint-history-ring))
-            ((and (minibufferp) (not (eq minibuffer-history-variable t)))
-             (symbol-value minibuffer-history-variable)))))
+    (let ((history)
+          (start-pos))
+      (cond
+       ((derived-mode-p 'eshell-mode)
+        (setq history (bound-and-true-p eshell-history-ring)
+              start-pos (save-excursion (eshell-bol) (point))))
+       ((derived-mode-p 'comint-mode)
+        (setq history (bound-and-true-p comint-input-ring)
+              start-pos (save-excursion (comint-bol) (point))))
+       ((and (minibufferp) (not (eq minibuffer-history-variable t)))
+        (setq history (symbol-value minibuffer-history-variable)
+              start-pos (line-beginning-position))))
       (when (ring-p history)
         (setq history (ring-elements history)))
       (when history
-        `(,(line-beginning-position) ,(point)
-          ,(cape--table-with-properties history :sort nil)
-          ,@cape--history-properties)))))
+        `( ,start-pos ,(point)
+           ,(cape--table-with-properties history :sort nil)
+           ,@cape--history-properties)))))
 
 ;;;;; cape-file
 
