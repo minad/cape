@@ -174,7 +174,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
      "height" "loop" "muted" "playsinline" "poster" "preload" "src"
      "width")
     (wbr))
-  "Alist of html tags and non-global attributes.")
+  "Alist of html5 tags and non-global attributes.")
 
 (defvar cape-web-html-global-attrs
   '("accesskey" "autocapitalize" "autofocus" "blocking" "class"
@@ -279,13 +279,13 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
      (style "text/css"))
     (wrap "hard" "off" "soft")
     (xmlns "http://www.w3.org/1999/xhtml"))
-  "Alist of html attributes and values.")
+  "Alist of html5 attributes and values.")
 
 (defvar cape-web-css-at-keywords
   '("charset" "color-profile" "counter-style" "font-face"
     "font-feature-values" "import" "keyframes" "layer" "media"
     "namespace" "page" "property" "supports")
-  "List of css3 at-keywords, which starts with \"@\" in media queries or selectors.")
+  "List of css3 at-keywords, which starts with \"@\" like media queries etc.")
 
 (defvar cape-web-css-pseudo-elems
   '("after" "backdrop" "before" "cue" "cue-region"
@@ -309,15 +309,21 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
     "valid" "visited" "where(")
   "List of css3 pseudo classes, which starts with \":\" in selectors.")
 
-(defvar cape-web-css-psfunc-args
+(defvar cape-web-css-sel-func-args
   '((dir "ltr" "rtl")
+    (has cape--sels)
+    (host cape--sels)
+    (host-context cape--sels)
+    (is cape--sels)
+    (not cape--sels)
     (nth-child class--nth)
     (nth-col class--nth)
     (nth-last-child class--nth)
     (nth-last-col class--nth)
     (nth-last-of-type class--nth)
-    (nth-of-type class--nth))
-  "Alist of css pseudo selector function arguments.")
+    (nth-of-type class--nth)
+    (where cape--sels))
+  "Alist of css3 pseudo selector function arguments.")
 
 (defvar cape-web-css-props-and-vals
   '((accent-color class--color "auto")
@@ -873,17 +879,17 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
      "horizontal-tb" "sideways-lr" "sideways-rl" "vertical-lr"
      "vertical-rl")
     (z-index class--math-function "auto"))
-  "Alist of css properties and non-global attribute values or functions.")
+  "Alist of css3 properties and non-global attribute values or functions.")
 
 (defvar cape-web-css-global-prop-vals
   '("inherit" "initial" "revert" "revert-layer" "unset")
   "List of css3 global property values.")
 
-(defvar cape-web-css-global-funcs
+(defvar cape-web-css-global-prop-funcs
   '("env(" "var(")
-  "List of css functions available everywhere in css property values.")
+  "List of css3 functions available everywhere in css property values.")
 
-(defvar cape-web-css-vfunc-args
+(defvar cape-web-css-prop-func-args
   '((abs class--math-function)
     (acos class--math-function)
     (add class--math-function)
@@ -992,7 +998,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
     (translateX class--math-function)
     (translateY class--math-function)
     (translateZ class--math-function))
-  "Alist of css value function arguments.")
+  "Alist of css3 property value function arguments.")
 
 (defvar cape-web-css-val-classes
   '((align-x "center" "end" "left" "right" "start")
@@ -1126,7 +1132,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
      "scaleY(" "scaleZ(" "skew(" "skewX(" "skewY(" "translate("
      "translate3d(" "translateX(" "translateY(" "translateZ(")
     (visual-box class--sizing-box "padding-box"))
-  "Alist of css value classes.")
+  "Alist of css3 value classes.")
 
 (defvar cape-web-html-decls-regexp
   "<!\\[?[A-Za-z]*"
@@ -1148,63 +1154,107 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
   "<\\([-0-9A-Za-z]+\\)\\([- \t\n0-9A-Za-z]\\|=[ \t\n]*\".*?\"\\|<!--.*?-->\\)*[ \t\n]\\([-0-9A-Za-z]+\\)=[ \t\n]*\"[^\"]*"
   "Regexp that matches to html attribute value parts.")
 
-(defvar cape-web-css-in-media-regexp
-  "@media[^{}]*{[^{}]*"
-  "Regexp that matches to css parts inner media queries.")
-
-(defvar cape-web-css-inner-regexp
-  "{[^{}]*"
-  "Regexp that matches to css inner parts.")
+(defvar cape-web-css-syntax-regexp
+  "\\([][(){}#.=:;\"']\\|/\\*\\|@media\\)"
+  "Regexp to parse css.")
 
 (defvar cape-web-css-at-keywords-regexp
   "@[-0-9A-Za-z]*"
   "Regexp that matches to css @-keyword parts.")
 
-(defvar cape-web-css-pseudo-elems-regexp
+(defvar cape-web-css-pseudo-elem-sels-regexp
   "::[-0-9A-Za-z]*"
-  "Regexp that matches to css pseudo element parts.")
+  "Regexp that matches to css pseudo element selectors parts.")
 
-(defvar cape-web-css-pseudo-classes-regexp
+(defvar cape-web-css-pseudo-class-sels-regexp
   ":[-0-9A-Za-z]*"
-  "Regexp that matches to css pseudo class parts.")
-
-(defvar cape-web-css-psfunc-args-regexp
-  ":\\([-0-9A-Za-z]+\\)([^()]*"
-  "Regexp that matches to css pseudo selector function argument parts.")
-
-(defvar cape-web-css-attr-sels-regexp
-  "\\[[-0-9A-Za-z]*"
-  "Regexp that matches to css attribute selectors.")
-
-(defvar cape-web-css-attr-vals-regexp
-  "[^-0-9A-Za-z]\\([-0-9A-Za-z]*\\)\\[\\([-0-9A-Za-z]+\\)[*^$~|]?=\"[^\"]*"
-  "Regexp that matches to values of css attribute selectors.")
+  "Regexp that matches to css pseudo class selector parts.")
 
 (defvar cape-web-css-id-or-class-sels-regexp
   "[#.][-0-9A-Za-z]*"
   "Regexp that matches to css id or class selector parts.")
 
-(defvar cape-web-css-prop-vals-regexp
-  "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)[ \t\n]*:\\([^{}()\";]\\|(.*?)\\|\".*?\"\\)*"
-  "Regexp that matches to css property value parts.")
+(defvar cape-web-css-props-regexp
+  "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)*:"
+  "Regexp that matches to css property parts.")
 
-(defvar cape-web-css-vfunc-args-regexp
-  "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)[ \t\n]*:\\([^{}\";]\\|(.*?)\\|\".*?\"\\)*[ \r\n,]\\([-A-Za-z]+\\)[ \t\n]*(\\([^()]\\|(.*?)\\)*"
-  "Regexp that matches to css value function argument parts.")
+(defvar cape-web-css-sel-tags-regexp
+  "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)\\(/\\*.*?\\*/\\)*[[#.:]"
+  "Regexp that matches to css tag name parts followed by selectors.")
 
-(defun cape--web-looking-back (regexp &optional limit)
+(defvar cape-web-css-attr-sels-regexp
+  "\\[\\(/\\*.*?\\*/\\)*\\([-0-9A-Za-z]+\\)\\(/\\*.*?\\*/\\)*[~|^\\$*]?="
+  "Regexp that matches to css attribute selector parts.")
+
+(defvar cape-web-css-sel-funcs-regexp
+  ":\\(/\\*.*?\\*/\\)*\\([-0-9A-Za-z]+\\)\\(/\\*.*?\\*/\\)*("
+  "Regexp that matches to css pseudo secector function parts.")
+
+(defvar cape-web-css-prop-funcs-regexp
+  "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)*("
+  "Regexp that matches to css property value function parts.")
+
+(defun cape-web--push (elem list)
+  "Same as `push', expect modifying list destructively.
+According to that side effect, list must have `nil' on bottom as sentinal.
+Safer to use \"(list nil)\" or \"(cons nil nil)\" as initializer;
+generate new empty \"(nil)\" list to avoid self-modification.
+Return whole list after pushed."
+  (setcdr list (cons (car list) (cdr list)))
+  (setcar list elem)
+  list)
+
+(defun cape-web--pop (list)
+  "Same as `pop', expect modifying list destructively.
+List only with bottom sentinel `nil' is treated as empty list,
+so cannot be popped anymore.
+Return removed elem."
+  (let ((elem (car list)))
+    (setcar list (cadr list))
+    (setcdr list (cddr list))
+    elem))
+
+(defun cape-web--syntaxp (syntax types)
+  "Return non-nil if the most recent syntax elem is that of types,
+specified as list of type symbols or single type symbol."
+  (cond
+   ((and types (listp types))
+    (catch 'found
+      (mapc
+       (lambda (type)
+         (when (eq (caar syntax) type)
+           (throw 'found t)))
+       types)
+      nil))
+   (t (eq (caar syntax) types))))
+
+(defun cape-web--clean-syntax (syntax types)
+  "From syntax, remove recent elems of types,
+specified as list of type symbols or single type symbol.
+Return list of removed elems."
+  (let ((elems ()))
+    (while (cape-web--syntaxp syntax types)
+      (push (cape-web--pop syntax) elems))
+    (nreverse elems)))
+
+(defun cape-web--looking-back (regexp &optional limit start)
   "Same as `looking-back', except avoiding greedy stretch with lazy match,
-and returning whole match string when matches."
-  (when (looking-back regexp limit)
-    ;; looking-back extends the match to fit current point even if
-    ;; regexp has lazy match specifiers
-    (when-let*
-        ((match (match-string-no-properties 0))
-         (exact (and (string-match regexp match) (match-string 0 match))))
-      ;; so compare the whole match string with that not extended
-      (and (string= exact match) match))))
+and returning whole match string when matches.
+Also try to look back from start, if specified."
+  (if start
+      (save-excursion
+        (goto-char start)
+        (cape-web--looking-back regexp limit))
+    (when (looking-back regexp limit)
+      ;; looking-back extends the match to fit current point even if
+      ;; regexp has lazy match specifiers
+      (when-let*
+          ((match (match-string-no-properties 0))
+           (exact (and (string-match regexp match) (match-string 0 match))))
+        ;; so compare the whole match string with that not extended
+        (and (string= exact match) match)))))
 
-(defun cape--web-get-http-attr-vals (tag attr)
+(defun cape-web--get-http-attr-vals (tag attr)
   "Get keyword list for tag and attr from `cape-web-html-attr-vals'."
   (when-let*
       ((vals (alist-get attr cape-web-html-attr-vals))
@@ -1218,14 +1268,14 @@ and returning whole match string when matches."
       (if (string= (symbol-name tag) "")
           ;; get all entries if tag name empty
           (apply 'append (mapcar 'cdr vals))
-        ;; get from attribyte and tag name
+        ;; get from attribute and tag name
         (or (alist-get tag vals)
             ;; use t in case not found tag name
             (alist-get t vals))))
      ;; maybe string: get only from attribute name
      (t vals))))
 
-(defun cape--web-get-css-vals (prop alist)
+(defun cape-web--get-css-vals (prop alist)
   "Get keyword list for prop from alist."
   (apply
    'append
@@ -1239,21 +1289,360 @@ and returning whole match string when matches."
             ((name (symbol-name val))
              (klass (and (string-match "^class--\\(.*\\)$" name)
                          (intern (match-string 1 name))))
-             (compl (cape--web-get-css-vals klass cape-web-css-val-classes)))
+             (compl (cape-web--get-css-vals klass cape-web-css-val-classes)))
           compl))
        ;; html attributes
        ((eq val 'cape--html-attrs)
         (apply 'append (cons cape-web-html-global-attrs
                              (mapcar 'cdr cape-web-html-tags-and-attrs))))
+       ;; css selectors: no completions here
+       ((eq val 'cape--sels)
+        nil)
        ;; css properties
        ((eq val 'cape--css-props)
         (mapcar 'car cape-web-css-props-and-vals))
        ;; others: alias to another property
        (t
-        (cape--web-get-css-vals val cape-web-css-props-and-vals))))
+        (cape-web--get-css-vals val cape-web-css-props-and-vals))))
     (alist-get prop alist))))
 
-(defun cape--web-keyword-list ()
+(defun cape-web--html-keyword-list ()
+  "Return html keywords for current point."
+  (cond
+   ;; <! declarations
+   ((cape-web--looking-back cape-web-html-decls-regexp)
+    cape-web-html-decls)
+   ;; <? instructions
+   ((cape-web--looking-back cape-web-html-insts-regexp)
+    cape-web-html-insts)
+   ;; tags
+   ((cape-web--looking-back cape-web-html-tags-regexp)
+    (mapcar 'car cape-web-html-tags-and-attrs))
+   ;; attributes
+   ((when-let*
+        ((match (cape-web--looking-back cape-web-html-attrs-regexp))
+         (tag (intern (match-string 1 match)))
+         (compl
+          (append cape-web-html-global-attrs
+                  (alist-get tag cape-web-html-tags-and-attrs))))
+      compl))
+   ;; attribute values
+   ((when-let*
+        ((match (cape-web--looking-back cape-web-html-attr-vals-regexp))
+         (tag (intern (match-string 1 match)))
+         (attr (intern (match-string 3 match)))
+         (compl (cape-web--get-http-attr-vals tag attr)))
+      compl))))
+
+(defun cape-web--open-syntax-css (syntax elem)
+  "Open elem on syntax under css syntax rule."
+  (cond
+   ;; NOTE: To check nesting, elems with open and close, always must be pushed
+   ;;       (and popped), although their kind might be changed by contexts.
+   ;;       The other elems for single status might be thrown away.
+   ((eq (car elem) 'bracket)
+    (cond
+     ((cape-web--syntaxp syntax '(sparen mquery select nil))
+      ;; outside property parts: attribute selector parts
+      (cape-web--push (cons 'sbracket (cdr elem)) syntax))
+     (t
+      ;; inside property parts: ignore
+      (cape-web--push (cons 'pbracket (cdr elem)) syntax))))
+   ((eq (car elem) 'paren)
+    (cond
+     ((cape-web--syntaxp syntax '(sparen mquery select nil))
+      ;; outside property parts: pseudo selector function arguments
+      (cape-web--push (cons 'sparen (cdr elem)) syntax))
+     ((cape-web--syntaxp syntax '(pparen pvalue))
+      ;; property value parts: property value function arguments (recursive)
+      (cape-web--push (cons 'pparen (cdr elem)) syntax))
+     (t
+      ;; others include property parts (not value): ignore
+      (cape-web--push (cons 'paren (cdr elem)) syntax))))
+   ((eq (car elem) 'brace)
+    ;; forget selector stats to turn into property parts
+    (cape-web--clean-syntax syntax 'select)
+    (if (cape-web--syntaxp syntax 'media)
+        ;; found @media sequence: inside media query, same as outside parts
+        (setcar (car syntax) 'mquery)
+      ;; others: property parts
+      (cape-web--push elem syntax)))
+   ((eq (car elem) 'shpdot)
+    (when (cape-web--syntaxp syntax '(sparen mquery nil))
+      ;; outside property parts: id or class selectors
+      ;; NOTE: Push them to record the selector point found the earliest,
+      ;;       so do not update even if found again.
+      (cape-web--push (cons 'select (cdr elem)) syntax)))
+   ((eq (car elem) 'equal)
+    (when (cape-web--syntaxp syntax 'sbracket)
+      ;; inside attribute selectors: attribute selector values
+      (cape-web--push (cons 'avalue (cdr elem)) syntax)))
+   ((eq (car elem) 'colon)
+    (cond
+     ((cape-web--syntaxp syntax '(sparen mquery nil))
+      ;; outside property parts: pseudo class or element selectors
+      ;; NOTE: Push them to record the selector point found the earliest,
+      ;;       so do not update even if found again.
+      (cape-web--push (cons 'select (cdr elem)) syntax))
+     ((cape-web--syntaxp syntax 'brace)
+      ;; inside property parts: turn into property value parts
+      (cape-web--push (cons 'pvalue (cdr elem)) syntax))))
+   ((memq (car elem) '(string comment))
+    (cape-web--push elem syntax))
+   ((eq (car elem) 'media)
+    (when (cape-web--syntaxp syntax '(mquery nil))
+      ;; media query allowed outside property parts
+      (cape-web--push elem syntax)))))
+
+(defun cape-web--close-syntax-css (syntax key)
+  "Remove the most recent elem with type key from syntax under css syntax rule."
+  (cape-web--clean-syntax syntax '(pvalue media))
+  (cond
+   ((eq key 'bracket)
+    ;; forget attribute value stats or orphan @media sequences
+    (cape-web--clean-syntax syntax '(avalue media))
+    (case
+     ((and (cape-web--syntaxp syntax 'sbracket)
+           (cape-web--syntaxp (cdr syntax) '(sparen mquery nil)))
+      ;; closed attribute selector: remain as selectors
+      ;; NOTE: Remain them to record the selector point found the earliest,
+      ;;       so do not update even if found again.
+      (setcar (car syntax) 'select))
+     ((cape-web--syntaxp syntax '(sbracket pbracket))
+      (cape-web--pop syntax))))
+   ((eq key 'paren)
+    ;; forget selector or attribute value stats or orphan @media sequences
+    (cape-web--clean-syntax syntax '(select avalue media))
+    (when (cape-web--syntaxp syntax '(sparen pparen paren))
+      (cape-web--pop syntax)))
+   ((eq key 'brace)
+    ;; forget property value stats or orphan @media sequences
+    (cape-web--clean-syntax syntax '(select pvalue media))
+    (when (cape-web--syntaxp syntax '(mquery brace))
+      (cape-web--pop syntax)))
+   ((eq key 'colon)
+    (when (cape-web--syntaxp syntax 'pvalue)
+      (cape-web--pop syntax)))
+   ((eq key 'string)
+    (when (cape-web--syntaxp syntax 'string)
+      (cape-web--pop syntax)))))
+
+(defun cape-web--parse-css (beg &optional end)
+  "Parse css before current point."
+  (save-excursion
+    (let ((syntax (list nil))
+          (bound (or end (point))))
+      ;; Pass 1: Traverse css from beg to end to analyze syntax.
+      (goto-char (or beg 0))
+      (catch 'parse
+        ;; check keywords successively
+        (while (search-forward-regexp cape-web-css-syntax-regexp bound t)
+          (let ((piece (match-string 0))
+                (piece-end (match-end 0)))
+            (cond
+             ;; brackets
+             ((string= piece "[")
+              (cape-web--open-syntax-css syntax (cons 'bracket piece-end)))
+             ((string= piece "]")
+              (cape-web--close-syntax-css syntax 'bracket))
+             ;; parens
+             ((string= piece "(")
+              (cape-web--open-syntax-css syntax (cons 'paren piece-end)))
+             ((string= piece ")")
+              (cape-web--close-syntax-css syntax 'paren))
+             ;; braces
+             ((string= piece "{")
+              (cape-web--open-syntax-css syntax (cons 'brace piece-end)))
+             ((string= piece "}")
+              (cape-web--close-syntax-css syntax 'brace))
+             ;; sharps or dots
+             ((or (string= piece "#") (string= piece "."))
+              (cape-web--open-syntax-css syntax (cons 'shpdot piece-end)))
+             ;; equals
+             ((string= piece "=")
+              (cape-web--open-syntax-css syntax (cons 'equal piece-end)))
+             ;; colons
+             ((string= piece ":")
+              (cape-web--open-syntax-css syntax (cons 'colon piece-end)))
+             ;; semicolons
+             ((string= piece ";")
+              (cape-web--close-syntax-css syntax 'colon))
+             ;; strings
+             ((string= piece "\"")
+              (unless (catch 'string
+                        ;; search eos
+                        (while (search-forward-regexp "\\(\"\\|\\\"\\)" bound t)
+                          (when (string= (match-string 0) "\"")
+                            ;; skip whole string if eos found
+                            (throw 'string t))))
+                ;; check only non-closed string
+                (cape-web--open-syntax-css syntax (cons 'string piece-end))
+                ;; exit loop cause it always reaches end
+                (throw 'parse t)))
+             ((string= piece "'")
+              (unless (catch 'string
+                        ;; search eos
+                        (while (search-forward-regexp "\\('\\|\\'\\)" bound t)
+                          (when (string= (match-string 0) "'")
+                            ;; skip whole string if eos found
+                            (throw 'string t))))
+                ;; check only non-closed string
+                (cape-web--open-syntax-css syntax (cons 'string piece-end))
+                ;; exit loop cause it always reaches end
+                (throw 'parse t)))
+             ;; comments
+             ((string= piece "/*")
+              ;; search eoc; skip whole comment if found
+              (unless (search-forward "*/" bound t)
+                ;; check only non-closed comment
+                (cape-web--open-syntax-css syntax (cons 'comment piece-end))
+                ;; exit loop cause it always reaches end
+                (throw 'parse t)))
+             ;; @media sequence
+             ((string= piece "@media")
+              (cape-web--open-syntax-css syntax (cons 'media piece-end)))))))
+      ;; Pass 2: Decide the part type just before end.
+      (cape-web--clean-syntax syntax 'media)
+      (cond
+       ((cape-web--syntaxp syntax '(mquery nil))
+        ;; outside property parts
+        (cons 'sels-or-global nil))
+       ((cape-web--syntaxp syntax 'select)
+        ;; after selector keywords outside property parts
+        (cons 'sels nil))
+       ((cape-web--syntaxp syntax 'sbracket)
+        ;; attribute selector parts
+        (cons 'attr-sel-names nil))
+       ((cape-web--syntaxp syntax 'avalue)
+        ;; just after attribute selector name
+        (cons 'attr-sel-val-start nil))
+       ((cape-web--syntaxp syntax 'string)
+        (cape-web--pop syntax)
+        (when (cape-web--syntaxp syntax 'avalue)
+          ;; inside strings in attribute selector values
+          (let ((avalue-pos (cdr (cape-web--pop syntax)))
+                (tag-poses
+                 ;; earlier selector parts to get tag name
+                 (mapcar 'cdr (cape-web--clean-syntax
+                               syntax '(sbracket sparen select)))))
+            (cons 'attr-sel-vals (cons avalue-pos tag-poses)))))
+       ((cape-web--syntaxp syntax 'sparen)
+        ;; pseudo selector function arguments
+        (or
+         ;; get function name and argument types
+         (when-let*
+             ((match (cape-web--looking-back
+                      cape-web-css-sel-funcs-regexp beg (cdar syntax)))
+              (func (intern (match-string 2 match)))
+              (args (alist-get func cape-web-css-sel-func-args)))
+           (when (memq 'cape--sels args)
+             ;; function takes recursive selectors as arguments
+             (cons 'sels nil)))
+         ;; otherwise, will complete using selector function arguments table
+         (cons 'sel-func-args (cdar syntax))))
+       ((cape-web--syntaxp syntax 'brace)
+        ;; inside property parts and not property value parts
+        (cons 'prop-names nil))
+       ((cape-web--syntaxp syntax 'pvalue)
+        ;; property value parts
+        (cons 'prop-vals (cdar syntax)))
+       ((cape-web--syntaxp syntax 'pparen)
+        (let ((pparen-poses
+               (mapcar 'cdr (cape-web--clean-syntax syntax 'pparen))))
+          (when (cape-web--syntaxp syntax 'pvalue)
+            ;; property value function arguments
+            (cons 'prop-func-args
+                  (append pparen-poses (list (cdar syntax)))))))))))
+
+(defun cape-web--css-keyword-list (beg)
+  "Return css keywords for current point."
+  (let ((syntax (cape-web--parse-css beg)))
+    (cond
+     ((memq (car syntax) '(sels-or-global sels))
+      (cond
+       ((and (eq (car syntax) 'sels-or-global)
+             (cape-web--looking-back cape-web-css-at-keywords-regexp beg))
+        ;; at-keywords
+        cape-web-css-at-keywords)
+       ((cape-web--looking-back cape-web-css-pseudo-elem-sels-regexp beg)
+        ;; pseudo element selectors
+        cape-web-css-pseudo-elems)
+       ((cape-web--looking-back cape-web-css-pseudo-class-sels-regexp beg)
+        ;; pseudo class selectors
+        cape-web-css-pseudo-classes)
+       ((cape-web--looking-back cape-web-css-id-or-class-sels-regexp beg)
+        ;; id or class selectors: no completions
+        nil)
+       (t
+        ;; element selectors
+        (mapcar 'car cape-web-html-tags-and-attrs))))
+     ((eq (car syntax) 'attr-sel-names)
+      ;; attribute selector names
+      (append (apply 'append (mapcar 'cdr cape-web-html-tags-and-attrs))
+              cape-web-html-global-attrs))
+     ((eq (car syntax) 'attr-sel-val-start)
+      ;; just after attribute selector name: complete only '"'
+      '("\""))
+     ((eq (car syntax) 'attr-sel-vals)
+      (when-let*
+          ((match1
+            (catch 'match
+              (mapc
+               (lambda (pos)
+                 (when-let
+                     ((match (cape-web--looking-back
+                              cape-web-css-sel-tags-regexp beg pos)))
+                   (throw 'match match)))
+               (cddr syntax))
+              ""))
+           (tag (intern (match-string 1 match1)))
+           (match2 (cape-web--looking-back
+                    cape-web-css-attr-sels-regexp beg (cadr syntax)))
+           (attr (intern (match-string 2 match2))))
+        ;; attribute selector values
+        (cape-web--get-http-attr-vals tag attr)))
+     ((eq (car syntax) 'sel-func-args)
+      (when-let*
+          ((match (cape-web--looking-back
+                   cape-web-css-sel-funcs-regexp beg (cdr syntax)))
+           (func-name (match-string 2 match))
+           (func (intern func-name)))
+        (when (member (concat func-name "(") cape-web-css-pseudo-classes)
+          ;; pseudo selector function arguments
+          (cape-web--get-css-vals func cape-web-css-sel-func-args))))
+     ((eq (car syntax) 'prop-names)
+      ;; property names
+      (mapcar 'car cape-web-css-props-and-vals))
+     ((eq (car syntax) 'prop-vals)
+      (when-let*
+          ((match (cape-web--looking-back
+                   cape-web-css-props-regexp beg (cdr syntax)))
+           (prop (intern (match-string 1 match))))
+        ;; property values
+        (append (cape-web--get-css-vals prop cape-web-css-props-and-vals)
+                cape-web-css-global-prop-vals cape-web-css-global-prop-funcs)))
+     ((eq (car syntax) 'prop-func-args)
+      (let* ((funcp (> (length syntax) 3))
+             (regex (if funcp
+                        cape-web-css-prop-funcs-regexp
+                      cape-web-css-props-regexp))
+             (alist (if funcp
+                        cape-web-css-prop-func-args
+                      cape-web-css-props-and-vals)))
+        (when-let*
+            ((match1 (cape-web--looking-back regex beg (caddr syntax)))
+             (parent (intern (match-string 1 match1)))
+             (match2 (cape-web--looking-back
+                      cape-web-css-prop-funcs-regexp beg (cadr syntax)))
+             (func-name (match-string 1 match2))
+             (func (intern func-name)))
+          (when (member (concat func-name "(")
+                        (cape-web--get-css-vals parent alist))
+            ;; property value function arguments
+            (append (cape-web--get-css-vals func cape-web-css-prop-func-args)
+                    cape-web-css-global-prop-funcs))))))))
+
+(defun cape-web--keyword-list ()
   "Return keywords for current point."
   (when-let
       ((type
@@ -1268,117 +1657,12 @@ and returning whole match string when matches."
            ;; others: return the type determined with major-mode
            (t compl-type)))))
     (cond
-     ;; html
      ((eq type 'html)
-      (cond
-       ;; <! declarations
-       ((cape--web-looking-back cape-web-html-decls-regexp)
-        cape-web-html-decls)
-       ;; <? instructions
-       ((cape--web-looking-back cape-web-html-insts-regexp)
-        cape-web-html-insts)
-       ;; tags
-       ((cape--web-looking-back cape-web-html-tags-regexp)
-        (mapcar 'car cape-web-html-tags-and-attrs))
-       ;; attributes
-       ((when-let*
-            ((match (cape--web-looking-back cape-web-html-attrs-regexp))
-             (tag-name (match-string 1 match))
-             (tag (intern tag-name))
-             (compl
-              (append cape-web-html-global-attrs
-                      (alist-get tag cape-web-html-tags-and-attrs))))
-          compl))
-       ;; attribute values
-       ((when-let*
-            ((match (cape--web-looking-back cape-web-html-attr-vals-regexp))
-             (tag-name (match-string 1 match))
-             (attr-name (match-string 3 match))
-             (tag (intern tag-name))
-             (attr (intern attr-name))
-             (compl (cape--web-get-http-attr-vals tag attr)))
-          compl))))
-     ;; css
+      (cape-web--html-keyword-list))
      ((eq type 'css)
-      ;; limit search area into css part when inside style element of html
-      (let ((beg (and (eq major-mode 'web-mode)
-                      (web-mode-part-beginning-position))))
-        (cond
-         ;; outer part
-         ((or (cape--web-looking-back cape-web-css-in-media-regexp beg)
-              (not (cape--web-looking-back cape-web-css-inner-regexp beg)))
-          (cond
-           ;; at-keywords
-           ((cape--web-looking-back cape-web-css-at-keywords-regexp beg)
-            cape-web-css-at-keywords)
-           ;; pseudo elements
-           ((cape--web-looking-back cape-web-css-pseudo-elems-regexp beg)
-            cape-web-css-pseudo-elems)
-           ;; pseudo classes
-           ((cape--web-looking-back cape-web-css-pseudo-classes-regexp beg)
-            cape-web-css-pseudo-classes)
-           ;; pseudo selector function arguments
-           ((when-let*
-                ((match
-                  (cape--web-looking-back cape-web-css-psfunc-args-regexp beg))
-                 (func-name (match-string 1 match))
-                 (func (intern func-name))
-                 (compl
-                  (when (member (concat func-name "(")
-                                cape-web-css-pseudo-classes)
-                    (cape--web-get-css-vals func cape-web-css-psfunc-args))))
-              compl))
-           ;; attribute selectors
-           ((cape--web-looking-back cape-web-css-attr-sels-regexp beg)
-            (apply 'append (cons cape-web-html-global-attrs
-                                 (mapcar 'cdr cape-web-html-tags-and-attrs))))
-           ;; values of attribute selectors
-           ((when-let*
-                ((match
-                  (cape--web-looking-back cape-web-css-attr-vals-regexp beg))
-                 (tag-name (match-string 1 match))
-                 (attr-name (match-string 2 match))
-                 (tag (intern tag-name))
-                 (attr (intern attr-name))
-                 (compl (cape--web-get-http-attr-vals tag attr)))
-              compl))
-           ;; id or class selectors: no completions
-           ((cape--web-looking-back cape-web-css-id-or-class-sels-regexp beg)
-            nil)
-           ;; others: html tag names
-           (t
-            (mapcar 'car cape-web-html-tags-and-attrs))))
-         ;; property values
-         ((when-let*
-              ((match
-                (cape--web-looking-back cape-web-css-prop-vals-regexp beg))
-               (prop-name (match-string 1 match))
-               (prop (intern prop-name))
-               (compl
-                (append
-                 cape-web-css-global-prop-vals
-                 cape-web-css-global-funcs
-                 (cape--web-get-css-vals prop cape-web-css-props-and-vals))))
-            compl))
-         ;; property value function arguments
-         ((when-let*
-              ((match
-                (cape--web-looking-back cape-web-css-vfunc-args-regexp beg))
-               (prop-name (match-string 1 match))
-               (func-name (match-string 3 match))
-               (prop (intern prop-name))
-               (func (intern func-name))
-               (compl
-                (when (member (concat func-name "(")
-                              (cape--web-get-css-vals
-                               prop cape-web-css-props-and-vals))
-                  (append
-                   cape-web-css-global-funcs
-                   (cape--web-get-css-vals func cape-web-css-vfunc-args)))))
-            compl))
-         ;; properties
-         (t
-          (mapcar 'car cape-web-css-props-and-vals)))))
+      (cape-web--css-keyword-list
+       ;; limit search area into css part when inside style element of html
+       (and (eq major-mode 'web-mode) (web-mode-part-beginning-position))))
      ;; maybe javascript: look cape-keyword-list
      (t
       (when-let ((kw (alist-get (intern (concat (symbol-name type) "-mode"))
@@ -1393,7 +1677,7 @@ If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
       (cape--interactive 'cape-keyword-web)
-    (when-let (keywords (cape--web-keyword-list))
+    (when-let (keywords (cape-web--keyword-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--table-with-properties keywords :category 'cape-keyword)
