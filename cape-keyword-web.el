@@ -1265,13 +1265,13 @@ Also try to look back from start, if specified."
       (alist-get val cape-web-html-attr-vals))
      ;; alist
      ((listp val)
-      (if (string= (symbol-name tag) "")
-          ;; get all entries if tag name empty
-          (apply 'append (mapcar 'cdr vals))
-        ;; get from attribute and tag name
-        (or (alist-get tag vals)
-            ;; use t in case not found tag name
-            (alist-get t vals))))
+      (if tag
+          ;; get from attribute and tag name
+          (or (alist-get tag vals)
+              ;; use t in case not found tag name
+              (alist-get t vals))
+        ;; get all entries if tag name empty
+        (apply 'append (mapcar 'cdr vals))))
      ;; maybe string: get only from attribute name
      (t vals))))
 
@@ -1401,7 +1401,7 @@ Also try to look back from start, if specified."
    ((eq key 'bracket)
     ;; forget attribute value stats or orphan @media sequences
     (cape-web--clean-syntax syntax '(avalue media))
-    (case
+    (cond
      ((and (cape-web--syntaxp syntax 'sbracket)
            (cape-web--syntaxp (cdr syntax) '(sparen mquery nil)))
       ;; closed attribute selector: remain as selectors
@@ -1584,23 +1584,21 @@ Also try to look back from start, if specified."
       ;; just after attribute selector name: complete only '"'
       '("\""))
      ((eq (car syntax) 'attr-sel-vals)
-      (when-let*
-          ((match1
-            (catch 'match
-              (mapc
-               (lambda (pos)
-                 (when-let
-                     ((match (cape-web--looking-back
-                              cape-web-css-sel-tags-regexp beg pos)))
-                   (throw 'match match)))
-               (cddr syntax))
-              ""))
-           (tag (intern (match-string 1 match1)))
-           (match2 (cape-web--looking-back
-                    cape-web-css-attr-sels-regexp beg (cadr syntax)))
-           (attr (intern (match-string 2 match2))))
-        ;; attribute selector values
-        (cape-web--get-http-attr-vals tag attr)))
+      (let ((tag
+             (catch 'tag
+               (mapc
+                (lambda (pos)
+                  (when-let ((match (cape-web--looking-back
+                                     cape-web-css-sel-tags-regexp beg pos)))
+                    (throw 'tag (intern (match-string 1 match)))))
+                (cddr syntax))
+               nil)))
+        (when-let*
+            ((match (cape-web--looking-back
+                     cape-web-css-attr-sels-regexp beg (cadr syntax)))
+             (attr (intern (match-string 2 match))))
+          ;; attribute selector values
+          (cape-web--get-http-attr-vals tag attr))))
      ((eq (car syntax) 'sel-func-args)
       (when-let*
           ((match (cape-web--looking-back
