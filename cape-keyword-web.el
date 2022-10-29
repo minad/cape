@@ -1199,28 +1199,27 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
   "Regexp that matches to css property value function parts.")
 
 (defun cape-web--push (elem list)
-  "Same as `push', except modifying list destructively.
-According to that side effect, list must have `nil' on bottom as sentinel.
-Safer to use \"(list nil)\" or \"(cons nil nil)\" as initializer;
-generate new empty \"(nil)\" list to avoid self-modification.
+  "Same as `push', except modifying LIST destructively.
+According to that side effect, LIST must be terminated by nil as a sentinel.
+Note that it is safer to initialize by \"(list nil)\" or \"(cons nil nil)\";
+generating new empty \"(nil)\" list to avoid self-modification.
 Return whole list after pushed."
   (setcdr list (cons (car list) (cdr list)))
   (setcar list elem)
   list)
 
 (defun cape-web--pop (list)
-  "Same as `pop', except modifying list destructively.
-List only with bottom sentinel `nil' is treated as empty list,
-so cannot be popped anymore.
-Return removed elem."
+  "Same as `pop', except modifying LIST destructively.
+If LIST is only nil as a member, it is treated as an empty list.
+Return removed elem, or nil if empty."
   (let ((elem (car list)))
     (setcar list (cadr list))
     (setcdr list (cddr list))
     elem))
 
 (defun cape-web--syntaxp (syntax types)
-  "Return non-nil if the most recent syntax elem is that of types,
-specified as list of type symbols or single type symbol."
+  "Return non-nil if the most recent elem in SYNTAX is that of TYPES,
+specified as a list of type symbols or a type symbol."
   (cond
    ((and types (listp types))
     (catch 'found
@@ -1233,8 +1232,8 @@ specified as list of type symbols or single type symbol."
    (t (eq (caar syntax) types))))
 
 (defun cape-web--clean-syntax (syntax types)
-  "From syntax, remove recent elems of types,
-specified as list of type symbols or single type symbol.
+  "Remove recent elems from SYNTAX while elems are of TYPES,
+specified as a list of type symbols or a type symbol.
 Return list of removed elems."
   (let ((elems ()))
     (while (cape-web--syntaxp syntax types)
@@ -1242,9 +1241,9 @@ Return list of removed elems."
     (nreverse elems)))
 
 (defun cape-web--looking-back (regexp &optional limit start)
-  "Same as `looking-back', except avoiding greedy stretch with lazy match,
-and returning whole match string when matches.
-Also try to look back from start, if specified."
+  "Same as `looking-back', except avoiding greedy stretch on lazy match,
+and returning whole match string if match.
+Also try to look back from START, if specified."
   (if start
       (save-excursion
         (goto-char start)
@@ -1259,7 +1258,7 @@ Also try to look back from start, if specified."
         (and (string= exact match) match)))))
 
 (defun cape-web--get-http-attr-vals (tag attr)
-  "Get keyword list for tag and attr from `cape-web-html-attr-vals'."
+  "Get keyword list for TAG and ATTR from `cape-web-html-attr-vals'."
   (when-let*
       ((vals (alist-get attr cape-web-html-attr-vals))
        (val (car vals)))
@@ -1280,7 +1279,7 @@ Also try to look back from start, if specified."
      (t vals))))
 
 (defun cape-web--get-css-vals (prop alist)
-  "Get keyword list for prop from alist."
+  "Get keyword list for PROP from ALIST."
   (apply
    'append
    (mapcar
@@ -1311,7 +1310,7 @@ Also try to look back from start, if specified."
     (alist-get prop alist))))
 
 (defun cape-web--open-syntax-html (syntax elem)
-  "Open elem on syntax under html syntax rule."
+  "Open ELEM on SYNTAX stack under the html syntax rules."
   (cond
    ;; NOTE: To check nesting, elems with open and close, always must be pushed
    ;;       (and popped), although their kind might be changed by contexts.
@@ -1340,7 +1339,8 @@ Also try to look back from start, if specified."
     (cape-web--push elem syntax))))
 
 (defun cape-web--close-syntax-html (syntax key)
-  "Close recent syntax elem with type key under html syntax rule."
+  "Close the recent elem of SYNTAX under the html syntax rules,
+if the elem is of type KEY."
   (cond
    ((eq key 'ang-bracket)
     ;; forget attribute and its value stats
@@ -1349,7 +1349,7 @@ Also try to look back from start, if specified."
       (cape-web--pop syntax)))))
 
 (defun cape-web--parse-html (&optional end)
-  "Parse html before current point."
+  "Parse html on current buffer before END, or current point if not specified."
   (save-excursion
     (let ((syntax (list nil))
           (bound (or end (point))))
@@ -1378,7 +1378,7 @@ Also try to look back from start, if specified."
                         ;; search eos
                         (while (search-forward-regexp
                                 "\\(\"\\|\\\\\"\\)" bound t)
-                          (when (string= (match-string 0) "\"")
+                          (when (string= (match-string-no-properties 0) "\"")
                             ;; skip whole string if eos found
                             (throw 'string t))))
                 ;; check only non-closed string
@@ -1390,7 +1390,7 @@ Also try to look back from start, if specified."
                         ;; search eos
                         (while (search-forward-regexp
                                 "\\('\\|\\\\'\\)" bound t)
-                          (when (string= (match-string 0) "'")
+                          (when (string= (match-string-no-properties 0) "'")
                             ;; skip whole string if eos found
                             (throw 'string t))))
                 ;; check only non-closed string
@@ -1466,7 +1466,7 @@ Also try to look back from start, if specified."
         (cape-web--get-http-attr-vals tag attr))))))
 
 (defun cape-web--open-syntax-css (syntax elem)
-  "Open elem on syntax under css syntax rule."
+  "Open ELEM on SYNTAX stack under the css syntax rules."
   (cond
    ;; NOTE: To check nesting, elems with open and close, always must be pushed
    ;;       (and popped), although their kind might be changed by contexts.
@@ -1526,7 +1526,8 @@ Also try to look back from start, if specified."
       (cape-web--push elem syntax)))))
 
 (defun cape-web--close-syntax-css (syntax key)
-  "Close recent syntax elem with type key under css syntax rule."
+  "Close the recent elem of SYNTAX under the css syntax rules,
+if the elem is of type KEY."
   (cond
    ((eq key 'bracket)
     ;; forget attribute value stats
@@ -1555,7 +1556,8 @@ Also try to look back from start, if specified."
       (cape-web--pop syntax)))))
 
 (defun cape-web--parse-css (&optional beg end)
-  "Parse css before current point."
+  "Parse css on current buffer before END, or current point if not specified.
+Start parsing from BEG, or point-min if not specified."
   (save-excursion
     (let ((syntax (list nil))
           (bound (or end (point))))
@@ -1600,7 +1602,7 @@ Also try to look back from start, if specified."
                         ;; search eos
                         (while (search-forward-regexp
                                 "\\(\"\\|\\\\\"\\)" bound t)
-                          (when (string= (match-string 0) "\"")
+                          (when (string= (match-string-no-properties 0) "\"")
                             ;; skip whole string if eos found
                             (throw 'string t))))
                 ;; check only non-closed string
@@ -1612,7 +1614,7 @@ Also try to look back from start, if specified."
                         ;; search eos
                         (while (search-forward-regexp
                                 "\\('\\|\\\\'\\)" bound t)
-                          (when (string= (match-string 0) "'")
+                          (when (string= (match-string-no-properties 0) "'")
                             ;; skip whole string if eos found
                             (throw 'string t))))
                 ;; check only non-closed string
@@ -1688,7 +1690,8 @@ Also try to look back from start, if specified."
                   (append pparen-poses (list (cdar syntax)))))))))))
 
 (defun cape-web--css-keyword-list (&optional beg)
-  "Return css keywords for current point."
+  "Return css keywords for current point.
+Start parsing from BEG, or point-min if not specified."
   (let ((syntax (cape-web--parse-css beg)))
     (cond
      ((memq (car syntax) '(sels-or-global sels))
