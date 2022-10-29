@@ -1134,6 +1134,10 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
     (visual-box class--sizing-box "padding-box"))
   "Alist of css3 value classes.")
 
+(defvar cape-web-html-syntax-regexp
+  "\\([<> \t\n=\"']\\|<!--\\)"
+  "Regexp to parse html.")
+
 (defvar cape-web-html-decls-regexp
   "<!\\[?[A-Za-z]*"
   "Regexp that matches to html declarations, or cdata sections.")
@@ -1146,13 +1150,13 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
   "<[-0-9A-Za-z]*"
   "Regexp that matches to html tag parts.")
 
-(defvar cape-web-html-attrs-regexp
-  "<\\([-0-9A-Za-z]+\\)\\([- \t\n0-9A-Za-z]\\|=[ \t\n]*\".*?\"\\|<!--.*?-->\\)*"
-  "Regexp that matches to html attribute parts.")
+(defvar cape-web-html-attr-tags-regexp
+  "<\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)+"
+  "Regexp that matches to html tag name parts followed by attributes.")
 
-(defvar cape-web-html-attr-vals-regexp
-  "<\\([-0-9A-Za-z]+\\)\\([- \t\n0-9A-Za-z]\\|=[ \t\n]*\".*?\"\\|<!--.*?-->\\)*[ \t\n]\\([-0-9A-Za-z]+\\)=[ \t\n]*\"[^\"]*"
-  "Regexp that matches to html attribute value parts.")
+(defvar cape-web-html-attrs-regexp
+  "\\([ \t\n]\\|<!--.*?-->\\)\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|<!--.*?-->\\)*="
+  "Regexp that matches to html attribute parts.")
 
 (defvar cape-web-css-syntax-regexp
   "\\([][(){}#.=:;\"']\\|/\\*\\|@media\\)"
@@ -1195,8 +1199,8 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
   "Regexp that matches to css property value function parts.")
 
 (defun cape-web--push (elem list)
-  "Same as `push', expect modifying list destructively.
-According to that side effect, list must have `nil' on bottom as sentinal.
+  "Same as `push', except modifying list destructively.
+According to that side effect, list must have `nil' on bottom as sentinel.
 Safer to use \"(list nil)\" or \"(cons nil nil)\" as initializer;
 generate new empty \"(nil)\" list to avoid self-modification.
 Return whole list after pushed."
@@ -1205,7 +1209,7 @@ Return whole list after pushed."
   list)
 
 (defun cape-web--pop (list)
-  "Same as `pop', expect modifying list destructively.
+  "Same as `pop', except modifying list destructively.
 List only with bottom sentinel `nil' is treated as empty list,
 so cannot be popped anymore.
 Return removed elem."
@@ -1306,33 +1310,160 @@ Also try to look back from start, if specified."
         (cape-web--get-css-vals val cape-web-css-props-and-vals))))
     (alist-get prop alist))))
 
+(defun cape-web--open-syntax-html (syntax elem)
+  "Open elem on syntax under html syntax rule."
+  (cond
+   ;; NOTE: To check nesting, elems with open and close, always must be pushed
+   ;;       (and popped), although their kind might be changed by contexts.
+   ;;       The other elems for single status might be thrown away.
+   ((eq (car elem) 'ang-bracket)
+    (cond
+     ((cape-web--syntaxp syntax nil)
+      ;; outside tags: tag parts
+      (cape-web--push (cons 'tag (cdr elem)) syntax))
+     (t
+      ;; others: ignore
+      (cape-web--push elem syntax))))
+   ((eq (car elem) 'space)
+    (cond
+     ((cape-web--syntaxp syntax 'tag)
+      ;; tag parts: turn into attribute parts
+      (cape-web--push (cons 'attr (cdr elem)) syntax))
+     ((cape-web--syntaxp syntax 'avalue)
+      ;; attribute value parts: end attribute values
+      (cape-web--clean-syntax syntax 'avalue))))
+   ((eq (car elem) 'equal)
+    (when (cape-web--syntaxp syntax 'attr)
+      ;; attribute parts: turn into attribute value parts
+      (cape-web--push (cons 'avalue (cdr elem)) syntax)))
+   ((memq (car elem) '(string comment))
+    (cape-web--push elem syntax))))
+
+(defun cape-web--close-syntax-html (syntax key)
+  "Close recent syntax elem with type key under html syntax rule."
+  (cond
+   ((eq key 'ang-bracket)
+    ;; forget attribute and its value stats
+    (cape-web--clean-syntax syntax '(attr avalue))
+    (when (cape-web--syntaxp syntax 'tag)
+      (cape-web--pop syntax)))))
+
+(defun cape-web--parse-html (&optional end)
+  "Parse html before current point."
+  (save-excursion
+    (let ((syntax (list nil))
+          (bound (or end (point))))
+      ;; Pass 1: Traverse html from bob to end to analyze syntax.
+      (goto-char (point-min))
+      (catch 'parse
+        ;; check keywords successively
+        (while (search-forward-regexp cape-web-html-syntax-regexp bound t)
+          (let ((piece (match-string-no-properties 0))
+                (piece-end (match-end 0)))
+            (cond
+             ;; angle brackets
+             ((string= piece "<")
+              (cape-web--open-syntax-html syntax (cons 'ang-bracket piece-end)))
+             ((string= piece ">")
+              (cape-web--close-syntax-html syntax 'ang-bracket))
+             ;; spaces
+             ((or (string= piece " ") (string= piece "\t") (string= piece "\n"))
+              (cape-web--open-syntax-html syntax (cons 'space piece-end)))
+             ;; equals
+             ((string= piece "=")
+              (cape-web--open-syntax-html syntax (cons 'equal piece-end)))
+             ;; strings
+             ((string= piece "\"")
+              (unless (catch 'string
+                        ;; search eos
+                        (while (search-forward-regexp
+                                "\\(\"\\|\\\\\"\\)" bound t)
+                          (when (string= (match-string 0) "\"")
+                            ;; skip whole string if eos found
+                            (throw 'string t))))
+                ;; check only non-closed string
+                (cape-web--open-syntax-html syntax (cons 'string piece-end))
+                ;; exit loop cause it always reaches end
+                (throw 'parse t)))
+             ((string= piece "'")
+              (unless (catch 'string
+                        ;; search eos
+                        (while (search-forward-regexp
+                                "\\('\\|\\\\'\\)" bound t)
+                          (when (string= (match-string 0) "'")
+                            ;; skip whole string if eos found
+                            (throw 'string t))))
+                ;; check only non-closed string
+                (cape-web--open-syntax-html syntax (cons 'string piece-end))
+                ;; exit loop cause it always reaches end
+                (throw 'parse t)))
+             ;; comments
+             ((string= piece "<!--")
+              ;; search eoc; skip whole comment if found
+              (unless (search-forward "-->" bound t)
+                ;; check only non-closed comment
+                (cape-web--open-syntax-html syntax (cons 'comment piece-end))
+                ;; exit loop cause it always reaches end
+                (throw 'parse t)))))))
+      ;; Pass 2: Decide the part type just before bound.
+      (cond
+       ((cape-web--syntaxp syntax 'tag)
+        ;; tag parts
+        (cons 'tags nil))
+       ((cape-web--syntaxp syntax 'attr)
+        ;; attribute parts
+        (let ((attr-pos (cdr (cape-web--pop syntax))))
+          (cons 'attr-names attr-pos)))
+       ((cape-web--syntaxp syntax 'avalue)
+        ;; just after attribute name
+        (cons 'attr-val-start nil))
+       ((cape-web--syntaxp syntax 'string)
+        (cape-web--pop syntax)
+        (when (cape-web--syntaxp syntax 'avalue)
+          ;; inside strings in attribute values
+          (when-let ((avalue-pos (cdr (cape-web--pop syntax)))
+                     (tag-pos (cdar (cape-web--clean-syntax syntax 'attr))))
+            (cons 'attr-vals (cons avalue-pos tag-pos)))))))))
+
 (defun cape-web--html-keyword-list ()
   "Return html keywords for current point."
-  (cond
-   ;; <! declarations
-   ((cape-web--looking-back cape-web-html-decls-regexp)
-    cape-web-html-decls)
-   ;; <? instructions
-   ((cape-web--looking-back cape-web-html-insts-regexp)
-    cape-web-html-insts)
-   ;; tags
-   ((cape-web--looking-back cape-web-html-tags-regexp)
-    (mapcar 'car cape-web-html-tags-and-attrs))
-   ;; attributes
-   ((when-let*
-        ((match (cape-web--looking-back cape-web-html-attrs-regexp))
-         (tag (intern (match-string 1 match)))
-         (compl
-          (append cape-web-html-global-attrs
-                  (alist-get tag cape-web-html-tags-and-attrs))))
-      compl))
-   ;; attribute values
-   ((when-let*
-        ((match (cape-web--looking-back cape-web-html-attr-vals-regexp))
-         (tag (intern (match-string 1 match)))
-         (attr (intern (match-string 3 match)))
-         (compl (cape-web--get-http-attr-vals tag attr)))
-      compl))))
+  (let ((syntax (cape-web--parse-html)))
+    (cond
+     ((not (car syntax))
+      ;; outside tags: no completions
+      nil)
+     ((eq (car syntax) 'tags)
+      (cond
+       ((cape-web--looking-back cape-web-html-decls-regexp)
+        ;; <! declarations
+        cape-web-html-decls)
+       ((cape-web--looking-back cape-web-html-insts-regexp)
+        ;; <? instructions
+        cape-web-html-insts)
+       ((cape-web--looking-back cape-web-html-tags-regexp)
+        ;; tags
+        (mapcar 'car cape-web-html-tags-and-attrs))))
+     ((eq (car syntax) 'attr-names)
+      (when-let*
+          ((match (cape-web--looking-back
+                   cape-web-html-attr-tags-regexp nil (cdr syntax)))
+           (tag (intern (match-string 1 match))))
+        ;; attribute names
+        (append (alist-get tag cape-web-html-tags-and-attrs)
+                cape-web-html-global-attrs)))
+     ((eq (car syntax) 'attr-val-start)
+      ;; just after attribute name: complete only '"'
+      '("\""))
+     ((eq (car syntax) 'attr-vals)
+      (when-let*
+          ((match1 (cape-web--looking-back
+                    cape-web-html-attr-tags-regexp nil (cddr syntax)))
+           (tag (intern (match-string 1 match1)))
+           (match2 (cape-web--looking-back
+                    cape-web-html-attrs-regexp nil (cadr syntax)))
+           (attr (intern (match-string 2 match2))))
+        ;; attribute values
+        (cape-web--get-http-attr-vals tag attr))))))
 
 (defun cape-web--open-syntax-css (syntax elem)
   "Open elem on syntax under css syntax rule."
@@ -1395,12 +1526,11 @@ Also try to look back from start, if specified."
       (cape-web--push elem syntax)))))
 
 (defun cape-web--close-syntax-css (syntax key)
-  "Remove the most recent elem with type key from syntax under css syntax rule."
-  (cape-web--clean-syntax syntax '(pvalue media))
+  "Close recent syntax elem with type key under css syntax rule."
   (cond
    ((eq key 'bracket)
-    ;; forget attribute value stats or orphan @media sequences
-    (cape-web--clean-syntax syntax '(avalue media))
+    ;; forget attribute value stats
+    (cape-web--clean-syntax syntax 'avalue)
     (cond
      ((and (cape-web--syntaxp syntax 'sbracket)
            (cape-web--syntaxp (cdr syntax) '(sparen mquery nil)))
@@ -1411,33 +1541,30 @@ Also try to look back from start, if specified."
      ((cape-web--syntaxp syntax '(sbracket pbracket))
       (cape-web--pop syntax))))
    ((eq key 'paren)
-    ;; forget selector or attribute value stats or orphan @media sequences
-    (cape-web--clean-syntax syntax '(select avalue media))
+    ;; forget selector or attribute value stats
+    (cape-web--clean-syntax syntax '(select avalue))
     (when (cape-web--syntaxp syntax '(sparen pparen paren))
       (cape-web--pop syntax)))
    ((eq key 'brace)
-    ;; forget property value stats or orphan @media sequences
+    ;; forget selector, property value stats or orphan @media sequences
     (cape-web--clean-syntax syntax '(select pvalue media))
     (when (cape-web--syntaxp syntax '(mquery brace))
       (cape-web--pop syntax)))
    ((eq key 'colon)
     (when (cape-web--syntaxp syntax 'pvalue)
-      (cape-web--pop syntax)))
-   ((eq key 'string)
-    (when (cape-web--syntaxp syntax 'string)
       (cape-web--pop syntax)))))
 
-(defun cape-web--parse-css (beg &optional end)
+(defun cape-web--parse-css (&optional beg end)
   "Parse css before current point."
   (save-excursion
     (let ((syntax (list nil))
           (bound (or end (point))))
       ;; Pass 1: Traverse css from beg to end to analyze syntax.
-      (goto-char (or beg 0))
+      (goto-char (or beg (point-min)))
       (catch 'parse
         ;; check keywords successively
         (while (search-forward-regexp cape-web-css-syntax-regexp bound t)
-          (let ((piece (match-string 0))
+          (let ((piece (match-string-no-properties 0))
                 (piece-end (match-end 0)))
             (cond
              ;; brackets
@@ -1471,7 +1598,8 @@ Also try to look back from start, if specified."
              ((string= piece "\"")
               (unless (catch 'string
                         ;; search eos
-                        (while (search-forward-regexp "\\(\"\\|\\\"\\)" bound t)
+                        (while (search-forward-regexp
+                                "\\(\"\\|\\\\\"\\)" bound t)
                           (when (string= (match-string 0) "\"")
                             ;; skip whole string if eos found
                             (throw 'string t))))
@@ -1482,7 +1610,8 @@ Also try to look back from start, if specified."
              ((string= piece "'")
               (unless (catch 'string
                         ;; search eos
-                        (while (search-forward-regexp "\\('\\|\\'\\)" bound t)
+                        (while (search-forward-regexp
+                                "\\('\\|\\\\'\\)" bound t)
                           (when (string= (match-string 0) "'")
                             ;; skip whole string if eos found
                             (throw 'string t))))
@@ -1501,7 +1630,7 @@ Also try to look back from start, if specified."
              ;; @media sequence
              ((string= piece "@media")
               (cape-web--open-syntax-css syntax (cons 'media piece-end)))))))
-      ;; Pass 2: Decide the part type just before end.
+      ;; Pass 2: Decide the part type just before bound.
       (cape-web--clean-syntax syntax 'media)
       (cond
        ((cape-web--syntaxp syntax '(mquery nil))
@@ -1512,7 +1641,11 @@ Also try to look back from start, if specified."
         (cons 'sels nil))
        ((cape-web--syntaxp syntax 'sbracket)
         ;; attribute selector parts
-        (cons 'attr-sel-names nil))
+        (let ((tag-poses
+               ;; earlier selector parts to get tag name
+               (mapcar 'cdr (cape-web--clean-syntax
+                             syntax '(sbracket sparen select)))))
+          (cons 'attr-sel-names tag-poses)))
        ((cape-web--syntaxp syntax 'avalue)
         ;; just after attribute selector name
         (cons 'attr-sel-val-start nil))
@@ -1554,7 +1687,7 @@ Also try to look back from start, if specified."
             (cons 'prop-func-args
                   (append pparen-poses (list (cdar syntax)))))))))))
 
-(defun cape-web--css-keyword-list (beg)
+(defun cape-web--css-keyword-list (&optional beg)
   "Return css keywords for current point."
   (let ((syntax (cape-web--parse-css beg)))
     (cond
@@ -1578,26 +1711,36 @@ Also try to look back from start, if specified."
         (mapcar 'car cape-web-html-tags-and-attrs))))
      ((eq (car syntax) 'attr-sel-names)
       ;; attribute selector names
-      (append (apply 'append (mapcar 'cdr cape-web-html-tags-and-attrs))
-              cape-web-html-global-attrs))
+      (let ((attrs
+             (catch 'attrs
+               (mapc
+                (lambda (pos)
+                  (when-let* ((match (cape-web--looking-back
+                                      cape-web-css-sel-tags-regexp beg pos))
+                              (tag (intern (match-string 1 match))))
+                    (throw 'attrs
+                           (alist-get tag cape-web-html-tags-and-attrs))))
+                (cdr syntax))
+               (apply 'append (mapcar 'cdr cape-web-html-tags-and-attrs)))))
+        (append attrs cape-web-html-global-attrs)))
      ((eq (car syntax) 'attr-sel-val-start)
       ;; just after attribute selector name: complete only '"'
       '("\""))
      ((eq (car syntax) 'attr-sel-vals)
-      (let ((tag
-             (catch 'tag
-               (mapc
-                (lambda (pos)
-                  (when-let ((match (cape-web--looking-back
-                                     cape-web-css-sel-tags-regexp beg pos)))
-                    (throw 'tag (intern (match-string 1 match)))))
-                (cddr syntax))
-               nil)))
-        (when-let*
-            ((match (cape-web--looking-back
-                     cape-web-css-attr-sels-regexp beg (cadr syntax)))
-             (attr (intern (match-string 2 match))))
-          ;; attribute selector values
+      (when-let*
+          ((match (cape-web--looking-back
+                   cape-web-css-attr-sels-regexp beg (cadr syntax)))
+           (attr (intern (match-string 2 match))))
+        ;; attribute selector values
+        (let ((tag
+               (catch 'tag
+                 (mapc
+                  (lambda (pos)
+                    (when-let ((match (cape-web--looking-back
+                                       cape-web-css-sel-tags-regexp beg pos)))
+                      (throw 'tag (intern (match-string 1 match)))))
+                  (cddr syntax))
+                 nil)))
           (cape-web--get-http-attr-vals tag attr))))
      ((eq (car syntax) 'sel-func-args)
       (when-let*
