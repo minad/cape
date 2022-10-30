@@ -1179,11 +1179,11 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
   "Regexp that matches to css id or class selector parts.")
 
 (defvar cape-web-css-props-regexp
-  "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)*:"
+  "[^-0-9A-Za-z:#.]\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)*:"
   "Regexp that matches to css property parts.")
 
 (defvar cape-web-css-sel-tags-regexp
-  "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)\\(/\\*.*?\\*/\\)*[[#.:]"
+  "[^-0-9A-Za-z:#.]\\([-0-9A-Za-z]+\\)\\(/\\*.*?\\*/\\)*[[#.:]"
   "Regexp that matches to css tag name parts followed by selectors.")
 
 (defvar cape-web-css-attr-sels-regexp
