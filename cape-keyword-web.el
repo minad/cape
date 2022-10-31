@@ -1489,15 +1489,20 @@ if the elem is of type KEY."
       (cape-web--push (cons 'pparen (cdr elem)) syntax))
      (t
       ;; others include property parts (not value): ignore
-      (cape-web--push (cons 'paren (cdr elem)) syntax))))
+      (cape-web--push elem syntax))))
    ((eq (car elem) 'brace)
     ;; forget selector stats to turn into property parts
     (cape-web--clean-syntax syntax 'select)
-    (if (cape-web--syntaxp syntax 'media)
-        ;; found @media sequence: inside media query, same as outside parts
-        (setcar (car syntax) 'mquery)
-      ;; others: property parts
-      (cape-web--push elem syntax)))
+    (cond
+     ((cape-web--syntaxp syntax 'media)
+      ;; found @media sequence: inside media query, same as outside parts
+      (setcar (car syntax) 'mquery))
+     ((cape-web--syntaxp syntax '(mquery nil))
+      ;; outside property parts (except in recursive selector): property parts
+      (cape-web--push (cons 'pbrace (cdr elem)) syntax))
+     (t
+      ;; others: ignore
+      (cape-web--push elem syntax))))
    ((eq (car elem) 'shpdot)
     (when (cape-web--syntaxp syntax '(sparen mquery nil))
       ;; outside property parts: id or class selectors
@@ -1515,7 +1520,7 @@ if the elem is of type KEY."
       ;; NOTE: Push them to record the selector point found the earliest,
       ;;       so do not update even if found again.
       (cape-web--push (cons 'select (cdr elem)) syntax))
-     ((cape-web--syntaxp syntax 'brace)
+     ((cape-web--syntaxp syntax 'pbrace)
       ;; inside property parts: turn into property value parts
       (cape-web--push (cons 'pvalue (cdr elem)) syntax))))
    ((memq (car elem) '(string comment))
@@ -1549,7 +1554,7 @@ if the elem is of type KEY."
    ((eq key 'brace)
     ;; forget selector, property value stats or orphan @media sequences
     (cape-web--clean-syntax syntax '(select pvalue media))
-    (when (cape-web--syntaxp syntax '(mquery brace))
+    (when (cape-web--syntaxp syntax '(mquery pbrace brace))
       (cape-web--pop syntax)))
    ((eq key 'colon)
     (when (cape-web--syntaxp syntax 'pvalue)
@@ -1675,7 +1680,7 @@ Start parsing from BEG, or point-min if not specified."
              (cons 'sels nil)))
          ;; otherwise, will complete using selector function arguments table
          (cons 'sel-func-args (cdar syntax))))
-       ((cape-web--syntaxp syntax 'brace)
+       ((cape-web--syntaxp syntax 'pbrace)
         ;; inside property parts and not property value parts
         (cons 'prop-names nil))
        ((cape-web--syntaxp syntax 'pvalue)
