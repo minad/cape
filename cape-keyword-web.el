@@ -31,15 +31,17 @@
     (web-mode . complex-web))
   "Alist of web-related major-modes and completion types.
 Type complex-web works only with `web-mode'.
-For the other-modes like `nxhtml-mode', needs more implementations.")
+For the other-modes like `nxhtml-mode', need more implementations.")
 
 (defvar cape-web-html-decls
   '("CDATA" "DOCTYPE")
-  "List of html declaration types or cdata sections, which starts with \"<!\".")
+  "List of html declaration types or cdata sections,
+which start with \"<!\".")
 
 (defvar cape-web-html-insts
   '("xml")
-  "List of html processing instructions for xml, which starts with \"<?\".")
+  "List of html processing instructions for xml,
+which start with \"<?\".")
 
 (defvar cape-web-html-tags-and-attrs
   '((a
@@ -174,7 +176,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
      "height" "loop" "muted" "playsinline" "poster" "preload" "src"
      "width")
     (wbr))
-  "Alist of html5 tags and non-global attributes.")
+  "Alist of html5 tags and attribute names.")
 
 (defvar cape-web-html-global-attrs
   '("accesskey" "autocapitalize" "autofocus" "blocking" "class"
@@ -279,20 +281,20 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
      (style "text/css"))
     (wrap "hard" "off" "soft")
     (xmlns "http://www.w3.org/1999/xhtml"))
-  "Alist of html5 attributes and values.")
+  "Alist of html5 attribute names and values.")
 
 (defvar cape-web-css-at-keywords
   '("charset" "color-profile" "counter-style" "font-face"
     "font-feature-values" "import" "keyframes" "layer" "media"
     "namespace" "page" "property" "supports")
-  "List of css3 at-keywords, which starts with \"@\" like media queries etc.")
+  "List of css3 at-keywords, which start with \"@\" like media queries.")
 
 (defvar cape-web-css-pseudo-elems
   '("after" "backdrop" "before" "cue" "cue-region"
     "file-selector-button" "first-letter" "first-line" "grammar-error"
     "marker" "part(" "placeholder" "selection" "slotted("
     "spelling-error" "target-text")
-  "List of css3 pseudo elements, which starts with \"::\" in selectors.")
+  "List of css3 pseudo elements, which start with \"::\" in selectors.")
 
 (defvar cape-web-css-pseudo-classes
   '("active" "any-link" "autofill" "blank" "checked" "default"
@@ -307,7 +309,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
     "read-write" "required" "right" "root" "scope" "target"
     "user-invalid" "-moz-ui-invalid" "user-valid" "moz-ui-valid"
     "valid" "visited" "where(")
-  "List of css3 pseudo classes, which starts with \":\" in selectors.")
+  "List of css3 pseudo classes, which start with \":\" in selectors.")
 
 (defvar cape-web-css-sel-func-args
   '((dir "ltr" "rtl")
@@ -323,7 +325,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
     (nth-last-of-type class--nth)
     (nth-of-type class--nth)
     (where cape--sels))
-  "Alist of css3 pseudo selector function arguments.")
+  "Alist of css3 pseudo selector function names and arguments.")
 
 (defvar cape-web-css-props-and-vals
   '((accent-color class--color "auto")
@@ -879,7 +881,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
      "horizontal-tb" "sideways-lr" "sideways-rl" "vertical-lr"
      "vertical-rl")
     (z-index class--math-function "auto"))
-  "Alist of css3 properties and non-global attribute values or functions.")
+  "Alist of css3 property names and values or function names.")
 
 (defvar cape-web-css-global-prop-vals
   '("inherit" "initial" "revert" "revert-layer" "unset")
@@ -887,7 +889,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
 
 (defvar cape-web-css-global-prop-funcs
   '("env(" "var(")
-  "List of css3 functions available everywhere in css property values.")
+  "List of css3 global property value function names.")
 
 (defvar cape-web-css-prop-func-args
   '((abs class--math-function)
@@ -998,7 +1000,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
     (translateX class--math-function)
     (translateY class--math-function)
     (translateZ class--math-function))
-  "Alist of css3 property value function arguments.")
+  "Alist of css3 property value function names and arguments.")
 
 (defvar cape-web-css-val-classes
   '((align-x "center" "end" "left" "right" "start")
@@ -1148,7 +1150,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
 
 (defvar cape-web-html-tags-regexp
   "<[-0-9A-Za-z]*"
-  "Regexp that matches to html tag parts.")
+  "Regexp that matches to html tag name parts.")
 
 (defvar cape-web-html-attr-tags-regexp
   "<\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)+"
@@ -1180,7 +1182,7 @@ For the other-modes like `nxhtml-mode', needs more implementations.")
 
 (defvar cape-web-css-props-regexp
   "[^-0-9A-Za-z:#.]\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)*:"
-  "Regexp that matches to css property parts.")
+  "Regexp that matches to css property name parts.")
 
 (defvar cape-web-css-sel-tags-regexp
   "[^-0-9A-Za-z:#.]\\([-0-9A-Za-z]+\\)\\(/\\*.*?\\*/\\)*[[#.:]"
@@ -1210,7 +1212,7 @@ Return whole list after pushed."
 
 (defun cape-web--pop (list)
   "Same as `pop', except modifying LIST destructively.
-If LIST is only nil as a member, it is treated as an empty list.
+If LIST has only nil as a member, it is treated as an empty list.
 Return removed elem, or nil if empty."
   (let ((elem (car list)))
     (setcar list (cadr list))
@@ -1219,7 +1221,7 @@ Return removed elem, or nil if empty."
 
 (defun cape-web--syntaxp (syntax types)
   "Return non-nil if the most recent elem in SYNTAX is that of TYPES,
-specified as a list of type symbols or a type symbol."
+specified as a list of type symbols or a single type symbol."
   (cond
    ((and types (listp types))
     (catch 'found
@@ -1232,8 +1234,8 @@ specified as a list of type symbols or a type symbol."
    (t (eq (caar syntax) types))))
 
 (defun cape-web--clean-syntax (syntax types)
-  "Remove recent elems from SYNTAX while elems are of TYPES,
-specified as a list of type symbols or a type symbol.
+  "From SYNTAX, remove all recent elems of TYPES,
+specified as a list of type symbols or a single type symbol.
 Return list of removed elems."
   (let ((elems ()))
     (while (cape-web--syntaxp syntax types)
@@ -1258,7 +1260,7 @@ Also try to look back from START, if specified."
         (and (string= exact match) match)))))
 
 (defun cape-web--get-http-attr-vals (tag attr)
-  "Get keyword list for TAG and ATTR from `cape-web-html-attr-vals'."
+  "Get html keyword list for TAG and ATTR from `cape-web-html-attr-vals'."
   (when-let*
       ((vals (alist-get attr cape-web-html-attr-vals))
        (val (car vals)))
@@ -1279,7 +1281,13 @@ Also try to look back from START, if specified."
      (t vals))))
 
 (defun cape-web--get-css-vals (prop alist)
-  "Get keyword list for PROP from ALIST."
+  "Get css keyword list for PROP from ALIST.
+ALIST can be `cape-web-css-props-and-vals' for property values,
+`cape-web-css-prop-func-args' for property value function arguments,
+or `cape-web-css-sel-func-args' for selector function arguments.
+NOTE: From inside this function, may called recursively with
+`cape-web-css-val-classes' to expand value classes,
+but not expected to be specified externally."
   (apply
    'append
    (mapcar
@@ -1310,7 +1318,7 @@ Also try to look back from START, if specified."
     (alist-get prop alist))))
 
 (defun cape-web--open-syntax-html (syntax elem)
-  "Open ELEM on SYNTAX stack under the html syntax rules."
+  "Open ELEM on SYNTAX stack, under the html syntax rules."
   (cond
    ;; NOTE: To check nesting, elems with open and close, always must be pushed
    ;;       (and popped), although their kind might be changed by contexts.
@@ -1339,8 +1347,8 @@ Also try to look back from START, if specified."
     (cape-web--push elem syntax))))
 
 (defun cape-web--close-syntax-html (syntax key)
-  "Close the recent elem of SYNTAX under the html syntax rules,
-if the elem is of type KEY."
+  "Close the most recent elem of type KEY on SYNTAX stack,
+under the html syntax rules."
   (cond
    ((eq key 'ang-bracket)
     ;; forget attribute and its value stats
@@ -1349,7 +1357,7 @@ if the elem is of type KEY."
       (cape-web--pop syntax)))))
 
 (defun cape-web--parse-html (&optional end)
-  "Parse html on current buffer before END, or current point if not specified."
+  "Parse html before END, or current point by default."
   (save-excursion
     (let ((syntax (list nil))
           (bound (or end (point))))
@@ -1426,7 +1434,7 @@ if the elem is of type KEY."
             (cons 'attr-vals (cons avalue-pos tag-pos)))))))))
 
 (defun cape-web--html-keyword-list ()
-  "Return html keywords for current point."
+  "Return html keywords at point."
   (let ((syntax (cape-web--parse-html)))
     (cond
      ((not (car syntax))
@@ -1466,7 +1474,7 @@ if the elem is of type KEY."
         (cape-web--get-http-attr-vals tag attr))))))
 
 (defun cape-web--open-syntax-css (syntax elem)
-  "Open ELEM on SYNTAX stack under the css syntax rules."
+  "Open ELEM on SYNTAX stack, under the css syntax rules."
   (cond
    ;; NOTE: To check nesting, elems with open and close, always must be pushed
    ;;       (and popped), although their kind might be changed by contexts.
@@ -1531,8 +1539,8 @@ if the elem is of type KEY."
       (cape-web--push elem syntax)))))
 
 (defun cape-web--close-syntax-css (syntax key)
-  "Close the recent elem of SYNTAX under the css syntax rules,
-if the elem is of type KEY."
+  "Close the most recent elem of type KEY on SYNTAX stack,
+under the css syntax rules."
   (cond
    ((eq key 'bracket)
     ;; forget attribute value stats
@@ -1561,8 +1569,8 @@ if the elem is of type KEY."
       (cape-web--pop syntax)))))
 
 (defun cape-web--parse-css (&optional beg end)
-  "Parse css on current buffer before END, or current point if not specified.
-Start parsing from BEG, or point-min if not specified."
+  "Parse css before END, or current point by default.
+Start parsing from BEG if specified."
   (save-excursion
     (let ((syntax (list nil))
           (bound (or end (point))))
@@ -1695,8 +1703,8 @@ Start parsing from BEG, or point-min if not specified."
                   (append pparen-poses (list (cdar syntax)))))))))))
 
 (defun cape-web--css-keyword-list (&optional beg)
-  "Return css keywords for current point.
-Start parsing from BEG, or point-min if not specified."
+  "Return css keywords at point.
+Start parsing from BEG if specified; useful for css part inside html."
   (let ((syntax (cape-web--parse-css beg)))
     (cond
      ((memq (car syntax) '(sels-or-global sels))
@@ -1792,7 +1800,7 @@ Start parsing from BEG, or point-min if not specified."
                     cape-web-css-global-prop-funcs))))))))
 
 (defun cape-web--keyword-list ()
-  "Return keywords for current point."
+  "Return web-related keywords at point."
   (when-let
       ((type
         (when-let ((compl-type (alist-get major-mode cape-web-compl-types)))
