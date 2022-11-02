@@ -33,6 +33,12 @@
 Type complex-web works only with `web-mode'.
 For the other-modes like `nxhtml-mode', need more implementations.")
 
+(defvar cape-web-engines-and-modes
+  '((erb . ruby)
+    (ejs . javascript))
+  "Alist of web-mode engines and cape-keyword modes,
+for sub block part of web-mode.")
+
 (defvar cape-web-html-decls
   '("CDATA" "DOCTYPE")
   "List of html declaration types or cdata sections,
@@ -1200,6 +1206,20 @@ which start with \"<?\".")
   "[^-0-9A-Za-z]\\([-0-9A-Za-z]+\\)\\([ \t\n]\\|/\\*.*?\\*/\\)*("
   "Regexp that matches to css property value function parts.")
 
+(defun cape-web--get-type-for-web-mode (point)
+  "Return completion type for `web-mode' at POINT."
+  ;; check text property to determine subparts in html (css, javascript)
+  (or (get-text-property point 'part-side)
+      ;; or check text property to find subblocks in html (php, erb, ejs etc)
+      (when (get-text-property point 'block-side)
+        ;; refer to web-mode-engine for subblocks
+        (let ((engine (intern web-mode-engine)))
+          (or (alist-get engine cape-web-engines-and-modes)
+              engine)))
+      ;; or check web-mode-content-type (whole file of html, css)
+      (unless (eq web-mode-content-type "")
+        (intern web-mode-content-type))))
+
 (defun cape-web--push (elem list)
   "Same as `push', except modifying LIST destructively.
 According to that side effect, LIST must be terminated by nil as a sentinel.
@@ -1801,18 +1821,14 @@ Start parsing from BEG if specified; useful for css part inside html."
 
 (defun cape-web--keyword-list ()
   "Return web-related keywords at point."
-  (when-let
-      ((type
-        (when-let ((compl-type (alist-get major-mode cape-web-compl-types)))
-          (cond
-           ;; web-mode: check text property to determine subparts in html
-           ((eq compl-type 'complex-web)
-            (or (get-text-property (point) 'part-side)
-                ;; or check web-mode-content-type
-                (unless (eq web-mode-content-type "")
-                  (intern web-mode-content-type))))
-           ;; others: return the type determined with major-mode
-           (t compl-type)))))
+  (when-let*
+      ((compl-type (alist-get major-mode cape-web-compl-types))
+       (type (cond
+              ((eq compl-type 'complex-web)
+               ;; web-mode: get the type which depends on curent point
+               (cape-web--get-type-for-web-mode (point)))
+              ;; others: return the type determined with major-mode
+              (t compl-type))))
     (cond
      ((eq type 'html)
       (cape-web--html-keyword-list))
