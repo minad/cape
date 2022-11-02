@@ -36,8 +36,8 @@ For the other-modes like `nxhtml-mode', need more implementations.")
 (defvar cape-web-engines-and-modes
   '((erb . ruby)
     (ejs . javascript))
-  "Alist of web-mode engines and cape-keyword modes,
-for sub block part of web-mode.")
+  "Alist of `web-mode' engines and `cape-keyword' modes,
+for sub block part of `web-mode'.")
 
 (defvar cape-web-html-decls
   '("CDATA" "DOCTYPE")
