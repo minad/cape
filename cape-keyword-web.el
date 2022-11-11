@@ -298,8 +298,9 @@ which start with \"<?\".")
 (defvar cape-web-css-pseudo-elems
   '("after" "backdrop" "before" "cue" "cue-region"
     "file-selector-button" "first-letter" "first-line" "grammar-error"
-    "marker" "part(" "placeholder" "selection" "slotted("
-    "spelling-error" "target-text")
+    "marker" "part(" "placeholder" "-webkit-scrollbar"
+    "-webkit-scrollbar-thumb" "selection" "slotted(" "spelling-error"
+    "target-text")
   "List of css3 pseudo elements, which start with \"::\" in selectors.")
 
 (defvar cape-web-css-pseudo-classes
@@ -313,7 +314,7 @@ which start with \"<?\".")
     "only-child" "only-of-type" "optional" "out-of-range" "paused"
     "picture-in-picture" "placeholder-shown" "playing" "read-only"
     "read-write" "required" "right" "root" "scope" "target"
-    "user-invalid" "-moz-ui-invalid" "user-valid" "moz-ui-valid"
+    "user-invalid" "-moz-ui-invalid" "user-valid" "-moz-ui-valid"
     "valid" "visited" "where(")
   "List of css3 pseudo classes, which start with \":\" in selectors.")
 
@@ -854,7 +855,7 @@ which start with \"<?\".")
     (touch-action
      "auto" "manipulation" "none" "pan-down" "pan-left" "pan-right"
      "pan-up" "pan-x" "pan-y" "pinch-zoom")
-    (transform class--tranform-function "none")
+    (transform class--transform-function "none")
     (transform-box class--transform-box)
     (transform-origin class--position)
     (transform-style "flat" "preserve-3d")
@@ -1110,6 +1111,7 @@ which start with \"<?\".")
     (image
      class--gradient
      "cross-fade(" "element(" "image(" "image-set(" "url(")
+    (keyframe-elems class--math-function "from" "to")
     (line-style-base "dashed" "dotted" "double" "solid")
     (line-style
      class--line-style-base "groove" "inset" "none" "outset" "ridge")
@@ -1167,7 +1169,7 @@ which start with \"<?\".")
   "Regexp that matches to html attribute parts.")
 
 (defvar cape-web-css-syntax-regexp
-  "\\([][(){}#.=:;\"']\\|/\\*\\|@media\\)"
+  "\\([][(){}#.=:;\"']\\|/\\*\\|@media\\|@keyframes\\)"
   "Regexp to parse css.")
 
 (defvar cape-web-css-at-keywords-regexp
@@ -1296,7 +1298,7 @@ Also try to look back from START, if specified."
               ;; use t in case not found tag name
               (alist-get t vals))
         ;; get all entries if tag name empty
-        (apply 'append (mapcar 'cdr vals))))
+        (seq-uniq (apply 'append (mapcar 'cdr vals)))))
      ;; maybe string: get only from attribute name
      (t vals))))
 
@@ -1308,34 +1310,35 @@ or `cape-web-css-sel-func-args' for selector function arguments.
 NOTE: From inside this function, may called recursively with
 `cape-web-css-val-classes' to expand value classes,
 but not expected to be specified externally."
-  (apply
-   'append
-   (mapcar
-    (lambda (val)
-      (cond
-       ;; string
-       ((stringp val) (list val))
-       ;; class: get from class definition
-       ((when-let*
-            ((name (symbol-name val))
-             (klass (and (string-match "^class--\\(.*\\)$" name)
-                         (intern (match-string 1 name))))
-             (compl (cape-web--get-css-vals klass cape-web-css-val-classes)))
-          compl))
-       ;; html attributes
-       ((eq val 'cape--html-attrs)
-        (apply 'append (cons cape-web-html-global-attrs
-                             (mapcar 'cdr cape-web-html-tags-and-attrs))))
-       ;; css selectors: no completions here
-       ((eq val 'cape--sels)
-        nil)
-       ;; css properties
-       ((eq val 'cape--css-props)
-        (mapcar 'car cape-web-css-props-and-vals))
-       ;; others: alias to another property
-       (t
-        (cape-web--get-css-vals val cape-web-css-props-and-vals))))
-    (alist-get prop alist))))
+  (seq-uniq
+   (apply
+    'append
+    (mapcar
+     (lambda (val)
+       (cond
+        ;; string
+        ((stringp val) (list val))
+        ;; class: get from class definition
+        ((when-let*
+             ((name (symbol-name val))
+              (klass (and (string-match "^class--\\(.*\\)$" name)
+                          (intern (match-string 1 name))))
+              (compl (cape-web--get-css-vals klass cape-web-css-val-classes)))
+           compl))
+        ;; html attributes
+        ((eq val 'cape--html-attrs)
+         (apply 'append (cons cape-web-html-global-attrs
+                              (mapcar 'cdr cape-web-html-tags-and-attrs))))
+        ;; css selectors: no completions here
+        ((eq val 'cape--sels)
+         nil)
+        ;; css properties
+        ((eq val 'cape--css-props)
+         (mapcar 'car cape-web-css-props-and-vals))
+        ;; others: alias to another property
+        (t
+         (cape-web--get-css-vals val cape-web-css-props-and-vals))))
+     (alist-get prop alist)))))
 
 (defun cape-web--open-syntax-html (syntax elem)
   "Open ELEM on SYNTAX stack, under the html syntax rules."
@@ -1525,8 +1528,11 @@ under the html syntax rules."
      ((cape-web--syntaxp syntax 'media)
       ;; found @media sequence: inside media query, same as outside parts
       (setcar (car syntax) 'mquery))
-     ((cape-web--syntaxp syntax '(mquery nil))
-      ;; outside property parts (except in recursive selector): property parts
+     ((cape-web--syntaxp syntax 'keyframe)
+      ;; found @keyframes sequence: keyframe element parts
+      (setcar (car syntax) 'kfelem))
+     ((cape-web--syntaxp syntax '(mquery kfelem nil))
+      ;; outside property parts or keyframe element parts : property parts
       (cape-web--push (cons 'pbrace (cdr elem)) syntax))
      (t
       ;; others: ignore
@@ -1556,6 +1562,10 @@ under the html syntax rules."
    ((eq (car elem) 'media)
     (when (cape-web--syntaxp syntax '(mquery nil))
       ;; media query allowed outside property parts
+      (cape-web--push elem syntax)))
+   ((eq (car elem) 'keyframe)
+    (when (cape-web--syntaxp syntax '(mquery nil))
+      ;; keyframes allowed outside property parts
       (cape-web--push elem syntax)))))
 
 (defun cape-web--close-syntax-css (syntax key)
@@ -1580,9 +1590,9 @@ under the css syntax rules."
     (when (cape-web--syntaxp syntax '(sparen pparen paren))
       (cape-web--pop syntax)))
    ((eq key 'brace)
-    ;; forget selector, property value stats or orphan @media sequences
-    (cape-web--clean-syntax syntax '(select pvalue media))
-    (when (cape-web--syntaxp syntax '(mquery pbrace brace))
+    ;; forget selector, property value stats or orphan @-sequences
+    (cape-web--clean-syntax syntax '(select pvalue media keyframe))
+    (when (cape-web--syntaxp syntax '(mquery kfelem pbrace brace))
       (cape-web--pop syntax)))
    ((eq key 'colon)
     (when (cape-web--syntaxp syntax 'pvalue)
@@ -1664,9 +1674,12 @@ Start parsing from BEG if specified."
                 (throw 'parse t)))
              ;; @media sequence
              ((string= piece "@media")
-              (cape-web--open-syntax-css syntax (cons 'media piece-end)))))))
+              (cape-web--open-syntax-css syntax (cons 'media piece-end)))
+             ;; @keyframes sequence
+             ((string= piece "@keyframes")
+              (cape-web--open-syntax-css syntax (cons 'keyframe piece-end)))))))
       ;; Pass 2: Decide the part type just before bound.
-      (cape-web--clean-syntax syntax 'media)
+      (cape-web--clean-syntax syntax '(media keyframe))
       (cond
        ((cape-web--syntaxp syntax '(mquery nil))
         ;; outside property parts
@@ -1708,6 +1721,9 @@ Start parsing from BEG if specified."
              (cons 'sels nil)))
          ;; otherwise, will complete using selector function arguments table
          (cons 'sel-func-args (cdar syntax))))
+       ((cape-web--syntaxp syntax 'kfelem)
+        ;; keyframe element parts
+        (cons 'keyframe-elems nil))
        ((cape-web--syntaxp syntax 'pbrace)
         ;; inside property parts and not property value parts
         (cons 'prop-names nil))
@@ -1757,7 +1773,8 @@ Start parsing from BEG if specified; useful for css part inside html."
                     (throw 'attrs
                            (alist-get tag cape-web-html-tags-and-attrs))))
                 (cdr syntax))
-               (apply 'append (mapcar 'cdr cape-web-html-tags-and-attrs)))))
+               (seq-uniq (apply 'append
+                                (mapcar 'cdr cape-web-html-tags-and-attrs))))))
         (append attrs cape-web-html-global-attrs)))
      ((eq (car syntax) 'attr-sel-val-start)
       ;; just after attribute selector name: complete only '"'
@@ -1787,6 +1804,9 @@ Start parsing from BEG if specified; useful for css part inside html."
         (when (member (concat func-name "(") cape-web-css-pseudo-classes)
           ;; pseudo selector function arguments
           (cape-web--get-css-vals func cape-web-css-sel-func-args))))
+     ((eq (car syntax) 'keyframe-elems)
+      ;; keyframe elements
+      (cape-web--get-css-vals (car syntax) cape-web-css-val-classes))
      ((eq (car syntax) 'prop-names)
       ;; property names
       (mapcar 'car cape-web-css-props-and-vals))
