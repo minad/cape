@@ -284,10 +284,19 @@ If INTERACTIVE is nil the function acts like a Capf."
 ;;;;; cape-symbol
 
 (defvar cape--symbol-properties
-  (list :annotation-function #'cape--symbol-annotation
-        :exit-function #'cape--symbol-exit
-        :company-kind #'cape--symbol-kind
-        :exclusive 'no)
+  (append
+   (list :annotation-function #'cape--symbol-annotation
+         :exit-function #'cape--symbol-exit
+         :exclusive 'no)
+   (when (>= emacs-major-version 28)
+     (autoload 'elisp--company-kind "elisp-mode")
+     (autoload 'elisp--company-doc-buffer "elisp-mode")
+     (autoload 'elisp--company-doc-string "elisp-mode")
+     (autoload 'elisp--company-location "elisp-mode")
+     (list :company-kind 'elisp--company-kind
+           :company-doc-buffer 'elisp--company-doc-buffer
+           :company-docsig 'elisp--company-doc-string
+           :company-location 'elisp--company-location)))
   "Completion extra properties for `cape-symbol'.")
 
 (defun cape--symbol-exit (name status)
@@ -300,17 +309,6 @@ STATUS is the exit status."
       (backward-char (length name))
       (insert c))
     (insert c)))
-
-(defun cape--symbol-kind (sym)
-  "Return kind of SYM."
-  (setq sym (intern-soft sym))
-  (cond
-   ((or (macrop sym) (special-form-p sym)) 'keyword)
-   ((fboundp sym) 'function)
-   ((boundp sym) 'variable)
-   ((featurep sym) 'module)
-   ((facep sym) 'color)
-   (t 'text)))
 
 (defun cape--symbol-annotation (sym)
   "Return kind of SYM."
