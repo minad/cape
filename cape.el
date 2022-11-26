@@ -668,6 +668,8 @@ VALID is the input comparator, see `cape--input-valid-p'.
 This feature is experimental."
   (let ((init (make-variable-buffer-local (make-symbol "cape--company-init"))))
     (lambda ()
+      (when (and (symbolp backend) (not (fboundp backend)))
+        (ignore-errors (require backend nil t)))
       (unless (symbol-value init)
         (cape--company-call backend 'init)
         (set init t))
