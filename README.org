@@ -36,7 +36,8 @@ advantage of Company backends even if you are not using Company as frontend.
 
 * Available Capfs
 
-+ ~cape-dabbrev~: Complete word from current buffers
++ ~cape-dabbrev~: Complete word from current buffers (see also ~dabbrev-capf~ on
+  Emacs 29)
 + ~cape-file~: Complete file name
 + ~cape-history~: Complete from Eshell, Comint or minibuffer history
 + ~cape-keyword~: Complete programming language keyword
