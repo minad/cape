@@ -231,6 +231,7 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-wrap-accept-all~, ~cape-capf-accept-all~: Create a Capf which accepts every input as valid.
 - ~cape-wrap-silent~, ~cape-capf-silent~: Wrap a chatty Capf and silence it.
 - ~cape-wrap-purify~, ~cape-capf-purify~: Purify a broken Capf and ensure that it does not modify the buffer.
+- ~cape-wrap-nonexclusive~, ~cape-capf-nonexclusive:~ Mark Capf as non-exclusive.
 - ~cape-wrap-noninterruptible~, ~cape-capf-noninterruptible:~ Protect a Capf which does not like to be interrupted.
 - ~cape-wrap-case-fold~, ~cape-capf-case-fold~: Create a Capf which is case insensitive.
 - ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.

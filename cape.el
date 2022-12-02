@@ -753,6 +753,11 @@ completion :category symbol can be specified."
             ,@properties ,@plist))))
 
 ;;;###autoload
+(defun cape-wrap-nonexclusive (capf)
+  "Call CAPF and ensure that it is marked as non-exclusive."
+  (cape-wrap-properties capf :exclusive 'no))
+
+;;;###autoload
 (defun cape-wrap-predicate (capf predicate)
   "Call CAPF and add an additional candidate PREDICATE.
 The PREDICATE is passed the candidate symbol or string."
@@ -845,6 +850,8 @@ If the prefix is long enough, enforce auto completion."
 (cape--capf-wrapper case-fold)
 ;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
 (cape--capf-wrapper noninterruptible)
+;;;###autoload (autoload 'cape-capf-nonexclusive "cape")
+(cape--capf-wrapper nonexclusive)
 ;;;###autoload (autoload 'cape-capf-predicate "cape")
 (cape--capf-wrapper predicate)
 ;;;###autoload (autoload 'cape-capf-prefix-length "cape")
