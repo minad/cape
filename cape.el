@@ -95,11 +95,13 @@ The buffers are scanned for completion candidates by `cape-line'."
                  (function :tag "Custom function")))
 
 (defcustom cape-symbol-wrapper
-  '((org-mode . ?=)
-    (markdown-mode . ?`)
-    (rst-mode . "``"))
+  '((org-mode ?= ?=)
+    (markdown-mode ?` ?`)
+    (rst-mode "``" "``")
+    (rcirc-mode "`" "'"))
   "Wrapper characters for symbols."
-  :type '(alist :key-type symbol :value-type (choice character string)))
+  :type '(alist :key-type symbol :value-type (list (choice character string)
+                                                   (choice character string))))
 
 ;;;; Helpers
 
@@ -307,8 +309,8 @@ STATUS is the exit status."
                          if (derived-mode-p m) return c)))
     (save-excursion
       (backward-char (length name))
-      (insert c))
-    (insert c)))
+      (insert (car c)))
+    (insert (cadr c))))
 
 (defun cape--symbol-annotation (sym)
   "Return kind of SYM."
