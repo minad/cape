@@ -289,6 +289,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (append
    (list :annotation-function #'cape--symbol-annotation
          :exit-function #'cape--symbol-exit
+         :predicate #'cape--symbol-predicate
          :exclusive 'no)
    (when (>= emacs-major-version 28)
      (autoload 'elisp--company-kind "elisp-mode")
@@ -300,6 +301,10 @@ If INTERACTIVE is nil the function acts like a Capf."
            :company-docsig 'elisp--company-doc-string
            :company-location 'elisp--company-location)))
   "Completion extra properties for `cape-symbol'.")
+
+(defun cape--symbol-predicate (sym)
+  "Return t if SYM is bound, fbound or propertized."
+  (or (fboundp sym) (boundp sym) (symbol-plist sym)))
 
 (defun cape--symbol-exit (name status)
   "Wrap symbol NAME with `cape-symbol-wrapper' buffers.
