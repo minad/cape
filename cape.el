@@ -99,6 +99,7 @@ The buffers are scanned for completion candidates by `cape-line'."
     (markdown-mode ?` ?`)
     (rst-mode "``" "``")
     (log-edit-mode "`" "'")
+    (message-mode "`" "'")
     (rcirc-mode "`" "'"))
   "Wrapper characters for symbols."
   :type '(alist :key-type symbol :value-type (list (choice character string)
