@@ -199,13 +199,21 @@ VALID is the input comparator, see `cape--input-valid-p'."
         (end (copy-marker end t))
         (table nil))
     (lambda (str pred action)
-      (let ((new-input (buffer-substring-no-properties beg end)))
-        (when (or (eq input 'init) (not (cape--input-valid-p input new-input valid)))
-          ;; NOTE: We have to make sure that the completion table is interruptible.
-          ;; An interruption should not happen between the setqs.
-          (setq table (funcall fun new-input)
-                input new-input)))
-      (complete-with-action action table str pred))))
+      ;; Bail out early for `metadata' and `boundaries'. This is a pointless
+      ;; move because of caching, but we do it anyway in the hope that the
+      ;; resulting profiler output looks less confusing, since the weight of the
+      ;; expensive FUN computation is moved to the `all-completions' action.
+      ;; Computing `all-completions' must surely be most expensive, so nobody
+      ;; will suspect a thing.
+      (unless (or (eq action 'metadata) (eq (car-safe action) 'boundaries))
+        (let ((new-input (buffer-substring-no-properties beg end)))
+          (when (or (eq input 'init)
+                    (not (cape--input-valid-p input new-input valid)))
+            ;; We have to make sure that the completion table is interruptible.
+            ;; An interruption should not happen between the setqs.
+            (setq table (funcall fun new-input)
+                  input new-input)))
+        (complete-with-action action table str pred)))))
 
 ;;;; Capfs
 
