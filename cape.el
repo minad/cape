@@ -372,9 +372,12 @@ If INTERACTIVE is nil the function acts like a Capf."
 ;;;###autoload
 (defun cape-dabbrev (&optional interactive)
   "Complete with Dabbrev at point.
+
+If INTERACTIVE is nil the function acts like a Capf. In case you
+observe a performance issue with autocompletion and `cape-dabbrev'
+it is strongly recommended to disable scanning in other buffers.
 See the user options `cape-dabbrev-min-length' and
-`cape-dabbrev-check-other-buffers'.
-If INTERACTIVE is nil the function acts like a Capf."
+`cape-dabbrev-check-other-buffers'."
   (interactive (list t))
   (if interactive
       (let ((cape-dabbrev-min-length 0))
