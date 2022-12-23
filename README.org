@@ -100,7 +100,7 @@ could be upstreamed into Emacs itself.
   )
 #+end_src
 
-* Experimental features
+* CAPF adapters and transformers
 ** Company adapter
 
 /Wrap your Company backend in a Cape and turn it into a Capf!/
@@ -219,7 +219,7 @@ achieve a similarly refreshing strategy.
               (list (cape-capf-buster #'some-caching-capf)))
 #+end_src
 
-** Other Capf transformers
+** Capf transformers
 
 Cape provides a set of additional Capf transformation functions, which are
 mostly meant to used by experts to fine tune the Capf behavior and Capf
@@ -236,8 +236,9 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-wrap-case-fold~, ~cape-capf-case-fold~: Create a Capf which is case insensitive.
 - ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
 - ~cape-wrap-predicate~, ~cape-capf-predicate~: Add candidate predicate to a Capf.
-- ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix
-  length.
+- ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix length.
+- ~cape-wrap-inside-comment~, ~cape-capf-inside-comment~: Ensure that Capf triggers only inside comment.
+- ~cape-wrap-inside-string~, ~cape-capf-inside-string~: Ensure that Capf triggers only inside a string literal.
 
 In the following we show a few example configurations, which have come up on the
 [[https://github.com/minad/cape/issues][Cape]] or [[https://github.com/minad/corfu/issues][Corfu issue tracker]] or the [[https://github.com/minad/corfu/wiki][Corfu wiki.]] I use some of these tweaks in my

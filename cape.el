@@ -833,6 +833,16 @@ If the prefix is long enough, enforce auto completion."
          ,@plist)))))
 
 ;;;###autoload
+(defun cape-wrap-inside-comment (capf)
+  "Call CAPF only if inside comment."
+  (and (nth 4 (syntax-ppss)) (funcall capf)))
+
+;;;###autoload
+(defun cape-wrap-inside-string (capf)
+  "Call CAPF only if inside string."
+  (and (nth 3 (syntax-ppss)) (funcall capf)))
+
+;;;###autoload
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not modify the buffer."
   ;; bug#50470: Fix Capfs which illegally modify the buffer or which
@@ -868,6 +878,10 @@ If the prefix is long enough, enforce auto completion."
 (cape--capf-wrapper buster)
 ;;;###autoload (autoload 'cape-capf-case-fold "cape")
 (cape--capf-wrapper case-fold)
+;;;###autoload (autoload 'cape-capf-inside-comment "cape")
+(cape--capf-wrapper inside-comment)
+;;;###autoload (autoload 'cape-capf-inside-string "cape")
+(cape--capf-wrapper inside-string)
 ;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
 (cape--capf-wrapper noninterruptible)
 ;;;###autoload (autoload 'cape-capf-nonexclusive "cape")
