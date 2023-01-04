@@ -169,9 +169,8 @@ then be used as a Capf via ~cape-company-to-capf~.
 
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
 
-Cape supports merging multiple Capfs using the function ~cape-super-capf~. This
-feature is experimental and should only be used in special scenarios.
-*Don't use cape-super-capf if you are not 100% sure that you need it!*
+Cape supports merging multiple Capfs using the function ~cape-super-capf~.
+*This feature is EXPERIMENTAL and should only be used in special scenarios. Don't use cape-super-capf if you are not 100% sure that you need it! If you decide to use the function, you are on UNSUPPORTED TERRITORY.*
 
 Note that ~cape-super-capf~ is not needed if you want to use multiple Capfs which
 are tried one by one, e.g., it is perfectly possible to use ~cape-file~ together
