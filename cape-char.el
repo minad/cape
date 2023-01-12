@@ -73,7 +73,8 @@ PREFIX are the prefix characters."
         (ann (intern (format "cape--%s-annotation" name)))
         (docsig (intern (format "cape--%s-docsig" name)))
         (exit (intern (format "cape--%s-exit" name)))
-        (properties (intern (format "cape--%s-properties" name))))
+        (properties (intern (format "cape--%s-properties" name)))
+        (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" )))
     `(progn
        (defvar ,hash (cape-char--translation
                       ,method
@@ -113,13 +114,13 @@ is nil the function acts like a capf." method method)
          (if interactive
              ;; NOTE: Disable cycling since replacement breaks it.
              (let (completion-cycle-threshold ,prefix-required)
-               (when (memq last-input-event ',prefix)
+               (when (and (memq last-input-event ',prefix)
+                          (not (thing-at-point-looking-at ,thing-re)))
                  (self-insert-command 1 last-input-event))
                (cape--interactive #',capf))
            (when-let (bounds
                       (cond
-                       ((thing-at-point-looking-at
-                         ,(concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
+                       ((thing-at-point-looking-at ,thing-re)
                         (cons (match-beginning 0) (match-end 0)))
                        ((not ,prefix-required) (cons (point) (point)))))
              (append
