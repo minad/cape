@@ -56,7 +56,7 @@ REGEXP is the regular expression matching the names."
                   (when (and (get-text-property beg 'face line) (< ename len) (<= echar len))
                     (let ((name (string-trim (substring-no-properties line beg ename)))
                           (char (string-trim (substring-no-properties line ename echar))))
-                      (when (and (string-match-p regexp name) (= (length char) 1))
+                      (when (and (string-match-p regexp name) (length= char 1))
                         (puthash name (aref char 0) hash))))
                   (setq beg echar)))))
           (kill-buffer)

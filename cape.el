@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 0.12
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.1.0"))
 ;; Homepage: https://github.com/minad/cape
 
 ;; This file is part of GNU Emacs.
@@ -44,6 +44,7 @@
 
 ;;; Code:
 
+(require 'compat)
 (eval-when-compile
   (require 'cl-lib)
   (require 'subr-x))
@@ -187,7 +188,7 @@ The CMP argument determines how the new input is compared to the old input.
         ('never nil)
         ((or 'prefix 'nil) (string-prefix-p old-input new-input))
         ('equal (equal old-input new-input))
-        ('substring (string-match-p (regexp-quote old-input) new-input)))))
+        ('substring (string-search old-input new-input)))))
 
 (defun cape--cached-table (beg end fun valid)
   "Create caching completion table.
@@ -285,7 +286,7 @@ If INTERACTIVE is nil the function acts like a Capf."
       (when org (setcar bounds (+ 5 (car bounds))))
       (when (or org
                 (not cape-file-directory-must-exist)
-                (and (string-match-p "/" file)
+                (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
         `(,(car bounds) ,(cdr bounds)
           ,(cape--nonessential-table #'read-file-name-internal)
@@ -536,7 +537,7 @@ If INTERACTIVE is nil the function acts like a Capf."
         (curr-buf (current-buffer))
         (buffers (funcall cape-line-buffer-function))
         lines)
-    (dolist (buf (if (listp buffers) buffers (list buffers)))
+    (dolist (buf (ensure-list buffers))
       (with-current-buffer buf
         (let ((beg (point-min))
               (max (point-max))
@@ -545,7 +546,7 @@ If INTERACTIVE is nil the function acts like a Capf."
           (save-excursion
             (while (< beg max)
               (goto-char beg)
-              (setq end (line-end-position))
+              (setq end (pos-eol))
               (unless (<= beg pt end)
                 (let ((line (buffer-substring-no-properties beg end)))
                   (unless (or (string-blank-p line) (gethash line ht))
@@ -562,7 +563,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape--interactive #'cape-line)
-    `(,(line-beginning-position) ,(point)
+    `(,(pos-bol) ,(point)
       ,(cape--table-with-properties (cape--line-list) :sort nil)
       ,@cape--line-properties)))
 
