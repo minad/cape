@@ -55,6 +55,8 @@
 
 (defgroup cape nil
   "Completion At Point Extensions."
+  :link '(url-link "https://github.com/minad/cape")
+  :link '(info-link "(cape)")
   :group 'convenience
   :prefix "cape-")
 
