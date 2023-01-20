@@ -302,7 +302,7 @@ If INTERACTIVE is nil the function acts like a Capf."
          :exit-function #'cape--symbol-exit
          :predicate #'cape--symbol-predicate
          :exclusive 'no)
-   (when (>= emacs-major-version 28)
+   (when (eval-when-compile (>= emacs-major-version 28))
      (autoload 'elisp--company-kind "elisp-mode")
      (autoload 'elisp--company-doc-buffer "elisp-mode")
      (autoload 'elisp--company-doc-string "elisp-mode")
