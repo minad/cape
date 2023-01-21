@@ -55,9 +55,12 @@
 
 (defgroup cape nil
   "Completion At Point Extensions."
-  :link '(url-link "https://github.com/minad/cape")
-  :link '(info-link "(cape)")
+  :link '(info-link :tag "Info Manual" "(cape)")
+  :link '(url-link :tag "Homepage" "https://github.com/minad/cape")
+  :link '(emacs-library-link :tag "Library Source" "cape.el")
   :group 'convenience
+  :group 'tools
+  :group 'matching
   :prefix "cape-")
 
 (defcustom cape-dict-file "/usr/share/dict/words"
