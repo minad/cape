@@ -125,11 +125,6 @@ The buffers are scanned for completion candidates by `cape-line'."
   "Return bounds of THING."
   (or (bounds-of-thing-at-point thing) (cons (point) (point))))
 
-(defun cape--interactive (capf)
-  "Complete with CAPF."
-  (let ((completion-at-point-functions (list capf)))
-    (or (completion-at-point) (user-error "%s: No completions" capf))))
-
 (defmacro cape--wrapped-table (wrap body)
   "Create wrapped completion table, handle `completion--unquote'.
 WRAP is the wrapper function.
@@ -243,7 +238,7 @@ See also `consult-history' for a more flexible variant based on
 `completing-read'. If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-history)
+      (cape-interactive #'cape-history)
     (let (history bol)
       (cond
        ((derived-mode-p 'eshell-mode)
@@ -278,7 +273,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (let (cape-file-directory-must-exist)
-        (cape--interactive #'cape-file))
+        (cape-interactive #'cape-file))
     (let* ((default-directory (pcase cape-file-directory
                                 ('nil default-directory)
                                 ((pred stringp) cape-file-directory)
@@ -353,7 +348,7 @@ STATUS is the exit status."
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-symbol)
+      (cape-interactive #'cape-symbol)
     (pcase-let ((`(,beg . ,end) (cape--bounds 'symbol)))
       (when (eq (char-after beg) ?')
         (setq beg (1+ beg) end (max beg end)))
@@ -387,7 +382,7 @@ See the user options `cape-dabbrev-min-length' and
   (interactive (list t))
   (if interactive
       (let ((cape-dabbrev-min-length 0))
-        (cape--interactive #'cape-dabbrev))
+        (cape-interactive #'cape-dabbrev))
     (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
       (let ((beg (match-beginning 0))
             (end (match-end 0)))
@@ -434,7 +429,7 @@ See the user options `cape-dabbrev-min-length' and
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-ispell)
+      (cape-interactive #'cape-ispell)
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
@@ -467,7 +462,7 @@ See the custom option `cape-dict-file'.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-dict)
+      (cape-interactive #'cape-dict)
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
@@ -518,7 +513,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (if interactive
       ;; NOTE: Disable cycling since abbreviation replacement breaks it.
       (let (completion-cycle-threshold)
-        (cape--interactive #'cape-abbrev))
+        (cape-interactive #'cape-abbrev))
     (when-let (abbrevs (cape--abbrev-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
@@ -567,7 +562,7 @@ The buffers returned by `cape-line-buffer-function' are scanned for lines.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-line)
+      (cape-interactive #'cape-line)
     `(,(pos-bol) ,(point)
       ,(cape--table-with-properties (cape--line-list) :sort nil)
       ,@cape--line-properties)))
@@ -738,11 +733,23 @@ This feature is experimental."
                                       (or (car (member x candidates)) x)))))))))
 
 ;;;###autoload
+(defun cape-interactive (&rest capfs)
+  "Complete interactively with the given CAPFS."
+  (let ((completion-at-point-functions capfs))
+    (unless (completion-at-point)
+      (user-error "%s: No completions"
+                  (mapconcat (lambda (fun)
+                               (if (symbolp fun)
+                                   (symbol-name fun)
+                                 "anonymous-capf"))
+                             capfs ", ")))))
+
+;;;###autoload
 (defun cape-interactive-capf (capf)
   "Create interactive completion function from CAPF."
   (lambda (&optional interactive)
     (interactive (list t))
-    (if interactive (cape--interactive capf) (funcall capf))))
+    (if interactive (cape-interactive capf) (funcall capf))))
 
 ;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)

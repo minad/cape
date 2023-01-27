@@ -226,7 +226,7 @@ interaction. These can either be used as advices (=cape-wrap-*)= or to create a
 new Capf from an existing Capf (=cape-capf-*=). You can bind the Capfs created by
 the Capf transformers with =defalias= to a function symbol.
 
-- ~cape-interactive-capf~: Create a Capf which can be called interactively.
+- ~cape-interactive-capf~, ~cape-interactive~: Create a Capf which can be called interactively.
 - ~cape-wrap-accept-all~, ~cape-capf-accept-all~: Create a Capf which accepts every input as valid.
 - ~cape-wrap-silent~, ~cape-capf-silent~: Wrap a chatty Capf and silence it.
 - ~cape-wrap-purify~, ~cape-capf-purify~: Purify a broken Capf and ensure that it does not modify the buffer.
@@ -244,10 +244,12 @@ In the following we show a few example configurations, which have come up on the
 personal configuration.
 
 #+begin_src emacs-lisp
-  ;; Example 1: Sanitize the `pcomplete-completions-at-point' Capf.
-  ;; The Capf has undesired side effects on Emacs 28 and earlier.
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify)
+  ;; Example 1: Sanitize the `pcomplete-completions-at-point' Capf.  The Capf has
+  ;; undesired side effects on Emacs 28 and earlier.  These advices are not needed
+  ;; on Emacs 29 and newer.
+  (when (< emacs-major-version 29)
+    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
   ;; Example 2: Configure a Capf with a specific auto completion prefix length
   (setq-local completion-at-point-functions
@@ -257,19 +259,17 @@ personal configuration.
   (defalias 'cape-dabbrev-min-2 (cape-capf-prefix-length #'cape-dabbrev 2))
   (setq-local completion-at-point-functions (list #'cape-dabbrev-min-2))
 
-  ;; Example 4: Define a defensive Dabbrev Capf, which accepts all inputs.
-  ;; If you use Corfu and `corfu-auto=t', the first candidate won't be auto
-  ;; selected even if `corfu-preselect-first=t'! You can use this instead of
-  ;; `cape-dabbrev'.
+  ;; Example 4: Define a defensive Dabbrev Capf, which accepts all inputs.  If you
+  ;; use Corfu and `corfu-auto=t', the first candidate won't be auto selected even
+  ;; if `corfu-preselect=first'. You can use this instead of `cape-dabbrev'.
   (defun my-cape-dabbrev-accept-all ()
     (cape-wrap-accept-all #'cape-dabbrev))
   (add-to-list 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
 
-  ;; Example 5: Define interactive Capf which can be bound to a key.
-  ;; Here we wrap the `elisp-completion-at-point' such that we can
-  ;; complete Elisp code explicitly in arbitrary buffers.
-  (global-set-key (kbd "C-c p e")
-                  (cape-interactive-capf #'elisp-completion-at-point))
+  ;; Example 5: Define interactive Capf which can be bound to a key.  Here we wrap
+  ;; the `elisp-completion-at-point' such that we can complete Elisp code
+  ;; explicitly in arbitrary buffers.
+  (keymap-global-set "C-c p e" (cape-interactive-capf #'elisp-completion-at-point))
 
   ;; Example 6: Ignore :keywords in Elisp completion.
   (defun ignore-elisp-keywords (sym)
