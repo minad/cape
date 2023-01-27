@@ -117,7 +117,7 @@ is nil the function acts like a capf." method method)
                (when (and (memq last-input-event ',prefix)
                           (not (thing-at-point-looking-at ,thing-re)))
                  (self-insert-command 1 last-input-event))
-               (cape--interactive #',capf))
+               (cape-interactive #',capf))
            (when-let (bounds
                       (cond
                        ((thing-at-point-looking-at ,thing-re)

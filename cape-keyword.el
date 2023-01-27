@@ -402,7 +402,7 @@ See the variable `cape-keyword-list'.
 If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
-      (cape--interactive #'cape-keyword)
+      (cape-interactive #'cape-keyword)
     (when-let (keywords (cape--keyword-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
