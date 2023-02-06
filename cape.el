@@ -388,12 +388,7 @@ See the user options `cape-dabbrev-min-length' and
             (end (match-end 0)))
         `(,beg ,end
           ,(cape--table-with-properties
-            (cape--cached-table beg end
-                                #'cape--dabbrev-list
-                                ;; TODO: Use equal, if candidates must be longer than cape-dabbrev-min-length.
-                                ;;(if (> cape-dabbrev-min-length 0) 'equal 'prefix)
-                                ;; Problem is that when entering more input, candidates get lost!
-                                'prefix)
+            (cape--cached-table beg end #'cape--dabbrev-list 'prefix)
             :category 'cape-dabbrev)
           ,@cape--dabbrev-properties)))))
 
@@ -571,7 +566,8 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 ;;;###autoload
 (defun cape-super-capf (&rest capfs)
-  "Merge CAPFS and return new Capf which includes all candidates."
+  "Merge CAPFS and return new Capf which includes all candidates.
+This feature is experimental."
   (lambda ()
     (when-let (results (delq nil (mapcar #'funcall capfs)))
       (pcase-let* ((`((,beg ,end . ,_)) results)
