@@ -728,7 +728,7 @@ This feature is experimental."
               :exit-function
               (lambda (x _status)
                 (cape--company-call backend 'post-completion
-                                    (or (car (member x candidates)) x)))))))))
+                                    (or (car (member x candidates)) x))))))))
 
 ;;;###autoload
 (defun cape-interactive (&rest capfs)
