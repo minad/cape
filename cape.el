@@ -678,58 +678,57 @@ This feature is experimental."
       ;; Plain old synchronous return value.
       (res res))))
 
+(defvar-local cape--company-init nil)
+
 ;;;###autoload
 (defun cape-company-to-capf (backend &optional valid)
   "Convert Company BACKEND function to Capf.
 VALID is the input comparator, see `cape--input-valid-p'.
 This feature is experimental."
-  (let ((init (and (symbolp backend)
-                   (make-variable-buffer-local
-                    (intern (format "cape--company-init-%s" backend))))))
-    (lambda ()
-      (when (and (symbolp backend) (not (fboundp backend)))
-        (ignore-errors (require backend nil t)))
-      (when (and init (not (symbol-value init)))
-        (cape--company-call backend 'init)
-        (put backend 'company-init t)
-        (set init t))
-      (when-let ((prefix (cape--company-call backend 'prefix))
-                 (initial-input (if (stringp prefix) prefix (car-safe prefix))))
-        (let* ((end (point)) (beg (- end (length initial-input)))
-               (dups (cape--company-call backend 'duplicates))
-               candidates)
-          (list beg end
-                (funcall
-                 (if (cape--company-call backend 'ignore-case)
-                     #'completion-table-case-fold
-                   #'identity)
-                 (cape--table-with-properties
-                  (cape--cached-table
-                   beg end
-                   (lambda (input)
-                     (setq candidates (cape--company-call backend 'candidates input))
-                     (when dups (setq candidates (delete-dups candidates)))
-                     candidates)
-                   (if (cape--company-call backend 'no-cache initial-input)
-                       'never valid))
-                  :category backend
-                  :sort (not (cape--company-call backend 'sorted))))
-                :exclusive 'no
-                :company-prefix-length (cdr-safe prefix)
-                :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
-                :company-location (lambda (x) (cape--company-call backend 'location x))
-                :company-docsig (lambda (x) (cape--company-call backend 'meta x))
-                :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
-                :company-kind (lambda (x) (cape--company-call backend 'kind x))
-                :annotation-function (lambda (x)
-                                       (when-let (ann (cape--company-call backend 'annotation x))
-                                         (if (string-match-p "^[ \t]" ann)
-                                             ann
-                                           (concat " " ann))))
-                :exit-function
-                (lambda (x _status)
-                  (cape--company-call backend 'post-completion
-                                      (or (car (member x candidates)) x)))))))))
+  (lambda ()
+    (when (and (symbolp backend) (not (fboundp backend)))
+      (ignore-errors (require backend nil t)))
+    (when (and (symbolp backend) (not (alist-get backend cape--company-init)))
+      (funcall backend 'init)
+      (put backend 'company-init t)
+      (setf (alist-get backend cape--company-init) t))
+    (when-let ((prefix (cape--company-call backend 'prefix))
+               (initial-input (if (stringp prefix) prefix (car-safe prefix))))
+      (let* ((end (point)) (beg (- end (length initial-input)))
+             (dups (cape--company-call backend 'duplicates))
+             candidates)
+        (list beg end
+              (funcall
+               (if (cape--company-call backend 'ignore-case)
+                   #'completion-table-case-fold
+                 #'identity)
+               (cape--table-with-properties
+                (cape--cached-table
+                 beg end
+                 (lambda (input)
+                   (setq candidates (cape--company-call backend 'candidates input))
+                   (when dups (setq candidates (delete-dups candidates)))
+                   candidates)
+                 (if (cape--company-call backend 'no-cache initial-input)
+                     'never valid))
+                :category backend
+                :sort (not (cape--company-call backend 'sorted))))
+              :exclusive 'no
+              :company-prefix-length (cdr-safe prefix)
+              :company-doc-buffer (lambda (x) (cape--company-call backend 'doc-buffer x))
+              :company-location (lambda (x) (cape--company-call backend 'location x))
+              :company-docsig (lambda (x) (cape--company-call backend 'meta x))
+              :company-deprecated (lambda (x) (cape--company-call backend 'deprecated x))
+              :company-kind (lambda (x) (cape--company-call backend 'kind x))
+              :annotation-function (lambda (x)
+                                     (when-let (ann (cape--company-call backend 'annotation x))
+                                       (if (string-match-p "^[ \t]" ann)
+                                           ann
+                                         (concat " " ann))))
+              :exit-function
+              (lambda (x _status)
+                (cape--company-call backend 'post-completion
+                                    (or (car (member x candidates)) x)))))))))
 
 ;;;###autoload
 (defun cape-interactive (&rest capfs)
