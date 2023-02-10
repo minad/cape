@@ -235,7 +235,7 @@ VALID is the input comparator, see `cape--input-valid-p'."
 (defun cape-history (&optional interactive)
   "Complete from Eshell, Comint or minibuffer history.
 See also `consult-history' for a more flexible variant based on
-`completing-read'. If INTERACTIVE is nil the function acts like a Capf."
+`completing-read'.  If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-history)
@@ -374,7 +374,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defun cape-dabbrev (&optional interactive)
   "Complete with Dabbrev at point.
 
-If INTERACTIVE is nil the function acts like a Capf. In case you
+If INTERACTIVE is nil the function acts like a Capf.  In case you
 observe a performance issue with autocompletion and `cape-dabbrev'
 it is strongly recommended to disable scanning in other buffers.
 See the user options `cape-dabbrev-min-length' and
@@ -774,7 +774,7 @@ comparator, see `cape--input-valid-p'."
 (defun cape-wrap-properties (capf &rest properties)
   "Call CAPF and add additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function and
-the various :company-* extensions. Furthermore a boolean :sort flag and a
+the various :company-* extensions.  Furthermore a boolean :sort flag and a
 completion :category symbol can be specified."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
