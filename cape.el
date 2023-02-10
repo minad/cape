@@ -683,12 +683,15 @@ This feature is experimental."
   "Convert Company BACKEND function to Capf.
 VALID is the input comparator, see `cape--input-valid-p'.
 This feature is experimental."
-  (let ((init (make-variable-buffer-local (make-symbol "cape--company-init"))))
+  (let ((init (and (symbolp backend)
+                   (make-variable-buffer-local
+                    (intern (format "cape--company-init-%s" backend))))))
     (lambda ()
       (when (and (symbolp backend) (not (fboundp backend)))
         (ignore-errors (require backend nil t)))
-      (unless (symbol-value init)
+      (when (and init (not (symbol-value init)))
         (cape--company-call backend 'init)
+        (put backend 'company-init t)
         (set init t))
       (when-let ((prefix (cape--company-call backend 'prefix))
                  (initial-input (if (stringp prefix) prefix (car-safe prefix))))
