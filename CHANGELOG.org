@@ -1,0 +1,7 @@
+#+title: cape.el - Changelog
+#+author: Daniel Mendler
+#+language: en
+
+* Version 0.13 (2023-05-15)
+
+- Start of changelog.
