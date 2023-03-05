@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 0.13
-;; Package-Requires: ((emacs "27.1") (compat "29.1.3.4"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.4.0"))
 ;; Homepage: https://github.com/minad/cape
 
 ;; This file is part of GNU Emacs.
@@ -72,7 +72,7 @@
 This setting ensures that words which are too short
 are not offered as completion candidates, such that
 auto completion does not pop up too aggressively."
-  :type 'integer)
+  :type 'natnum)
 
 (defcustom cape-dabbrev-check-other-buffers t
   "Buffers to check for dabbrev.
