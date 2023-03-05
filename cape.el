@@ -856,10 +856,11 @@ If the prefix is long enough, enforce auto completion."
 ;;;###autoload
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not modify the buffer."
-  ;; bug#50470: Fix Capfs which illegally modify the buffer or which
-  ;; illegally call `completion-in-region'. The workaround here has been
-  ;; proposed @jakanakaevangeli in bug#50470 and is used in
-  ;; @jakanakaevangeli's capf-autosuggest package.
+  ;; bug#50470: Fix Capfs which illegally modify the buffer or which illegally
+  ;; call `completion-in-region'.  The workaround here was proposed by
+  ;; @jakanakaevangeli and is used in his capf-autosuggest package.  In Emacs 29
+  ;; the purity bug of Pcomplete has been fixed, such that make
+  ;; `cape-wrap-purify' is not necessary anymore.
   (catch 'cape--illegal-completion-in-region
     (condition-case nil
         (let ((buffer-read-only t)
