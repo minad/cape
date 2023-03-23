@@ -379,7 +379,8 @@
     (js-ts-mode javascript-mode)
     (python-ts-mode python-mode)
     (ruby-ts-mode ruby-mode)
-    (rust-ts-mode rust-mode))
+    (rust-ts-mode rust-mode)
+    (elixir-ts-mode elixir-mode))
   "Alist of major modes and keywords."
   :type 'alist
   :group 'cape)
