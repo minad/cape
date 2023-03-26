@@ -38,9 +38,9 @@
 ;; cape-ispell: Complete word from Ispell dictionary
 ;; cape-dict: Complete word from dictionary file
 ;; cape-line: Complete entire line from file
-;; cape-tex: Complete unicode char from TeX command, e.g. \hbar.
-;; cape-sgml: Complete unicode char from Sgml entity, e.g., &alpha.
-;; cape-rfc1345: Complete unicode char using RFC 1345 mnemonics.
+;; cape-tex: Complete Unicode char from TeX command, e.g. \hbar.
+;; cape-sgml: Complete Unicode char from SGML entity, e.g., &alpha.
+;; cape-rfc1345: Complete Unicode char using RFC 1345 mnemonics.
 
 ;;; Code:
 
