@@ -2,6 +2,13 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- =cape-wrap-buster=, =cape-capf-buster= and =cape-company-to-capf=: The argument
+  VALID must be a function taking two arguments, the old and new input. It
+  should return nil if the input must be considered invalid such that the
+  candidates must be recomputed.
+
 * Version 0.13 (2023-02-15)
 
 - Start of changelog.
