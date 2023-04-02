@@ -752,8 +752,9 @@ This feature is experimental."
 ;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)
   "Call CAPF and return a completion table with cache busting.
-The cache is busted when the input changes, where VALID is the input
-comparator, see `cape--input-valid-p'."
+The cache is busted when the input changes, where VALID is the
+input comparator, see `cape--input-valid-p'.  This function can be
+used as an advice around an existing Capf."
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
        `(,beg ,end
@@ -785,7 +786,8 @@ completion :category symbol can be specified."
 
 ;;;###autoload
 (defun cape-wrap-nonexclusive (capf)
-  "Call CAPF and ensure that it is marked as non-exclusive."
+  "Call CAPF and ensure that it is marked as non-exclusive.
+This function can be used as an advice around an existing Capf."
   (cape-wrap-properties capf :exclusive 'no))
 
 ;;;###autoload
@@ -812,22 +814,25 @@ The PREDICATE is passed the candidate symbol or string."
 
 ;;;###autoload
 (defun cape-wrap-silent (capf)
-  "Call CAPF and silence it (no messages, no errors)."
+  "Call CAPF and silence it (no messages, no errors).
+This function can be used as an advice around an existing Capf."
   (pcase (cape--silent (funcall capf))
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--silent-table table) ,@plist))))
 
 ;;;###autoload
 (defun cape-wrap-case-fold (capf &optional dont-fold)
-  "Call CAPF and return a case insenstive completion table.
-If DONT-FOLD is non-nil return a case sensitive table instead."
+  "Call CAPF and return a case-insensitive completion table.
+If DONT-FOLD is non-nil return a case sensitive table instead.
+This function can be used as an advice around an existing Capf."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist))))
 
 ;;;###autoload
 (defun cape-wrap-noninterruptible (capf)
-  "Call CAPF and return a non-interruptible completion table."
+  "Call CAPF and return a non-interruptible completion table.
+This function can be used as an advice around an existing Capf."
   (pcase (let (throw-on-input) (funcall capf))
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--noninterruptible-table table) ,@plist))))
@@ -845,17 +850,22 @@ If the prefix is long enough, enforce auto completion."
 
 ;;;###autoload
 (defun cape-wrap-inside-comment (capf)
-  "Call CAPF only if inside comment."
+  "Call CAPF only if inside comment.
+This function can be used as an advice around an existing Capf."
   (and (nth 4 (syntax-ppss)) (funcall capf)))
 
 ;;;###autoload
 (defun cape-wrap-inside-string (capf)
-  "Call CAPF only if inside string."
+  "Call CAPF only if inside string.
+This function can be used as an advice around an existing Capf."
   (and (nth 3 (syntax-ppss)) (funcall capf)))
 
 ;;;###autoload
 (defun cape-wrap-purify (capf)
-  "Call CAPF and ensure that it does not modify the buffer."
+  "Call CAPF and ensure that it does not illegally modify the buffer.
+This function can be used as an advice around an existing
+Capf.  It has been introduced mainly to fix the broken
+`pcomplete-completions-at-point' function in Emacs versions < 29."
   ;; bug#50470: Fix Capfs which illegally modify the buffer or which illegally
   ;; call `completion-in-region'.  The workaround here was proposed by
   ;; @jakanakaevangeli and is used in his capf-autosuggest package.  In Emacs 29
@@ -874,13 +884,14 @@ If the prefix is long enough, enforce auto completion."
 
 ;;;###autoload
 (defun cape-wrap-accept-all (capf)
-  "Call CAPF and return a completion table which accepts every input."
+  "Call CAPF and return a completion table which accepts every input.
+This function can be used as an advice around an existing Capf."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
 
 (defmacro cape--capf-wrapper (wrapper)
-  "Create a capf transformer for WRAPPER."
+  "Create a capf transformer from WRAPPER."
   `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
      (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
 
