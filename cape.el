@@ -174,27 +174,12 @@ SORT should be nil to disable sorting."
             metadata
           (complete-with-action action table str pred))))))
 
-(defun cape--input-valid-p (old-input new-input cmp)
-  "Return non-nil if the NEW-INPUT is valid in comparison to OLD-INPUT.
-The CMP argument determines how the new input is compared to the old input.
-- never: Never treat the input as valid.
-- prefix/nil: The old input is a prefix of the new input.
-- equal: The old input is equal to the new input.
-- substring: The old input is a substring of the new input."
-  ;; Treat input as not changed if it contains space to allow
-  ;; Orderless completion style filtering.
-  (or (string-match-p "\\s-" new-input)
-      (pcase-exhaustive cmp
-        ('never nil)
-        ((or 'prefix 'nil) (string-prefix-p old-input new-input))
-        ('equal (equal old-input new-input))
-        ('substring (string-search old-input new-input)))))
-
 (defun cape--cached-table (beg end fun valid)
   "Create caching completion table.
-BEG and END are the input bounds.
-FUN is the function which computes the candidates.
-VALID is the input comparator, see `cape--input-valid-p'."
+BEG and END are the input bounds.  FUN is the function which
+computes the candidates.  VALID is a function taking the old and
+new input string.  It should return nil if the cached candidates
+became invalid."
   (let ((input 'init)
         (beg (copy-marker beg))
         (end (copy-marker end t))
@@ -209,7 +194,8 @@ VALID is the input comparator, see `cape--input-valid-p'."
       (unless (or (eq action 'metadata) (eq (car-safe action) 'boundaries))
         (let ((new-input (buffer-substring-no-properties beg end)))
           (when (or (eq input 'init)
-                    (not (cape--input-valid-p input new-input valid)))
+                    (not (or (string-match-p "\\s-" new-input) ;; Support Orderless
+                             (funcall valid input new-input))))
             ;; We have to make sure that the completion table is interruptible.
             ;; An interruption should not happen between the setqs.
             (setq table (funcall fun new-input)
@@ -388,7 +374,9 @@ See the user options `cape-dabbrev-min-length' and
             (end (match-end 0)))
         `(,beg ,end
           ,(cape--table-with-properties
-            (cape--cached-table beg end #'cape--dabbrev-list 'prefix)
+            (cape--cached-table beg end
+                                #'cape--dabbrev-list
+                                #'string-prefix-p)
             :category 'cape-dabbrev)
           ,@cape--dabbrev-properties)))))
 
@@ -428,7 +416,9 @@ If INTERACTIVE is nil the function acts like a Capf."
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
-          (cape--cached-table (car bounds) (cdr bounds) #'cape--ispell-words 'substring)
+          (cape--cached-table (car bounds) (cdr bounds)
+                              #'cape--ispell-words
+                              #'string-search)
           :category 'cape-ispell)
         ,@cape--ispell-properties))))
 
@@ -567,7 +557,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 ;;;###autoload
 (defun cape-super-capf (&rest capfs)
   "Merge CAPFS and return new Capf which includes all candidates.
-This feature is experimental."
+The function `cape-super-capf' is experimental."
   (lambda ()
     (when-let (results (delq nil (mapcar #'funcall capfs)))
       (pcase-let* ((`((,beg ,end . ,_)) results)
@@ -683,8 +673,11 @@ This feature is experimental."
 ;;;###autoload
 (defun cape-company-to-capf (backend &optional valid)
   "Convert Company BACKEND function to Capf.
-VALID is the input comparator, see `cape--input-valid-p'.
-This feature is experimental."
+VALID is a function taking the old and new input string.  It
+should return nil if the cached candidates became invalid.  The
+default value for VALID is `string-prefix-p' such that the
+candidates are only fetched again if the input prefix
+changed.  The function `cape-company-to-capf' is experimental."
   (lambda ()
     (when (and (symbolp backend) (not (fboundp backend)))
       (ignore-errors (require backend nil t)))
@@ -710,7 +703,7 @@ This feature is experimental."
                    (when dups (setq candidates (delete-dups candidates)))
                    candidates)
                  (if (cape--company-call backend 'no-cache initial-input)
-                     'never valid))
+                     #'equal (or valid #'string-prefix-p)))
                 :category backend
                 :sort (not (cape--company-call backend 'sorted))))
               :exclusive 'no
@@ -752,25 +745,30 @@ This feature is experimental."
 ;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)
   "Call CAPF and return a completion table with cache busting.
-The cache is busted when the input changes, where VALID is the
-input comparator, see `cape--input-valid-p'.  This function can be
-used as an advice around an existing Capf."
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       `(,beg ,end
-              ,(let* ((beg (copy-marker beg))
-                      (end (copy-marker end t))
-                      (input (buffer-substring-no-properties beg end)))
-                 (lambda (str pred action)
-                   (let ((new-input (buffer-substring-no-properties beg end)))
-                     (unless (cape--input-valid-p input new-input valid)
-                       (pcase (funcall capf)
-                         (`(,_beg ,_end ,new-table . ,_plist)
-                          ;; NOTE: We have to make sure that the completion table is interruptible.
-                          ;; An interruption should not happen between the setqs.
-                          (setq table new-table input new-input)))))
-                   (complete-with-action action table str pred)))
-              ,@plist))))
+This function can be used as an advice around an existing Capf.
+The cache is busted when the input changes.  The argument VALID
+can be a function taking the old and new input string.  It should
+return nil if the new input requires that the completion table is
+refreshed.  The default value for VALID is `equal', such that the
+completion table is refreshed on every input change."
+  (setq valid (or valid #'equal))
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end
+            ,(let* ((beg (copy-marker beg))
+                    (end (copy-marker end t))
+                    (input (buffer-substring-no-properties beg end)))
+               (lambda (str pred action)
+                 (let ((new-input (buffer-substring-no-properties beg end)))
+                   (unless (or (string-match-p "\\s-" new-input) ;; Support Orderless
+                               (funcall valid input new-input))
+                     (pcase (funcall capf)
+                       (`(,_beg ,_end ,new-table . ,_plist)
+                        ;; NOTE: We have to make sure that the completion table is interruptible.
+                        ;; An interruption should not happen between the setqs.
+                        (setq table new-table input new-input)))))
+                 (complete-with-action action table str pred)))
+            ,@plist))))
 
 ;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
