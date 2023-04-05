@@ -8,6 +8,7 @@
   VALID must be a function taking two arguments, the old and new input. It
   should return nil if the input must be considered invalid such that the
   candidates must be recomputed.
+- =cape-ispell=: Deprecate in favor of =cape-dict=.
 
 * Version 0.13 (2023-02-15)
 

@@ -43,7 +43,6 @@ advantage of Company backends even if you are not using Company as frontend.
 + ~cape-keyword~: Complete programming language keyword
 + ~cape-symbol~: Complete Elisp symbol
 + ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~)
-+ ~cape-ispell~: Complete word from Ispell dictionary
 + ~cape-dict~: Complete word from dictionary file
 + ~cape-line~: Complete entire line from current buffer
 + ~cape-tex~: Complete Unicode char from TeX command, e.g. ~\hbar~.
@@ -75,7 +74,6 @@ could be upstreamed into Emacs itself.
            ("C-c p k" . cape-keyword)
            ("C-c p s" . cape-symbol)
            ("C-c p a" . cape-abbrev)
-           ("C-c p i" . cape-ispell)
            ("C-c p l" . cape-line)
            ("C-c p w" . cape-dict)
            ("C-c p \\" . cape-tex)
@@ -93,7 +91,6 @@ could be upstreamed into Emacs itself.
     ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
     ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
     ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-    ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
     ;;(add-to-list 'completion-at-point-functions #'cape-dict)
     ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
     ;;(add-to-list 'completion-at-point-functions #'cape-line)
@@ -184,8 +181,8 @@ Completion table merging works only for tables which are sufficiently
 well-behaved and tables which do not define completion boundaries.
 ~cape-super-capf~ has the same restrictions as ~completion-table-merge~ and
 ~completion-table-in-turn~. As a simple rule of thumb, ~cape-super-capf~ works only
-well for static completion functions like ~cape-dabbrev~, ~cape-keyword~,
-~cape-ispell~, etc., but not for complex multi-step completions like ~cape-file~.
+well for static completion functions like ~cape-dabbrev~, ~cape-keyword~, ~cape-dict~,
+etc., but not for complex multi-step completions like ~cape-file~.
 
 #+begin_src emacs-lisp
   ;; Merge the dabbrev, dict and keyword capfs, display candidates together.

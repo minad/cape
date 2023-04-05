@@ -35,7 +35,6 @@
 ;; cape-keyword: Complete programming language keyword
 ;; cape-symbol: Complete Elisp symbol
 ;; cape-abbrev: Complete abbreviation (add-global-abbrev, add-mode-abbrev)
-;; cape-ispell: Complete word from Ispell dictionary
 ;; cape-dict: Complete word from dictionary file
 ;; cape-line: Complete entire line from file
 ;; cape-tex: Complete Unicode char from TeX command, e.g. \hbar.
@@ -66,6 +65,14 @@
 (defcustom cape-dict-file "/usr/share/dict/words"
   "Dictionary word list file."
   :type 'string)
+
+(defcustom cape-dict-grep t
+  "Use grep to search through `cape-dict-file'.
+If this variable is non-nil, the dictionary will be searched with
+grep in a separate process.  Otherwise the whole dictionary will
+be loaded into Emacs.  Depending on the size of your dictionary
+one or the other approach is preferable."
+  :type 'boolean)
 
 (defcustom cape-dabbrev-min-length 4
   "Minimum length of dabbrev expansions.
@@ -391,37 +398,6 @@ See the user options `cape-dabbrev-min-length' and
              for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
              if (>= (length w) min-len) collect w)))
 
-;;;;; cape-ispell
-
-(defvar cape--ispell-properties
-  (list :annotation-function (lambda (_) " Ispell")
-        :company-kind (lambda (_) 'text)
-        :exclusive 'no)
-  "Completion extra properties for `cape-ispell'.")
-
-(declare-function ispell-lookup-words "ispell")
-(defun cape--ispell-words (str)
-  "Return all words from Ispell matching STR."
-  (with-demoted-errors "Ispell Error: %S"
-    (require 'ispell)
-    (cape--silent (ispell-lookup-words (format "*%s*" str)))))
-
-;;;###autoload
-(defun cape-ispell (&optional interactive)
-  "Complete word at point with Ispell.
-If INTERACTIVE is nil the function acts like a Capf."
-  (interactive (list t))
-  (if interactive
-      (cape-interactive #'cape-ispell)
-    (let ((bounds (cape--bounds 'word)))
-      `(,(car bounds) ,(cdr bounds)
-        ,(cape--table-with-properties
-          (cape--cached-table (car bounds) (cdr bounds)
-                              #'cape--ispell-words
-                              #'string-search)
-          :category 'cape-ispell)
-        ,@cape--ispell-properties))))
-
 ;;;;; cape-dict
 
 (defvar cape--dict-properties
@@ -430,11 +406,16 @@ If INTERACTIVE is nil the function acts like a Capf."
         :exclusive 'no)
   "Completion extra properties for `cape-dict'.")
 
-(defvar cape--dict-words nil)
-(defun cape--dict-words ()
-  "Dictionary words."
-  (or cape--dict-words
-      (setq cape--dict-words
+(defun cape--dict-grep-words (str)
+  "Return all words from `cape-dict-file' matching STR."
+  (unless (equal str "")
+    (process-lines-ignore-status "grep" "-Fi" str cape-dict-file)))
+
+(defvar cape--dict-all-words nil)
+(defun cape--dict-all-words ()
+  "Load all words from `cape-dict-file'."
+  (or cape--dict-all-words
+      (setq cape--dict-all-words
             (split-string (with-temp-buffer
                             (insert-file-contents cape-dict-file)
                             (buffer-string))
@@ -450,8 +431,16 @@ If INTERACTIVE is nil the function acts like a Capf."
       (cape-interactive #'cape-dict)
     (let ((bounds (cape--bounds 'word)))
       `(,(car bounds) ,(cdr bounds)
-        ,(cape--table-with-properties (cape--dict-words) :category 'cape-dict)
+        ,(cape--table-with-properties
+          (if cape-dict-grep
+              (cape--cached-table (car bounds) (cdr bounds)
+                                  #'cape--dict-grep-words
+                                  #'string-search)
+            (cape--dict-all-words))
+          :category 'cape-dict)
         ,@cape--dict-properties))))
+
+(define-obsolete-function-alias 'cape-ispell 'cape-dict "0.13")
 
 ;;;;; cape-abbrev
 
