@@ -63,11 +63,13 @@
   :prefix "cape-")
 
 (defcustom cape-dict-file "/usr/share/dict/words"
-  "Dictionary word list file or list of files."
-  :type '(choice string (repeat string)))
+  "Path to dictionary word list file.
+This variable can also be a list of paths or
+a function returning a single or more paths."
+  :type '(choice string (repeat string) function))
 
 (defcustom cape-dict-grep t
-  "Use grep to search through `cape-dict-file'.
+  "Use grep to search through the dictionary specified by `cape-dict-file'.
 If this variable is non-nil, the dictionary will be searched with
 grep in a separate process.  Otherwise the whole dictionary will
 be loaded into Emacs.  Depending on the size of your dictionary
@@ -406,11 +408,18 @@ See the user options `cape-dabbrev-min-length' and
         :exclusive 'no)
   "Completion extra properties for `cape-dict'.")
 
+(defun cape--dict-file ()
+  "Return list of dictionary files."
+  (ensure-list
+   (if (functionp cape-dict-file)
+       (funcall cape-dict-file)
+     cape-dict-file)))
+
 (defun cape--dict-grep-words (str)
   "Return all words from `cape-dict-file' matching STR."
   (unless (equal str "")
     (apply #'process-lines-ignore-status
-           "grep" "-Fi" str (ensure-list cape-dict-file))))
+           "grep" "-Fi" str (cape--dict-file))))
 
 (defvar cape--dict-all-words nil)
 (defun cape--dict-all-words ()
@@ -419,7 +428,7 @@ See the user options `cape-dabbrev-min-length' and
       (setq cape--dict-all-words
             (split-string (with-temp-buffer
                             (mapc #'insert-file-contents
-                                  (ensure-list cape-dict-file))
+                                  (cape--dict-file))
                             (buffer-string))
                           "\n" 'omit-nulls))))
 
