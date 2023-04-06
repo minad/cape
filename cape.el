@@ -63,8 +63,8 @@
   :prefix "cape-")
 
 (defcustom cape-dict-file "/usr/share/dict/words"
-  "Dictionary word list file."
-  :type 'string)
+  "Dictionary word list file or list of files."
+  :type '(choice string (repeat string)))
 
 (defcustom cape-dict-grep t
   "Use grep to search through `cape-dict-file'.
@@ -409,7 +409,8 @@ See the user options `cape-dabbrev-min-length' and
 (defun cape--dict-grep-words (str)
   "Return all words from `cape-dict-file' matching STR."
   (unless (equal str "")
-    (process-lines-ignore-status "grep" "-Fi" str cape-dict-file)))
+    (apply #'process-lines-ignore-status
+           "grep" "-Fi" str (ensure-list cape-dict-file))))
 
 (defvar cape--dict-all-words nil)
 (defun cape--dict-all-words ()
@@ -417,7 +418,8 @@ See the user options `cape-dabbrev-min-length' and
   (or cape--dict-all-words
       (setq cape--dict-all-words
             (split-string (with-temp-buffer
-                            (insert-file-contents cape-dict-file)
+                            (mapc #'insert-file-contents
+                                  (ensure-list cape-dict-file))
                             (buffer-string))
                           "\n" 'omit-nulls))))
 
