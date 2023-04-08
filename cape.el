@@ -129,16 +129,23 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 ;;;; Helpers
 
-(defun cape--case-replace (flag input)
-  "Replace case of INPUT depending on FLAG."
-  (when (and (if (eq flag 'case-replace) case-replace flag)
-             (not (equal input "")))
-    (lambda (str status)
-      (unless (eq status 'exact)
-        (save-match-data
-          (delete-char (- (length str)))
-          (string-match (regexp-quote input) input)
-          (insert (replace-match str nil nil input)))))))
+(defun cape--case-replace-list (flag input strs)
+  "Replace case of STRS depending on INPUT and FLAG."
+  (if (and (if (eq flag 'case-replace) case-replace flag)
+           (not (equal input "")))
+      (mapcar (apply-partially #'cape--case-replace flag input) strs)
+    strs))
+
+(defun cape--case-replace (flag input str)
+  "Replace case of STR depending on INPUT and FLAG."
+  (if (and (if (eq flag 'case-replace) case-replace flag)
+           (not (equal input ""))
+           (string-prefix-p input str t))
+      (save-match-data
+        (if (string-match input input)
+            (replace-match str nil nil input)
+          str))
+    str))
 
 (defmacro cape--silent (&rest body)
   "Silence BODY."
@@ -394,34 +401,32 @@ it is strongly recommended to disable scanning in other buffers.
 See the user options `cape-dabbrev-min-length' and
 `cape-dabbrev-check-other-buffers'."
   (interactive (list t))
-  (require 'dabbrev)
   (if interactive
       (let ((cape-dabbrev-min-length 0))
         (cape-interactive #'cape-dabbrev))
     (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
       (let ((beg (match-beginning 0))
-            (end (match-end 0))
-            (input (match-string 0)))
+            (end (match-end 0)))
         `(,beg ,end
           ,(cape--table-with-properties
             (cape--cached-table beg end
                                 #'cape--dabbrev-list
                                 #'string-prefix-p)
             :category 'cape-dabbrev)
-          :exit-function
-          ,(and (dabbrev--ignore-case-p input)
-                (cape--case-replace dabbrev-case-replace input))
           ,@cape--dabbrev-properties)))))
 
-(defun cape--dabbrev-list (word)
-  "Find all dabbrev expansions for WORD."
+(defun cape--dabbrev-list (input)
+  "Find all dabbrev expansions for INPUT."
+  (require 'dabbrev)
   (cape--silent
     (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
       (dabbrev--reset-global-variables))
-    (cl-loop with min-len = (+ cape-dabbrev-min-length (length word))
-             for w in (dabbrev--find-all-expansions word (dabbrev--ignore-case-p word))
-             if (>= (length w) min-len) collect w)))
+    (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
+             with ic = (dabbrev--ignore-case-p input)
+             for w in (dabbrev--find-all-expansions input ic)
+             if (>= (length w) min-len) collect
+             (cape--case-replace (and ic dabbrev-case-replace) input w))))
 
 ;;;;; cape-dict
 
@@ -438,11 +443,13 @@ See the user options `cape-dabbrev-min-length' and
        (funcall cape-dict-file)
      cape-dict-file)))
 
-(defun cape--dict-grep-words (str)
-  "Return all words from `cape-dict-file' matching STR."
-  (unless (equal str "")
-    (apply #'process-lines-ignore-status
-           "grep" "-Fi" str (cape--dict-file))))
+(defun cape--dict-grep-words (input)
+  "Return all words from `cape-dict-file' matching INPUT."
+  (unless (equal input "")
+    (cape--case-replace-list
+     cape-dict-case-replace input
+     (apply #'process-lines-ignore-status
+            "grep" "-Fi" input (cape--dict-file)))))
 
 (defvar cape--dict-all-words nil)
 (defun cape--dict-all-words ()
@@ -463,18 +470,18 @@ If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-dict)
-    (let* ((bounds (cape--bounds 'word))
-           (input (buffer-substring-no-properties (car bounds) (cdr bounds))))
-      `(,(car bounds) ,(cdr bounds)
+    (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
+      `(,beg ,end
         ,(cape--table-with-properties
           (if cape-dict-grep
-              (cape--cached-table (car bounds) (cdr bounds)
+              (cape--cached-table beg end
                                   #'cape--dict-grep-words
                                   #'string-search)
-            (cape--dict-all-words))
+            (cape--case-replace-list cape-dict-case-replace
+                                     (buffer-substring-no-properties beg end)
+                                     (cape--dict-all-words)))
           :category 'cape-dict)
-        :exit-function ,(cape--case-replace cape-dict-case-replace input)
-       ,@cape--dict-properties))))
+        ,@cape--dict-properties))))
 
 (define-obsolete-function-alias 'cape-ispell 'cape-dict "0.13")
 
