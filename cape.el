@@ -138,14 +138,13 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 (defun cape--case-replace (flag input str)
   "Replace case of STR depending on INPUT and FLAG."
-  (if (and (if (eq flag 'case-replace) case-replace flag)
+  (or (and (if (eq flag 'case-replace) case-replace flag)
            (not (equal input ""))
-           (string-prefix-p input str t))
-      (save-match-data
-        (if (string-match input input)
-            (replace-match str nil nil input)
-          str))
-    str))
+           (string-prefix-p input str t)
+           (save-match-data
+             (and (string-match input input)
+                  (replace-match str nil nil input))))
+      str))
 
 (defmacro cape--silent (&rest body)
   "Silence BODY."
