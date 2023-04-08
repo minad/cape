@@ -76,6 +76,13 @@ be loaded into Emacs.  Depending on the size of your dictionary
 one or the other approach is preferable."
   :type 'boolean)
 
+(defcustom cape-dict-case-replace 'case-replace
+  "Preserve case of input.
+See `dabbrev-case-replace' for details."
+  :type '(choice (const :tag "off" nil)
+                 (const :tag "based on `case-replace'" case-replace)
+                 (other :tag "on" t)))
+
 (defcustom cape-dabbrev-min-length 4
   "Minimum length of dabbrev expansions.
 This setting ensures that words which are too short
@@ -121,6 +128,17 @@ The buffers are scanned for completion candidates by `cape-line'."
                                                    (choice character string))))
 
 ;;;; Helpers
+
+(defun cape--case-replace (flag input)
+  "Replace case of INPUT depending on FLAG."
+  (when (and (if (eq flag 'case-replace) case-replace flag)
+             (not (equal input "")))
+    (lambda (str status)
+      (unless (eq status 'exact)
+        (save-match-data
+          (delete-char (- (length str)))
+          (string-match (regexp-quote input) input)
+          (insert (replace-match str nil nil input)))))))
 
 (defmacro cape--silent (&rest body)
   "Silence BODY."
@@ -361,6 +379,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 (defvar dabbrev-check-all-buffers)
 (defvar dabbrev-check-other-buffers)
+(defvar dabbrev-case-replace)
 (declare-function dabbrev--ignore-case-p "dabbrev")
 (declare-function dabbrev--find-all-expansions "dabbrev")
 (declare-function dabbrev--reset-global-variables "dabbrev")
@@ -375,23 +394,27 @@ it is strongly recommended to disable scanning in other buffers.
 See the user options `cape-dabbrev-min-length' and
 `cape-dabbrev-check-other-buffers'."
   (interactive (list t))
+  (require 'dabbrev)
   (if interactive
       (let ((cape-dabbrev-min-length 0))
         (cape-interactive #'cape-dabbrev))
     (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
       (let ((beg (match-beginning 0))
-            (end (match-end 0)))
+            (end (match-end 0))
+            (input (match-string 0)))
         `(,beg ,end
           ,(cape--table-with-properties
             (cape--cached-table beg end
                                 #'cape--dabbrev-list
                                 #'string-prefix-p)
             :category 'cape-dabbrev)
+          :exit-function
+          ,(and (dabbrev--ignore-case-p input)
+                (cape--case-replace dabbrev-case-replace input))
           ,@cape--dabbrev-properties)))))
 
 (defun cape--dabbrev-list (word)
   "Find all dabbrev expansions for WORD."
-  (require 'dabbrev)
   (cape--silent
     (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
@@ -440,7 +463,8 @@ If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-dict)
-    (let ((bounds (cape--bounds 'word)))
+    (let* ((bounds (cape--bounds 'word))
+           (input (buffer-substring-no-properties (car bounds) (cdr bounds))))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
           (if cape-dict-grep
@@ -449,7 +473,8 @@ If INTERACTIVE is nil the function acts like a Capf."
                                   #'string-search)
             (cape--dict-all-words))
           :category 'cape-dict)
-        ,@cape--dict-properties))))
+        :exit-function ,(cape--case-replace cape-dict-case-replace input)
+       ,@cape--dict-properties))))
 
 (define-obsolete-function-alias 'cape-ispell 'cape-dict "0.13")
 
