@@ -294,21 +294,21 @@ If INTERACTIVE is nil the function acts like a Capf."
   (if interactive
       (let (cape-file-directory-must-exist)
         (cape-interactive #'cape-file))
-    (let* ((default-directory (pcase cape-file-directory
-                                ('nil default-directory)
-                                ((pred stringp) cape-file-directory)
-                                (_ (funcall cape-file-directory))))
-           (bounds (cape--bounds 'filename))
-           (non-essential t)
-           (file (buffer-substring (car bounds) (cdr bounds)))
-           ;; Support org links globally, see `org-open-at-point-global'.
-           (org (string-prefix-p "file:" file)))
-      (when org (setcar bounds (+ 5 (car bounds))))
+    (pcase-let* ((default-directory (pcase cape-file-directory
+                                      ('nil default-directory)
+                                      ((pred stringp) cape-file-directory)
+                                      (_ (funcall cape-file-directory))))
+                 (`(,beg . ,end) (cape--bounds 'filename))
+                 (non-essential t)
+                 (file (buffer-substring-no-properties beg end))
+                 ;; Support org links globally, see `org-open-at-point-global'.
+                 (org (string-prefix-p "file:" file)))
+      (when org (setq beg (+ 5 beg)))
       (when (or org
                 (not cape-file-directory-must-exist)
                 (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
-        `(,(car bounds) ,(cdr bounds)
+        `(,beg ,end
           ,(cape--nonessential-table #'read-file-name-internal)
           ,@(when (or org (string-match-p "./" file))
               '(:company-prefix-length t))
