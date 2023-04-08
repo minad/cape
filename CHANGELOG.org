@@ -11,6 +11,9 @@
 - =cape-ispell=: Deprecate in favor of =cape-dict=.
 - =cape-dict-file=: Support multiple dictionary files or a function returning one
   or more files.
+- =cape-dict=, =cape-dabbrev=: Replace case depending on initial input.
+- =cape-dict-case-replace=: New variable to configure case replacement, similar to
+  =dabbrev-case-replace=.
 
 * Version 0.13 (2023-02-15)
 
