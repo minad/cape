@@ -412,9 +412,10 @@ See the user options `cape-dabbrev-min-length' and
             (end (match-end 0)))
         `(,beg ,end
           ,(cape--table-with-properties
-            (cape--cached-table beg end
-                                #'cape--dabbrev-list
-                                #'string-prefix-p)
+            (completion-table-case-fold
+              (cape--cached-table beg end
+                                  #'cape--dabbrev-list
+                                  #'string-prefix-p))
             :category 'cape-dabbrev)
           ,@cape--dabbrev-properties)))))
 
@@ -477,10 +478,11 @@ If INTERACTIVE is nil the function acts like a Capf."
     (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
       `(,beg ,end
         ,(cape--table-with-properties
-          (cape--cached-table beg end
-                              #'cape--dict-grep-words
-                              (lambda (old new)
-                                (string-match-p (regexp-quote old) new)))
+          (completion-table-case-fold
+            (cape--cached-table beg end
+                                #'cape--dict-grep-words
+                                (lambda (old new)
+                                  (string-match-p (regexp-quote old) new))))
           :category 'cape-dict)
         ,@cape--dict-properties))))
 
