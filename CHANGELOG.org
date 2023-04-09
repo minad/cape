@@ -14,6 +14,8 @@
 - =cape-dict=, =cape-dabbrev=: Replace case depending on initial input.
 - =cape-dict-case-replace=: New variable to configure case replacement, similar to
   =dabbrev-case-replace=.
+- =cape-dict-case-fold=: New variable to configure if case is ignored
+  during search and completion.
 
 * Version 0.13 (2023-02-15)
 
