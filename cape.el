@@ -401,6 +401,20 @@ If INTERACTIVE is nil the function acts like a Capf."
 (declare-function dabbrev--find-all-expansions "dabbrev")
 (declare-function dabbrev--reset-global-variables "dabbrev")
 
+(defun cape--dabbrev-list (input)
+  "Find all dabbrev expansions for INPUT."
+  (cape--silent
+    (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
+          (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
+      (dabbrev--reset-global-variables))
+    (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
+             with ic = (if (eq dabbrev-case-fold-search 'case-fold-search)
+                           case-fold-search
+                         dabbrev-case-fold-search)
+             for w in (dabbrev--find-all-expansions input ic)
+             if (>= (length w) min-len) collect
+             (cape--case-replace (and ic dabbrev-case-replace) input w))))
+
 ;;;###autoload
 (defun cape-dabbrev (&optional interactive)
   "Complete with Dabbrev at point.
@@ -415,6 +429,7 @@ See the user options `cape-dabbrev-min-length' and
       (let ((cape-dabbrev-min-length 0))
         (cape-interactive #'cape-dabbrev))
     (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
+      (require 'dabbrev)
       (let ((beg (match-beginning 0))
             (end (match-end 0)))
         `(,beg ,end
@@ -426,21 +441,6 @@ See the user options `cape-dabbrev-min-length' and
                     dabbrev-case-fold-search)))
             :category 'cape-dabbrev)
           ,@cape--dabbrev-properties)))))
-
-(defun cape--dabbrev-list (input)
-  "Find all dabbrev expansions for INPUT."
-  (require 'dabbrev)
-  (cape--silent
-    (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
-          (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
-      (dabbrev--reset-global-variables))
-    (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-             with ic = (if (eq dabbrev-case-fold-search 'case-fold-search)
-                           case-fold-search
-                         dabbrev-case-fold-search)
-             for w in (dabbrev--find-all-expansions input ic)
-             if (>= (length w) min-len) collect
-             (cape--case-replace (and ic dabbrev-case-replace) input w))))
 
 ;;;;; cape-dict
 
