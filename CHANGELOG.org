@@ -16,6 +16,8 @@
   =dabbrev-case-replace=.
 - =cape-dict-case-fold=: New variable to configure if case is ignored
   during search and completion.
+- =cape-elisp-block=: Complete Elisp in Org or Markdown code block. This Capf is
+  particularly useful for literate Emacs configurations.
 
 * Version 0.13 (2023-02-15)
 

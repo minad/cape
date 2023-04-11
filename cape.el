@@ -387,6 +387,32 @@ If INTERACTIVE is nil the function acts like a Capf."
         ,(cape--table-with-properties obarray :category 'symbol)
         ,@cape--symbol-properties))))
 
+;;;;; cape-elisp-block
+
+(declare-function org-element-at-point "org-element")
+(declare-function markdown-code-block-lang "ext:markdown-mode")
+
+;;;###autoload
+(defun cape-elisp-block (&optional interactive)
+  "Complete Elisp in Org or Markdown code block.
+This Capf is particularly useful for literate Emacs configurations.
+If INTERACTIVE is nil the function acts like a Capf."
+  (interactive (list t))
+  (if interactive
+      (cape-interactive #'cape-elisp-block)
+    (when-let ((face (get-text-property (point) 'face))
+               (lang (or (and (if (listp face)
+                                  (memq 'org-block face)
+                                (eq 'org-block face))
+                              (plist-get (cadr (org-element-at-point)) :language))
+                         (and (if (listp face)
+                                  (memq 'markdown-code-face face)
+                                (eq 'markdown-code-face face))
+                              (save-excursion
+                                (markdown-code-block-lang)))))
+               ((member lang '("elisp" "emacs-lisp"))))
+      (elisp-completion-at-point))))
+
 ;;;;; cape-dabbrev
 
 (defvar cape--dabbrev-properties
