@@ -52,8 +52,8 @@ advantage of Company backends even if you are not using Company as frontend.
 * Configuration
 
 Cape is available on GNU ELPA and MELPA. You can install the package with
-~package-install~. In the long term some of the Capfs provided by this package
-could be upstreamed into Emacs itself.
+~package-install~. In the following we present a sample configuration based on the
+popular ~use-package~ macro.
 
 #+begin_src emacs-lisp
 ;; Enable Corfu completion UI
