@@ -13,9 +13,8 @@
 #+html: <a href="https://stable.melpa.org/#/cape"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/cape-badge.svg"/></a>
 
 Cape provides Completion At Point Extensions which can be used in combination
-with the [[https://github.com/minad/corfu][Corfu]] completion UI or the default completion UI. The completion
-backends used by ~completion-at-point~ are so called ~completion-at-point-functions~
-(Capfs). In principle, the Capfs provided by Cape can also be used by [[https://github.com/company-mode/company-mode][Company]].
+with [[https://github.com/minad/corfu][Corfu]], [[https://github.com/company-mode/company-mode][Company]] or the default completion UI. The completion backends used
+by ~completion-at-point~ are so called ~completion-at-point-functions~ (Capfs).
 
 #+html: <img src="https://github.com/minad/cape/blob/logo/cape.png?raw=true" align="right" width="30%">
 
