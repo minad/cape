@@ -390,7 +390,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 ;;;;; cape-elisp-block
 
-(declare-function org-element-at-point "org-element")
+(declare-function org-element-context "org-element")
 (declare-function markdown-code-block-lang "ext:markdown-mode")
 
 ;;;###autoload
@@ -405,7 +405,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                (lang (or (and (if (listp face)
                                   (memq 'org-block face)
                                 (eq 'org-block face))
-                              (plist-get (cadr (org-element-at-point)) :language))
+                              (plist-get (cadr (org-element-context)) :language))
                          (and (if (listp face)
                                   (memq 'markdown-code-face face)
                                 (eq 'markdown-code-face face))
