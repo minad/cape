@@ -823,7 +823,7 @@ completion table is refreshed on every input change."
   (setq valid (or valid #'equal))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     (setq plist `(:corfu--buster t . ,plist))
+     (setq plist `(:cape--buster t . ,plist))
      `(,beg ,end
        ,(let* ((beg (copy-marker beg))
                (end (copy-marker end t))
