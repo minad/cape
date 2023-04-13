@@ -822,15 +822,15 @@ completion table is refreshed on every input change."
   (setq valid (or valid #'equal))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     (setq plist `(:cape--buster t . ,plist))
-     `(,beg ,end
-       ,(let* ((beg (copy-marker beg))
-               (end (copy-marker end t))
-               (input (buffer-substring-no-properties beg end))
-               (all-input input)
-               (all-table table))
-          (lambda (str pred action)
-            (let ((new-input (buffer-substring-no-properties beg end)))
+     (let* ((mbeg (copy-marker beg))
+            (mend (copy-marker end t))
+            (input (buffer-substring-no-properties mbeg mend))
+            (all-input input)
+            (all-table table)
+            (all-plist `(:cape--buster t . ,plist)))
+       `(,beg ,end
+         ,(lambda (str pred action)
+            (let ((new-input (buffer-substring-no-properties mbeg mend)))
               (unless (or (string-match-p "\\s-" new-input) ;; Support Orderless
                           (funcall valid (if (eq action t) all-input input) new-input))
                 (pcase (funcall capf)
@@ -843,9 +843,9 @@ completion table is refreshed on every input change."
                      (when (eq action t)
                        (setf all-table new-table
                              all-input new-input
-                             (cddr plist) new-plist)))))))
-            (complete-with-action action (if (eq action t) all-table table) str pred)))
-       ,@plist))))
+                             (cddr all-plist) new-plist)))))))
+            (complete-with-action action (if (eq action t) all-table table) str pred))
+         ,@all-plist)))))
 
 ;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
