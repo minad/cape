@@ -826,18 +826,25 @@ completion table is refreshed on every input change."
      `(,beg ,end
        ,(let* ((beg (copy-marker beg))
                (end (copy-marker end t))
-               (input (buffer-substring-no-properties beg end)))
+               (input (buffer-substring-no-properties beg end))
+               (all-input input)
+               (all-table table))
           (lambda (str pred action)
             (let ((new-input (buffer-substring-no-properties beg end)))
               (unless (or (string-match-p "\\s-" new-input) ;; Support Orderless
-                          (funcall valid input new-input))
+                          (funcall valid (if (eq action t) all-input input) new-input))
                 (pcase (funcall capf)
                   (`(,_beg ,_end ,new-table . ,new-plist)
                    (let (throw-on-input) ;; No interrupt during state update
-                     (setf table new-table
-                           input new-input
-                           (cddr plist) new-plist))))))
-            (complete-with-action action table str pred)))
+                     (setq table new-table input new-input)
+                     ;; Update `all-table' separately for `all-completions',
+                     ;; such that the `plist' is synchronized with the returned
+                     ;; candidates.
+                     (when (eq action t)
+                       (setf all-table new-table
+                             all-input new-input
+                             (cddr plist) new-plist)))))))
+            (complete-with-action action (if (eq action t) all-table table) str pred)))
        ,@plist))))
 
 ;;;###autoload
