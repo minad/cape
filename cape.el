@@ -656,7 +656,7 @@ The function `cape-super-capf' is experimental."
                 '(metadata (category . cape-super)
                            (display-sort-function . identity)
                            (cycle-sort-function . identity)))
-               ('t
+               ('t ;; all-completions
                 (let ((ht (make-hash-table :test #'equal))
                       (candidates nil))
                   (cl-loop for (table . plist) in tables do
@@ -677,7 +677,7 @@ The function `cape-super-capf' is experimental."
                              (setq candidates (nconc candidates cands))))
                   (setq cand-ht ht)
                   (delq nil candidates)))
-               (_
+               (_ ;; try-completion and test-completion
                 (completion--some
                  (pcase-lambda (`(,table . ,plist))
                    (complete-with-action
