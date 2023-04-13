@@ -635,11 +635,6 @@ The function `cape-super-capf' is experimental."
     (when-let (results (delq nil (mapcar #'funcall capfs)))
       (pcase-let* ((`((,beg ,end . ,_)) results)
                    (cand-ht (make-hash-table :test #'equal))
-                   (extra-fun
-                    (lambda (prop)
-                      (lambda (cand &rest args)
-                        (when-let (fun (plist-get (gethash cand cand-ht) prop))
-                          (apply fun cand args)))))
                    (tables nil)
                    (prefix-len nil))
         (cl-loop for (beg2 end2 . rest) in results do
@@ -654,55 +649,56 @@ The function `cape-super-capf' is experimental."
                       ((and (integerp prefix-len) (integerp plen))
                        (setq prefix-len (max prefix-len plen)))))))
         (setq tables (nreverse tables))
-        (list beg end
-              (lambda (str pred action)
-                (pcase action
-                  (`(boundaries . ,_) nil)
-                  ('metadata
-                   '(metadata (category . cape-super)
-                              (display-sort-function . identity)
-                              (cycle-sort-function . identity)))
-                  ('t
-                   (let ((ht (make-hash-table :test #'equal))
-                         (candidates nil))
-                     (cl-loop for (table . plist) in tables do
-                              (let* ((pr (if-let (pr (plist-get plist :predicate))
-                                             (if pred
-                                                 (lambda (x) (and (funcall pr x) (funcall pred x)))
-                                               pr)
-                                           pred))
-                                     (md (completion-metadata "" table pr))
-                                     (sort (or (completion-metadata-get md 'display-sort-function)
-                                               #'identity))
-                                     (cands (funcall sort (all-completions str table pr))))
-                                (cl-loop for cell on cands
-                                         for cand = (car cell) do
-                                         (if (eq (gethash cand ht t) t)
-                                             (puthash cand plist ht)
-                                           (setcar cell nil)))
-                                (setq candidates (nconc candidates cands))))
-                     (setq cand-ht ht)
-                     (delq nil candidates)))
-                  (_
-                   (completion--some
-                    (pcase-lambda (`(,table . ,plist))
-                      (complete-with-action
-                       action table str
-                       (if-let (pr (plist-get plist :predicate))
-                           (if pred
-                               (lambda (x) (and (funcall pr x) (funcall pred x)))
-                             pr)
-                         pred)))
-                    tables))))
-              :exclusive 'no
-              :company-prefix-length prefix-len
-              :company-doc-buffer (funcall extra-fun :company-doc-buffer)
-              :company-location (funcall extra-fun :company-location)
-              :company-docsig (funcall extra-fun :company-docsig)
-              :company-deprecated (funcall extra-fun :company-deprecated)
-              :company-kind (funcall extra-fun :company-kind)
-              :annotation-function (funcall extra-fun :annotation-function)
-              :exit-function (funcall extra-fun :exit-function))))))
+        `(,beg ,end
+          ,(lambda (str pred action)
+             (pcase action
+               (`(boundaries . ,_) nil)
+               ('metadata
+                '(metadata (category . cape-super)
+                           (display-sort-function . identity)
+                           (cycle-sort-function . identity)))
+               ('t
+                (let ((ht (make-hash-table :test #'equal))
+                      (candidates nil))
+                  (cl-loop for (table . plist) in tables do
+                           (let* ((pr (if-let (pr (plist-get plist :predicate))
+                                          (if pred
+                                              (lambda (x) (and (funcall pr x) (funcall pred x)))
+                                            pr)
+                                        pred))
+                                  (md (completion-metadata "" table pr))
+                                  (sort (or (completion-metadata-get md 'display-sort-function)
+                                            #'identity))
+                                  (cands (funcall sort (all-completions str table pr))))
+                             (cl-loop for cell on cands
+                                      for cand = (car cell) do
+                                      (if (eq (gethash cand ht t) t)
+                                          (puthash cand plist ht)
+                                        (setcar cell nil)))
+                             (setq candidates (nconc candidates cands))))
+                  (setq cand-ht ht)
+                  (delq nil candidates)))
+               (_
+                (completion--some
+                 (pcase-lambda (`(,table . ,plist))
+                   (complete-with-action
+                    action table str
+                    (if-let (pr (plist-get plist :predicate))
+                        (if pred
+                            (lambda (x) (and (funcall pr x) (funcall pred x)))
+                          pr)
+                      pred)))
+                 tables))))
+          :exclusive no
+          :company-prefix-length ,prefix-len
+          ,@(mapcan
+             (lambda (prop)
+               (list prop (lambda (cand &rest args)
+                            (when-let (fun (plist-get (gethash cand cand-ht) prop))
+                              (apply fun cand args)))))
+             '(:company-docsig :company-location :company-kind
+               :company-doc-buffer :company-deprecated
+               :annotation-function :exit-function)))))))
 
 (defun cape--company-call (&rest app)
   "Apply APP and handle future return values."
