@@ -838,8 +838,8 @@ completion table is refreshed on every input change."
                    (let (throw-on-input) ;; No interrupt during state update
                      (setq table new-table input new-input)
                      ;; Update `all-table' separately for `all-completions',
-                     ;; such that the `plist' is synchronized with the returned
-                     ;; candidates.
+                     ;; such that the `all-plist' is synchronized with the
+                     ;; returned candidates.
                      (when (eq action t)
                        (setf all-table new-table
                              all-input new-input
