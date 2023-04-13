@@ -85,11 +85,11 @@ See `dabbrev-case-replace' for details."
                  (const :tag "use `case-replace'" case-replace)
                  (other :tag "on" t)))
 
-(defcustom cape-dict-case-fold 'case-replace
+(defcustom cape-dict-case-fold 'case-fold-search
   "Case fold search during search.
 See `dabbrev-case-fold-search' for details."
   :type '(choice (const :tag "off" nil)
-                 (const :tag "use `case-fold'" case-fold)
+                 (const :tag "use `case-fold-search'" case-fold-search)
                  (other :tag "on" t)))
 
 (defcustom cape-dabbrev-min-length 4
@@ -137,6 +137,10 @@ The buffers are scanned for completion candidates by `cape-line'."
                                                    (choice character string))))
 
 ;;;; Helpers
+
+(defun cape--case-fold-p (fold)
+  "Return non-nil if case folding is enabled for FOLD."
+  (if (eq fold 'case-fold-search) case-fold-search fold))
 
 (defun cape--case-replace-list (flag input strs)
   "Replace case of STRS depending on INPUT and FLAG."
@@ -435,9 +439,7 @@ If INTERACTIVE is nil the function acts like a Capf."
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
       (dabbrev--reset-global-variables))
     (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-             with ic = (if (eq dabbrev-case-fold-search 'case-fold-search)
-                           case-fold-search
-                         dabbrev-case-fold-search)
+             with ic = (cape--case-fold-p dabbrev-case-fold-search)
              for w in (dabbrev--find-all-expansions input ic)
              if (>= (length w) min-len) collect
              (cape--case-replace (and ic dabbrev-case-replace) input w))))
@@ -463,9 +465,7 @@ See the user options `cape-dabbrev-min-length' and
           ,(cape--table-with-properties
             (completion-table-case-fold
              (cape--cached-table beg end #'cape--dabbrev-list #'string-prefix-p)
-             (not (if (eq dabbrev-case-fold-search 'case-fold-search)
-                      case-fold-search
-                    dabbrev-case-fold-search)))
+             (not (cape--case-fold-p dabbrev-case-fold-search)))
             :category 'cape-dabbrev)
           ,@cape--dabbrev-properties)))))
 
@@ -492,7 +492,9 @@ See the user options `cape-dabbrev-min-length' and
      cape-dict-case-replace input
      (if cape-dict-grep
          (apply #'process-lines-ignore-status
-                "grep" "-Fi" input (cape--dict-file))
+                "grep"
+                (concat "-Fh" (and (cape--case-fold-p cape-dict-case-fold) "i"))
+                input (cape--dict-file))
        (unless cape--dict-all-words
          (setq cape--dict-all-words
                (split-string (with-temp-buffer
@@ -517,9 +519,7 @@ If INTERACTIVE is nil the function acts like a Capf."
         ,(cape--table-with-properties
           (completion-table-case-fold
            (cape--cached-table beg end #'cape--dict-list #'string-search)
-           (not (if (eq cape-dict-case-fold 'case-fold-search)
-                    case-fold-search
-                  cape-dict-case-fold)))
+           (not (cape--case-fold-p cape-dict-case-fold)))
           :category 'cape-dict)
         ,@cape--dict-properties))))
 
