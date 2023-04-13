@@ -2,6 +2,10 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- Bugfixes
+
 * Version 0.14 (2023-04-13)
 
 - =cape-wrap-buster=, =cape-capf-buster= and =cape-company-to-capf=: The argument
