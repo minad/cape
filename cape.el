@@ -823,6 +823,7 @@ completion table is refreshed on every input change."
   (setq valid (or valid #'equal))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
+     (setq plist `(:corfu--buster t . ,plist))
      `(,beg ,end
        ,(let* ((beg (copy-marker beg))
                (end (copy-marker end t))
@@ -832,10 +833,11 @@ completion table is refreshed on every input change."
               (unless (or (string-match-p "\\s-" new-input) ;; Support Orderless
                           (funcall valid input new-input))
                 (pcase (funcall capf)
-                  (`(,_beg ,_end ,new-table . ,_plist)
-                   ;; NOTE: We have to make sure that the completion table is interruptible.
-                   ;; An interruption should not happen between the setqs.
-                   (setq table new-table input new-input)))))
+                  (`(,_beg ,_end ,new-table . ,new-plist)
+                   (let (throw-on-input) ;; No interrupt during state update
+                     (setf table new-table
+                           input new-input
+                           (cddr plist) new-plist))))))
             (complete-with-action action table str pred)))
        ,@plist))))
 
