@@ -448,11 +448,14 @@ If INTERACTIVE is nil the function acts like a Capf."
   "Return bounds of abbreviation."
   (unless (boundp 'dabbrev-abbrev-char-regexp)
     (require 'dabbrev))
-  (let ((re (or dabbrev-abbrev-char-regexp "\\sw\\|\\s_")))
+  (let ((re (or dabbrev-abbrev-char-regexp "\\sw\\|\\s_"))
+        (limit (minibuffer-prompt-end)))
     (when (or (looking-at re)
-              (save-excursion (forward-char -1) (looking-at re)))
+              (and (> (point) limit)
+                   (save-excursion (forward-char -1) (looking-at re))))
       (cons (save-excursion
-              (while (save-excursion (forward-char -1) (looking-at re))
+              (while (and (> (point) limit)
+                          (save-excursion (forward-char -1) (looking-at re)))
                 (forward-char -1))
               (when dabbrev-abbrev-skip-leading-regexp
                 (while (looking-at dabbrev-abbrev-skip-leading-regexp)
