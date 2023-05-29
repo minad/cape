@@ -50,8 +50,6 @@
   (require 'cl-lib)
   (require 'subr-x))
 
-(autoload 'thing-at-point-looking-at "thingatpt")
-
 ;;;; Customization
 
 (defgroup cape nil
@@ -429,6 +427,8 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defvar dabbrev-check-other-buffers)
 (defvar dabbrev-case-replace)
 (defvar dabbrev-case-fold-search)
+(defvar dabbrev-abbrev-char-regexp)
+(defvar dabbrev-abbrev-skip-leading-regexp)
 (declare-function dabbrev--find-all-expansions "dabbrev")
 (declare-function dabbrev--reset-global-variables "dabbrev")
 
@@ -444,6 +444,25 @@ If INTERACTIVE is nil the function acts like a Capf."
              if (>= (length w) min-len) collect
              (cape--case-replace (and ic dabbrev-case-replace) input w))))
 
+(defun cape--dabbrev-bounds ()
+  "Return bounds of abbreviation."
+  (unless (boundp 'dabbrev-abbrev-char-regexp)
+    (require 'dabbrev))
+  (let ((re (or dabbrev-abbrev-char-regexp "\\sw\\|\\s_")))
+    (when (or (looking-at re)
+              (save-excursion (forward-char -1) (looking-at re)))
+      (cons (save-excursion
+              (while (save-excursion (forward-char -1) (looking-at re))
+                (forward-char -1))
+              (when dabbrev-abbrev-skip-leading-regexp
+                (while (looking-at dabbrev-abbrev-skip-leading-regexp)
+                  (forward-char 1)))
+              (point))
+            (save-excursion
+              (while (looking-at re)
+                (forward-char 1))
+              (point))))))
+
 ;;;###autoload
 (defun cape-dabbrev (&optional interactive)
   "Complete with Dabbrev at point.
@@ -457,17 +476,15 @@ See the user options `cape-dabbrev-min-length' and
   (if interactive
       (let ((cape-dabbrev-min-length 0))
         (cape-interactive #'cape-dabbrev))
-    (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
-      (require 'dabbrev)
-      (let ((beg (match-beginning 0))
-            (end (match-end 0)))
-        `(,beg ,end
-          ,(cape--table-with-properties
-            (completion-table-case-fold
-             (cape--cached-table beg end #'cape--dabbrev-list #'string-prefix-p)
-             (not (cape--case-fold-p dabbrev-case-fold-search)))
-            :category 'cape-dabbrev)
-          ,@cape--dabbrev-properties)))))
+    (when-let ((bounds (cape--dabbrev-bounds)))
+      `(,(car bounds) ,(cdr bounds)
+        ,(cape--table-with-properties
+          (completion-table-case-fold
+           (cape--cached-table (car bounds) (cdr bounds)
+                               #'cape--dabbrev-list #'string-prefix-p)
+           (not (cape--case-fold-p dabbrev-case-fold-search)))
+          :category 'cape-dabbrev)
+        ,@cape--dabbrev-properties))))
 
 ;;;;; cape-dict
 
