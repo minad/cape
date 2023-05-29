@@ -2,6 +2,11 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- =cape-dabbrev=: Respect =dabbrev-abbrev-char-regexp= and
+  =dabbrev-abbrev-skip-leading-regexp=.
+
 * Version 0.15 (2023-04-17)
 
 - Bugfixes
