@@ -292,6 +292,9 @@ See also `consult-history' for a more flexible variant based on
 
 ;;;;; cape-file
 
+(defvar comint-unquote-function)
+(defvar comint-requote-function)
+
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Dir" " File"))
         :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file))
@@ -311,6 +314,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                                       ('nil default-directory)
                                       ((pred stringp) cape-file-directory)
                                       (_ (funcall cape-file-directory))))
+                 ;; TODO: Bounds are not correct in comint/eshell buffers
                  (`(,beg . ,end) (cape--bounds 'filename))
                  (non-essential t)
                  (file (buffer-substring-no-properties beg end))
@@ -322,7 +326,13 @@ If INTERACTIVE is nil the function acts like a Capf."
                 (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
         `(,beg ,end
-          ,(cape--nonessential-table #'read-file-name-internal)
+          ,(cape--nonessential-table
+            (if (derived-mode-p 'comint-mode 'eshell-mode)
+                (completion-table-with-quoting
+                 #'read-file-name-internal
+                 comint-unquote-function
+                 comint-requote-function)
+              #'read-file-name-internal))
           ,@(when (or org (string-match-p "./" file))
               '(:company-prefix-length t))
           ,@cape--file-properties)))))
