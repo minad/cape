@@ -826,7 +826,7 @@ changed.  The function `cape-company-to-capf' is experimental."
          (capfs (if ctx (cdr capfs) capfs))
          (completion-at-point-functions
           (if ctx
-              (mapcar (lambda (fun) `(lambda () (let ,ctx (,fun)))) capfs)
+              (mapcar (lambda (f) `(lambda () (let ,ctx (funcall ',f)))) capfs)
             capfs)))
     (unless (completion-at-point)
       (user-error "%s: No completions"
