@@ -7,6 +7,7 @@
 - =cape-dabbrev=: Respect =dabbrev-abbrev-char-regexp= and
   =dabbrev-abbrev-skip-leading-regexp=.
 - =cape-file=: Quote file names in comint/eshell buffers.
+- Replace =cape-dabbrev-min-length= with =cape-capf-expansion-length=.
 
 * Version 0.15 (2023-04-17)
 

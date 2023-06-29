@@ -90,13 +90,6 @@ See `dabbrev-case-fold-search' for details."
                  (const :tag "use `case-fold-search'" case-fold-search)
                  (other :tag "on" t)))
 
-(defcustom cape-dabbrev-min-length 4
-  "Minimum length of dabbrev expansions.
-This setting ensures that words which are too short
-are not offered as completion candidates, such that
-auto completion does not pop up too aggressively."
-  :type 'natnum)
-
 (defcustom cape-dabbrev-check-other-buffers t
   "Buffers to check for dabbrev.
 
@@ -135,6 +128,17 @@ The buffers are scanned for completion candidates by `cape-line'."
                                                    (choice character string))))
 
 ;;;; Helpers
+
+(defsubst cape--predicate-argument (arg)
+  "Normalize predicate ARG."
+  ;; First argument is key, second is value for hash tables.
+  ;; The first argument can be a cons cell for alists. Then
+  ;; the candidate itself is either a string or a symbol. We
+  ;; normalize the calling convention here such that PREDICATE
+  ;; always receives a string.
+  (setq arg (car arg)
+        arg (if (consp arg) (car arg) arg))
+  (if (symbolp arg) (symbol-name arg) arg))
 
 (defun cape--case-fold-p (fold)
   "Return non-nil if case folding is enabled for FOLD."
@@ -447,11 +451,10 @@ If INTERACTIVE is nil the function acts like a Capf."
     (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
       (dabbrev--reset-global-variables))
-    (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-             with ic = (cape--case-fold-p dabbrev-case-fold-search)
-             for w in (dabbrev--find-all-expansions input ic)
-             if (>= (length w) min-len) collect
-             (cape--case-replace (and ic dabbrev-case-replace) input w))))
+    (cape--case-replace-list
+     dabbrev-case-fold-search input
+     (dabbrev--find-all-expansions
+      input (cape--case-fold-p dabbrev-case-fold-search)))))
 
 (defun cape--dabbrev-bounds ()
   "Return bounds of abbreviation."
@@ -486,7 +489,7 @@ See the user options `cape-dabbrev-min-length' and
 `cape-dabbrev-check-other-buffers'."
   (interactive (list t))
   (if interactive
-      (cape-interactive '((cape-dabbrev-min-length 0)) #'cape-dabbrev)
+      (cape-interactive #'cape-dabbrev)
     (when-let ((bounds (cape--dabbrev-bounds)))
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
@@ -894,23 +897,15 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload
 (defun cape-wrap-predicate (capf predicate)
   "Call CAPF and add an additional candidate PREDICATE.
-The PREDICATE is passed the candidate symbol or string."
+The PREDICATE is passed the candidate string."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,table
             :predicate
-            ,(if-let (pred (plist-get plist :predicate))
-                 ;; First argument is key, second is value for hash tables.
-                 ;; The first argument can be a cons cell for alists. Then
-                 ;; the candidate itself is either a string or a symbol. We
-                 ;; normalize the calling convention here such that PREDICATE
-                 ;; always receives a string or a symbol.
-                 (lambda (&rest args)
-                   (when (apply pred args)
-                     (setq args (car args))
-                     (funcall predicate (if (consp args) (car args) args))))
-               (lambda (key &optional _val)
-                 (funcall predicate (if (consp key) (car key) key))))
+            ,(let ((pred (plist-get plist :predicate)))
+               (lambda (&rest args)
+                 (and (or (not pred) (apply pred args))
+                      (funcall predicate (cape--predicate-argument args)))))
             ,@plist))))
 
 ;;;###autoload
@@ -948,6 +943,22 @@ If the prefix is long enough, enforce auto completion."
        `(,beg ,end ,table
          :company-prefix-length t
          ,@plist)))))
+
+;;;###autoload
+(defun cape-wrap-expansion-length (capf length)
+  "Call CAPF and ensure that the expansions are long enough.
+This is useful for auto completion, only candidates which are
+LENGTH characters longer than the prefix are considered."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,table
+       :predicate
+       ,(let ((pred (plist-get plist :predicate))
+              (min (+ length (- end beg))))
+          (lambda (&rest args)
+            (and (or (not pred) (apply pred args))
+                 (>= (length (cape--predicate-argument args)) min))))
+       ,@plist))))
 
 ;;;###autoload
 (defun cape-wrap-inside-comment (capf)
@@ -1018,6 +1029,8 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper properties)
 ;;;###autoload (autoload 'cape-capf-purify "cape")
 (cape--capf-wrapper purify)
+;;;###autoload (autoload 'cape-capf-expansion-length "cape")
+(cape--capf-wrapper expansion-length)
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 (cape--capf-wrapper silent)
 

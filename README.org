@@ -235,6 +235,7 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
 - ~cape-wrap-predicate~, ~cape-capf-predicate~: Add candidate predicate to a Capf.
 - ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix length.
+- ~cape-wrap-expansion-length~, ~cape-capf-expansion-length~: Enforce a minimal length of the expansion.
 - ~cape-wrap-inside-comment~, ~cape-capf-inside-comment~: Ensure that Capf triggers only inside comment.
 - ~cape-wrap-inside-string~, ~cape-capf-inside-string~: Ensure that Capf triggers only inside a string literal.
 
