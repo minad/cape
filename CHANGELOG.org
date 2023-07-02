@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 0.16 (2023-07-02)
 
 - =cape-dabbrev=: Respect =dabbrev-abbrev-char-regexp= and
   =dabbrev-abbrev-skip-leading-regexp=.
