@@ -519,10 +519,12 @@ See the user options `cape-dabbrev-min-length' and
     (cape--case-replace-list
      cape-dict-case-replace input
      (if cape-dict-grep
-         (apply #'process-lines-ignore-status
-                "grep"
-                (concat "-Fh" (and (cape--case-fold-p cape-dict-case-fold) "i"))
-                input (cape--dict-file))
+         (let ((inhibit-message t)
+               (message-log-max nil))
+           (apply #'process-lines-ignore-status
+                  "grep"
+                  (concat "-Fh" (and (cape--case-fold-p cape-dict-case-fold) "i"))
+                  input (cape--dict-file)))
        (unless cape--dict-all-words
          (setq cape--dict-all-words
                (split-string (with-temp-buffer
