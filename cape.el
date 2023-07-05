@@ -528,8 +528,9 @@ See the user options `cape-dabbrev-min-length' and
 ;;;###autoload
 (defun cape-dict (&optional interactive)
   "Complete word from dictionary at point.
-See the custom option `cape-dict-file'.
-If INTERACTIVE is nil the function acts like a Capf."
+This completion function works best if the dictionary is sorted
+by frequency.  See the custom option `cape-dict-file'.  If
+INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-dict)
@@ -539,6 +540,7 @@ If INTERACTIVE is nil the function acts like a Capf."
           (completion-table-case-fold
            (cape--cached-table beg end #'cape--dict-list)
            (not (cape--case-fold-p cape-dict-case-fold)))
+          :sort nil ;; Presorted word list (by frequency)
           :category 'cape-dict)
         ,@cape--dict-properties))))
 
