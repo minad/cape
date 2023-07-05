@@ -2,6 +2,10 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Changelog
+
+- =cape-dict=: Always use grep, remove =cape-dict-use-grep=.
+
 * Version 0.16 (2023-07-02)
 
 - =cape-dabbrev=: Respect =dabbrev-abbrev-char-regexp= and

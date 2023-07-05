@@ -68,14 +68,6 @@ This variable can also be a list of paths or
 a function returning a single or more paths."
   :type '(choice string (repeat string) function))
 
-(defcustom cape-dict-grep t
-  "Use grep to search through the dictionary specified by `cape-dict-file'.
-If this variable is non-nil, the dictionary will be searched with
-grep in a separate process.  Otherwise the whole dictionary will
-be loaded into Emacs.  Depending on the size of your dictionary
-one or the other approach is preferable."
-  :type 'boolean)
-
 (defcustom cape-dict-case-replace 'case-replace
   "Preserve case of input.
 See `dabbrev-case-replace' for details."
@@ -505,36 +497,21 @@ See the user options `cape-dabbrev-min-length' and
         :exclusive 'no)
   "Completion extra properties for `cape-dict'.")
 
-(defun cape--dict-file ()
-  "Return list of dictionary files."
-  (ensure-list
-   (if (functionp cape-dict-file)
-       (funcall cape-dict-file)
-     cape-dict-file)))
-
-(defvar cape--dict-all-words nil)
 (defun cape--dict-list (input)
   "Return all words from `cape-dict-file' matching INPUT."
   (unless (equal input "")
     (cape--case-replace-list
      cape-dict-case-replace input
-     (if cape-dict-grep
-         (let ((inhibit-message t)
-               (message-log-max nil))
-           (apply #'process-lines-ignore-status
-                  "grep"
-                  (concat "-Fh" (and (cape--case-fold-p cape-dict-case-fold) "i"))
-                  input (cape--dict-file)))
-       (unless cape--dict-all-words
-         (setq cape--dict-all-words
-               (split-string (with-temp-buffer
-                               (mapc #'insert-file-contents
-                                     (cape--dict-file))
-                               (buffer-string))
-                             "\n" 'omit-nulls)))
-       (let ((completion-ignore-case t)
-             (completion-regexp-list (list (regexp-quote input))))
-         (all-completions "" cape--dict-all-words))))))
+     (let ((inhibit-message t)
+           (message-log-max nil))
+       (apply #'process-lines-ignore-status
+              "grep"
+              (concat "-Fh" (and (cape--case-fold-p cape-dict-case-fold) "i"))
+              input
+              (ensure-list
+               (if (functionp cape-dict-file)
+                   (funcall cape-dict-file)
+                 cape-dict-file)))))))
 
 ;;;###autoload
 (defun cape-dict (&optional interactive)
