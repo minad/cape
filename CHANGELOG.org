@@ -5,6 +5,9 @@
 * Changelog
 
 - =cape-dict=: Always use grep, remove =cape-dict-use-grep=.
+- =cape-dict=: Add =cape-dict-limit=.
+- Generalize =cape--cached-table=. The candidate computation function must return
+  a pair of a predicate function and the list of candidates.
 
 * Version 0.16 (2023-07-02)
 
