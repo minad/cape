@@ -544,8 +544,6 @@ INTERACTIVE is nil the function acts like a Capf."
           :category 'cape-dict)
         ,@cape--dict-properties))))
 
-(define-obsolete-function-alias 'cape-ispell 'cape-dict "0.13")
-
 ;;;;; cape-abbrev
 
 (defun cape--abbrev-tables ()
