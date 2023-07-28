@@ -48,6 +48,7 @@ advantage of Company backends even if you are not using Company as frontend.
 + ~cape-tex~: Complete Unicode char from TeX command, e.g. ~\hbar~.
 + ~cape-sgml~: Complete Unicode char from SGML entity, e.g., ~&alpha~.
 + ~cape-rfc1345~: Complete Unicode char using RFC 1345 mnemonics.
++ ~cape-yasnippet~: Complete and expand snippets registered with [[https://github.com/joaotavora/yasnippet][yasnippet]].
 
 * Configuration
 
@@ -80,7 +81,8 @@ popular ~use-package~ macro.
          ("C-c p _" . cape-tex)
          ("C-c p ^" . cape-tex)
          ("C-c p &" . cape-sgml)
-         ("C-c p r" . cape-rfc1345))
+         ("C-c p r" . cape-rfc1345)
+         ("C-c p y" . cape-yasnippet))
   :init
   ;; Add `completion-at-point-functions', used by `completion-at-point'.
   ;; NOTE: The order matters!
@@ -96,6 +98,7 @@ popular ~use-package~ macro.
   ;;(add-to-list 'completion-at-point-functions #'cape-dict)
   ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
+  ;;(add-to-list 'completion-at-point-functions #'cape-yasnippet)
 )
 #+end_src
 

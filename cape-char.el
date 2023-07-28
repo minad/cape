@@ -26,8 +26,6 @@
 
 (require 'cape)
 
-(autoload 'thing-at-point-looking-at "thingatpt")
-
 ;; Declare as pure function which is evaluated at compile time. We don't use a
 ;; macro for this computation since packages like `helpful' will
 ;; `macroexpand-all' the expensive `cape-char--define' macro calls.

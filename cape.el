@@ -42,6 +42,7 @@
 ;; `cape-tex': Complete Unicode char from TeX command, e.g. \hbar.
 ;; `cape-sgml': Complete Unicode char from SGML entity, e.g., &alpha.
 ;; `cape-rfc1345': Complete Unicode char using RFC 1345 mnemonics.
+;; `cape-yasnippet': Complete and expand snippets registered with yasnippet.
 
 ;;; Code:
 
@@ -49,6 +50,9 @@
 (eval-when-compile
   (require 'cl-lib)
   (require 'subr-x))
+
+(autoload 'thing-at-point-looking-at "thingatpt")
+(autoload 'font-lock-ensure "font-lock")
 
 ;;;; Customization
 
@@ -642,6 +646,111 @@ If INTERACTIVE is nil the function acts like a Capf."
     `(,(pos-bol) ,(point)
       ,(cape--table-with-properties (cape--line-list) :sort nil)
       ,@cape--line-properties)))
+
+;;;;; cape-yasnippet
+
+(declare-function yas-expand "yasnippet" (&optional field))
+(declare-function yas-expand-snippet "yasnippet" (snippet &optional start end expand-env))
+(declare-function yas-minor-mode "yasnippet" (&optional arg))
+(declare-function yas-active-snippets "yasnippet" (&optional beg end))
+(declare-function yas-next-field "yasnippet" (&optional arg))
+(declare-function yas-next-field-will-exit-p "yasnippet" (&optional arg))
+(declare-function yas--all-templates "yasnippet" (tables))
+(declare-function yas--get-snippet-tables "yasnippet" (&optional mode))
+(declare-function yas--require-template-specific-condition-p "yasnippet" nil)
+(declare-function yas--template-key "yasnippet" (template))
+(declare-function yas--template-name "yasnippet" (template))
+(declare-function yas--template-condition "yasnippet" (template))
+(declare-function yas--template-get-file "yasnippet" (template))
+(declare-function yas--template-can-expand-p "yasnippet" (condition requirement))
+
+(defvar cape--yasnippet-buffer-name "*cape-yasnippet expansion*")
+ 
+(defvar cape--yasnippet-properties
+  (list :annotation-function #'cape--yasnippet-annotate
+        :company-kind (lambda (_) 'snippet)
+        :company-doc-buffer #'cape--yasnippet-doc-buffer
+        :company-location #'cape--yasnippet-doc-location
+        :exit-function #'cape--yasnippet-exit
+        :exclusive 'no)
+  "Return a list of extra properties for snippet completions.")
+
+
+(defun cape--yasnippet-exit (_ status)
+  "Actually expand the snippet, if STATUS is \"finished\"."
+  (when (string= "finished" status)
+    (yas-expand)))
+
+(defun cape--yasnippet-doc-buffer (cand)
+  "Calculate the expansion of the snippet for CAND.
+Returns a buffer to be displayed by popupinfo."
+  (when-let ((template (get-text-property 0 'yas-template cand))
+             (maj-mode major-mode)
+             (buf (get-buffer-create cape--yasnippet-buffer-name)))
+    (with-current-buffer buf
+      (erase-buffer)
+      (funcall maj-mode)
+      (yas-minor-mode)
+      (save-excursion
+        (yas-expand-snippet template)
+        (when (yas-active-snippets)
+          (let ((i 0))
+            (while (not (yas-next-field-will-exit-p 1))
+              (setq i (+ i 1))
+              (insert (format "<%d>" i))
+              (yas-next-field)))
+          (insert "<END>"))
+        (font-lock-ensure))
+      (let* ((components (split-string (cape--yasnippet-doc-location cand) "/"))
+             (subdir (concat "~" (string-join (seq-drop components (- (length components) 3)) "/"))))
+        (insert (format "Defined in \"%s\"." subdir) ?\n))
+      (insert "Expands to:" ?\n ?\n)
+      (current-buffer))))
+
+(defun cape--yasnippet-doc-location (cand)
+  "Recover the definition file location from CAND."
+  (yas--template-get-file (get-text-property 0 'yas-template cand)))
+
+(defun cape--yasnippet-annotate (cand)
+  "Return annotation for CAND."
+  (let ((name (get-text-property 0 'yas-name cand)))
+    (format " (Snippet \"%s\")" name)))
+
+(defun cape--yasnippet-list (input)
+  "Use INPUT to compute and filter the initial table."
+  (when-let* ((templates (yas--all-templates (yas--get-snippet-tables major-mode)))
+              (special-req (yas--require-template-specific-condition-p))
+              (init-table (mapcar
+                           (lambda (template)
+                             (let ((key (yas--template-key template))
+                                   (name (yas--template-name template))
+                                   (condition (yas--template-condition template)))
+                               (when (and (string-prefix-p input key)
+                                          (yas--template-can-expand-p condition special-req))
+                                 (propertize key
+                                             'yas-name name
+                                             'yas-template template))))
+                           templates)))
+    (cons (apply-partially #'string-prefix-p input)
+          init-table)))
+
+;;;###autoload
+(defun cape-yasnippet (&optional interactive)
+  "Complete with yasnippet at point.
+If INTERACTIVE is nil the function acts like a Capf."
+  (interactive (list t))
+  (unless (featurep 'yasnippet)
+    (ignore-errors (require 'yasnippet nil t)))
+  (if interactive
+      (cape-interactive #'cape-yasnippet)
+    (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
+      (let ((beg (match-beginning 0))
+            (end (match-end 0)))
+        `(,beg ,end
+          ,(cape--table-with-properties
+            (cape--cached-table beg end #'cape--yasnippet-list)
+            :category 'snippet)
+          ,@cape--yasnippet-properties)))))
 
 ;;;; Capf combinators
 
