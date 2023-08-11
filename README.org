@@ -112,10 +112,10 @@ completion mechanism. The function is approximately the inverse of the
 ~company-capf~ backend from Company. The adapter can be used as follows:
 
 #+begin_src emacs-lisp
-  ;; Use Company backends as Capfs.
-  (setq-local completion-at-point-functions
-    (mapcar #'cape-company-to-capf
-      (list #'company-files #'company-ispell #'company-dabbrev)))
+;; Use Company backends as Capfs.
+(setq-local completion-at-point-functions
+  (mapcar #'cape-company-to-capf
+    (list #'company-files #'company-ispell #'company-dabbrev)))
 #+end_src
 
 Note that the adapter does not require Company to be installed or enabled.
@@ -125,30 +125,30 @@ small example completion backend, which can be used with both
 ~completion-at-point~ (Corfu, default completion) and Company.
 
 #+begin_src emacs-lisp
-  (defvar emojis
-    '((":-D" . "😀")
-      (";-)" . "😉")
-      (":-/" . "😕")
-      (":-(" . "🙁")
-      (":-*" . "😙")))
+(defvar emojis
+  '((":-D" . "😀")
+    (";-)" . "😉")
+    (":-/" . "😕")
+    (":-(" . "🙁")
+    (":-*" . "😙")))
 
-  (defun emoji-backend (action &optional arg &rest _)
-    (pcase action
-      ('prefix (and (memq (char-before) '(?: ?\;))
-                    (cons (string (char-before)) t)))
-      ('candidates (all-completions arg emojis))
-      ('annotation (concat " " (cdr (assoc arg emojis))))
-      ('post-completion
-       (let ((str (buffer-substring (- (point) 3) (point))))
-         (delete-region (- (point) 3) (point))
-       (insert (cdr (assoc str emojis)))))))
+(defun emoji-backend (action &optional arg &rest _)
+  (pcase action
+    ('prefix (and (memq (char-before) '(?: ?\;))
+                  (cons (string (char-before)) t)))
+    ('candidates (all-completions arg emojis))
+    ('annotation (concat " " (cdr (assoc arg emojis))))
+    ('post-completion
+     (let ((str (buffer-substring (- (point) 3) (point))))
+       (delete-region (- (point) 3) (point))
+     (insert (cdr (assoc str emojis)))))))
 
-  ;; Register emoji backend with `completion-at-point'
-  (setq completion-at-point-functions
-        (list (cape-company-to-capf #'emoji-backend)))
+;; Register emoji backend with `completion-at-point'
+(setq completion-at-point-functions
+      (list (cape-company-to-capf #'emoji-backend)))
 
-  ;; Register emoji backend with Company.
-  (setq company-backends '(emoji-backend))
+;; Register emoji backend with Company.
+(setq company-backends '(emoji-backend))
 #+end_src
 
 It is possible to merge/group multiple Company backends and use them as a single
@@ -157,13 +157,13 @@ transforms multiple Company backends into a single Company backend, which can
 then be used as a Capf via ~cape-company-to-capf~.
 
 #+begin_src emacs-lisp
-  (require 'company)
-  ;; Use the company-dabbrev and company-elisp backends together.
-  (setq completion-at-point-functions
-        (list
-         (cape-company-to-capf
-          (apply-partially #'company--multi-backend-adapter
-                           '(company-dabbrev company-elisp)))))
+(require 'company)
+;; Use the company-dabbrev and company-elisp backends together.
+(setq completion-at-point-functions
+      (list
+       (cape-company-to-capf
+        (apply-partially #'company--multi-backend-adapter
+                         '(company-dabbrev company-elisp)))))
 #+end_src
 
 ** Super-Capf - Merging multiple Capfs
@@ -189,14 +189,14 @@ well for static completion functions like ~cape-dabbrev~, ~cape-keyword~, ~cape-
 etc., but not for complex multi-step completions like ~cape-file~.
 
 #+begin_src emacs-lisp
-  ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
-  (setq-local completion-at-point-functions
-              (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
+;; Merge the dabbrev, dict and keyword capfs, display candidates together.
+(setq-local completion-at-point-functions
+            (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
 
-  ;; Alternative: Define named Capf instead of using the anonymous Capf directly
-  (defalias 'cape-dabbrev+dict+keyword
-    (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword))
-  (setq-local completion-at-point-functions (list #'cape-dabbrev+dict+keyword))
+;; Alternative: Define named Capf instead of using the anonymous Capf directly
+(defalias 'cape-dabbrev+dict+keyword
+  (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword))
+(setq-local completion-at-point-functions (list #'cape-dabbrev+dict+keyword))
 #+end_src
 
 See also the aforementioned ~company--multi-backend-adapter~ from Company, which
@@ -215,8 +215,8 @@ refreshes the completion table frequently. With the ~cape-capf-buster~ we can
 achieve a similarly refreshing strategy.
 
 #+begin_src emacs-lisp
-  (setq-local completion-at-point-functions
-              (list (cape-capf-buster #'some-caching-capf)))
+(setq-local completion-at-point-functions
+            (list (cape-capf-buster #'some-caching-capf)))
 #+end_src
 
 ** Capf transformers
@@ -245,39 +245,40 @@ In the following we show a few example configurations, which have come up on the
 personal configuration.
 
 #+begin_src emacs-lisp
-  ;; Example 1: Sanitize the `pcomplete-completions-at-point' Capf.  The Capf has
-  ;; undesired side effects on Emacs 28 and earlier.  These advices are not needed
-  ;; on Emacs 29 and newer.
-  (when (< emacs-major-version 29)
-    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-    (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+;; Example 1: Sanitize the `pcomplete-completions-at-point' Capf.  The Capf has
+;; undesired side effects on Emacs 28 and earlier.  These advices are not needed
+;; on Emacs 29 and newer.
+(when (< emacs-major-version 29)
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
 
-  ;; Example 2: Configure a Capf with a specific auto completion prefix length
-  (setq-local completion-at-point-functions
-              (list (cape-capf-prefix-length #'cape-dabbrev 2)))
+;; Example 2: Configure a Capf with a specific auto completion prefix length
+(setq-local completion-at-point-functions
+            (list (cape-capf-prefix-length #'cape-dabbrev 2)))
 
-  ;; Example 3: Named Capf
-  (defalias 'cape-dabbrev-min-2 (cape-capf-prefix-length #'cape-dabbrev 2))
-  (setq-local completion-at-point-functions (list #'cape-dabbrev-min-2))
+;; Example 3: Named Capf
+(defalias 'cape-dabbrev-min-2 (cape-capf-prefix-length #'cape-dabbrev 2))
+(setq-local completion-at-point-functions (list #'cape-dabbrev-min-2))
 
-  ;; Example 4: Define a defensive Dabbrev Capf, which accepts all inputs.  If you
-  ;; use Corfu and `corfu-auto=t', the first candidate won't be auto selected even
-  ;; if `corfu-preselect=first'. You can use this instead of `cape-dabbrev'.
-  (defun my-cape-dabbrev-accept-all ()
-    (cape-wrap-accept-all #'cape-dabbrev))
-  (add-to-list 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
+;; Example 4: Define a defensive Dabbrev Capf, which accepts all inputs.  If you
+;; use Corfu and `corfu-auto=t', the first candidate won't be auto selected if
+;; `corfu-preselect=valid', such that it cannot be accidentally committed when
+;; pressing RET.
+(defun my-cape-dabbrev-accept-all ()
+  (cape-wrap-accept-all #'cape-dabbrev))
+(add-to-list 'completion-at-point-functions #'my-cape-dabbrev-accept-all)
 
-  ;; Example 5: Define interactive Capf which can be bound to a key.  Here we wrap
-  ;; the `elisp-completion-at-point' such that we can complete Elisp code
-  ;; explicitly in arbitrary buffers.
-  (keymap-global-set "C-c p e" (cape-interactive-capf #'elisp-completion-at-point))
+;; Example 5: Define interactive Capf which can be bound to a key.  Here we wrap
+;; the `elisp-completion-at-point' such that we can complete Elisp code
+;; explicitly in arbitrary buffers.
+(keymap-global-set "C-c p e" (cape-interactive-capf #'elisp-completion-at-point))
 
-  ;; Example 6: Ignore :keywords in Elisp completion.
-  (defun ignore-elisp-keywords (sym)
-    (not (keywordp sym)))
-  (setq-local completion-at-point-functions
-              (list (cape-capf-predicate #'elisp-completion-at-point
-                                         #'ignore-elisp-keywords)))
+;; Example 6: Ignore :keywords in Elisp completion.
+(defun ignore-elisp-keywords (sym)
+  (not (keywordp sym)))
+(setq-local completion-at-point-functions
+            (list (cape-capf-predicate #'elisp-completion-at-point
+                                       #'ignore-elisp-keywords)))
 #+end_src
 
 * Contributions
