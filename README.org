@@ -67,7 +67,7 @@ distinguish the buffer-local and the global value of the
 precedence, but if the buffer-local value contains the value =t= at the end of the
 list, it means that the functions specified in the global list should be
 executed afterwards. The special meaning of the value =t= is a feature of the
-=run-hooks= function, see the section "Running Hooks" in the Elisp manual for
+=run-hooks= function, see the section [[info:elisp#Running Hooks]["Running Hooks" in the Elisp manual]] for
 further information.
 
 #+begin_src emacs-lisp
