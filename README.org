@@ -55,6 +55,21 @@ Cape is available on GNU ELPA and MELPA. You can install the package with
 ~package-install~. In the following we present a sample configuration based on the
 popular ~use-package~ macro.
 
+I recommend to bind the =cape-*= completion commands to keys such that you can
+invoke them explicitly, see the =:bind= specification below. Furthermore the
+=cape-*= functions are Capfs which you can add to the
+=completion-at-point-functions= list.
+
+Note that the Capfs which occur earlier in the list take precedence, such that
+Capfs which come later may not get a chance to run. Furthermore one must
+distinguish the buffer-local and the global value of the
+=completion-at-point-functions= variable. The buffer-local value of the list takes
+precedence, but if the buffer-local value contains the value =t= at the end of the
+list, it means that the functions specified in the global list should be
+executed afterwards. The special meaning of the value =t= is a feature of the
+=run-hooks= function, see the section "Running Hooks" in the Elisp manual for
+further information.
+
 #+begin_src emacs-lisp
 ;; Enable Corfu completion UI
 ;; See the Corfu README for more configuration tips.
