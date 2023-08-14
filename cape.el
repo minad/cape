@@ -240,9 +240,13 @@ still valid."
           (when (or (not valid)
                     (not (or (string-match-p "\\s-" input) ;; Support Orderless
                              (funcall valid input))))
-            (pcase-let ((`(,new-valid . ,new-table) (funcall fun input))
-                        (throw-on-input nil)) ;; No interrupt during state update
-              (setq table new-table valid new-valid))))
+            (let* (;; Reset in case `all-completions' is used inside FUN
+                   completion-ignore-case completion-regexp-list
+                   ;; Retrieve new state by calling FUN
+                   (new (funcall fun input))
+                   ;; No interrupt during state update
+                   throw-on-input)
+              (setq valid (car new) table (cdr new)))))
         (complete-with-action action table str pred)))))
 
 ;;;; Capfs
@@ -855,7 +859,10 @@ completion table is refreshed on every input change."
             (let ((new-input (buffer-substring-no-properties beg end)))
               (unless (or (string-match-p "\\s-" new-input) ;; Support Orderless
                           (funcall valid input new-input))
-                (pcase (funcall capf)
+                (pcase
+                    ;; Reset in case `all-completions' is used inside CAPF
+                    (let (completion-ignore-case completion-regexp-list)
+                      (funcall capf))
                   (`(,_beg ,_end ,new-table . ,new-plist)
                    (let (throw-on-input) ;; No interrupt during state update
                      (setf table new-table
