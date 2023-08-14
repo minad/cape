@@ -218,13 +218,27 @@ SORT should be nil to disable sorting."
             metadata
           (complete-with-action action table str pred))))))
 
-(defun cape--cached-table (beg end fun)
-  "Create caching completion table.
+(defun cape--dynamic-table (beg end fun)
+  "Create dynamic completion table from FUN with caching.
 BEG and END are the input bounds.  FUN is the function which
 computes the candidates.  FUN must return a pair of a predicate
 function function and the list of candidates.  The predicate is
 passed new input and must return non-nil if the candidates are
-still valid."
+still valid.
+
+It is only necessary to use this function if the set of
+candidates is computed dynamically based on the input and not
+statically determined.  The behavior is similar but slightly
+different to `completion-table-dynamic'.
+
+The difference to the builtins `completion-table-dynamic' and
+`completion-table-with-cache' is that this function does not use
+the prefix argument of the completion table to compute the
+candidates.  Instead it uses the input in the buffer between BEG
+and END to FUN to compute the candidates.  This way the dynamic
+candidate computation is compatible with non-prefix completion
+styles like `substring' or `orderless', which pass the empty
+string as first argument to the completion table."
   (let ((beg (copy-marker beg))
         (end (copy-marker end t))
         valid table)
@@ -493,7 +507,7 @@ See the user options `cape-dabbrev-min-length' and
       `(,(car bounds) ,(cdr bounds)
         ,(cape--table-with-properties
           (completion-table-case-fold
-           (cape--cached-table (car bounds) (cdr bounds) #'cape--dabbrev-list)
+           (cape--dynamic-table (car bounds) (cdr bounds) #'cape--dabbrev-list)
            (not (cape--case-fold-p dabbrev-case-fold-search)))
           :category 'cape-dabbrev)
         ,@cape--dabbrev-properties))))
@@ -542,7 +556,7 @@ INTERACTIVE is nil the function acts like a Capf."
       `(,beg ,end
         ,(cape--table-with-properties
           (completion-table-case-fold
-           (cape--cached-table beg end #'cape--dict-list)
+           (cape--dynamic-table beg end #'cape--dict-list)
            (not (cape--case-fold-p cape-dict-case-fold)))
           :sort nil ;; Presorted word list (by frequency)
           :category 'cape-dict)
@@ -789,7 +803,7 @@ changed.  The function `cape-company-to-capf' is experimental."
                    #'completion-table-case-fold
                  #'identity)
                (cape--table-with-properties
-                (cape--cached-table
+                (cape--dynamic-table
                  beg end
                  (lambda (input)
                    (setq candidates (cape--company-call backend 'candidates input))
