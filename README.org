@@ -56,19 +56,22 @@ Cape is available on GNU ELPA and MELPA. You can install the package with
 popular ~use-package~ macro.
 
 I recommend to bind the =cape-*= completion commands to keys such that you can
-invoke them explicitly, see the =:bind= specification below. Furthermore the
-=cape-*= functions are Capfs which you can add to the
-=completion-at-point-functions= list.
+invoke them explicitly. This makes particular sense for special Capfs which you
+only want to trigger in rare circumstances. See the =:bind= specification below.
 
-Note that the Capfs which occur earlier in the list take precedence, such that
-Capfs which come later may not get a chance to run. Furthermore one must
-distinguish the buffer-local and the global value of the
+Furthermore the =cape-*= functions are Capfs which you can add to the
+=completion-at-point-functions= list. Take care when adding Capfs to the list
+since each of the Capfs adds a small runtime cost. Note that the Capfs which
+occur earlier in the list take precedence, such that the first Capf returning a
+result will win and the later Capfs may not get a chance to run.
+
+One must distinguish the buffer-local and the global value of the
 =completion-at-point-functions= variable. The buffer-local value of the list takes
-precedence, but if the buffer-local value contains the value =t= at the end of the
-list, it means that the functions specified in the global list should be
-executed afterwards. The special meaning of the value =t= is a feature of the
-=run-hooks= function, see the section [[info:elisp#Running Hooks]["Running Hooks" in the Elisp manual]] for
-further information.
+precedence, but if the buffer-local list contains the symbol =t= at the end, it
+means that the functions specified in the global list should be executed
+afterwards. The special meaning of the value =t= is a feature of the =run-hooks=
+function, see the section [[info:elisp#Running Hooks]["Running Hooks" in the Elisp manual]] for further
+information.
 
 #+begin_src emacs-lisp
 ;; Enable Corfu completion UI
