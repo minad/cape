@@ -23,9 +23,10 @@ This makes the backends available for completion, which is usually invoked by
 pressing ~TAB~ or ~M-TAB~. The functions can also be invoked interactively to
 trigger the respective completion at point. You can bind them directly to a key
 in your user configuration. Notable commands/Capfs are ~cape-line~ for completion
-of a line from the current buffer and ~cape-file~ for completion of a file name.
-The commands ~cape-symbol~ and ~cape-elisp-block~ are useful for documentation of
-Elisp packages or configurations, since they completes Elisp anywhere.
+of a line from the current buffer, ~cape-history~ for history completion in shell
+or Comint modes and ~cape-file~ for completion of file names. The commands
+~cape-symbol~ and ~cape-elisp-block~ are useful for documentation of Elisp packages
+or configurations, since they complete Elisp anywhere.
 
 Cape has the super power to transform Company backends into Capfs and merge
 multiple Capfs into a Super-Capf! These transformers allow you to still take
@@ -134,7 +135,7 @@ completion mechanism. The function is approximately the inverse of the
 ;; Use Company backends as Capfs.
 (setq-local completion-at-point-functions
   (mapcar #'cape-company-to-capf
-    (list #'company-files #'company-ispell #'company-dabbrev)))
+    (list #'company-files #'company-keywords #'company-dabbrev)))
 #+end_src
 
 Note that the adapter does not require Company to be installed or enabled.
@@ -170,10 +171,11 @@ small example completion backend, which can be used with both
 (setq company-backends '(emoji-backend))
 #+end_src
 
-It is possible to merge/group multiple Company backends and use them as a single
-Capf using the ~company--multi-backend-adapter~ function from Company. The adapter
+It is possible to merge multiple Company backends and use them as a single Capf
+using the ~company--multi-backend-adapter~ function from Company. The adapter
 transforms multiple Company backends into a single Company backend, which can
-then be used as a Capf via ~cape-company-to-capf~.
+then be used as a Capf via ~cape-company-to-capf~. Capfs can be merged directly
+with ~cape-super-capf~.
 
 #+begin_src emacs-lisp
 (require 'company)
@@ -215,9 +217,9 @@ etc., but not for multi-step completions like ~cape-file~.
             (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
 
 ;; Alternative: Define named Capf instead of using the anonymous Capf directly
-(defalias 'cape-dabbrev+dict+keyword
+(defalias 'cape-dabbrev-dict-keyword
   (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword))
-(setq-local completion-at-point-functions (list #'cape-dabbrev+dict+keyword))
+(setq-local completion-at-point-functions (list #'cape-dabbrev-dict-keyword))
 #+end_src
 
 See also the aforementioned ~company--multi-backend-adapter~ from Company, which
