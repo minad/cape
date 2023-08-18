@@ -230,10 +230,10 @@ BODY is the wrapping expression."
 (defun cape--debug-table (table name beg end)
   "Create completion TABLE with debug messages.
 NAME is the name of the Capf, BEG and END are the input markers."
-  ;; TODO reuse `cape--wrapped-table'
   (lambda (str pred action)
     (let ((result (complete-with-action action table str pred)))
       (if (and (eq action 'completion--unquote) (functionp (cadr result)))
+          ;; See `cape--wrapped-table'
           (cl-callf cape--debug-table (cadr result) name beg end)
         (cape--debug-message
          "%s(action=%S input=%s:%s:%S prefix=%S ignore-case=%S%s%s) => %s"
