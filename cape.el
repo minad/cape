@@ -908,24 +908,23 @@ meaningful debugging output."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      (let* (completion-ignore-case completion-regexp-list
-                                   (limit cape--debug-length)
-                                   (cands (all-completions
-                                           "" table
-                                           (lambda (&rest _)
-                                             (>= (cl-decf limit) 0)))))
+            (limit cape--debug-length)
+            (pred (plist-get plist :predicate))
+            (cands (all-completions
+                    "" table
+                    (lambda (&rest args)
+                      (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0))))))
        (message
         "%s() => input=%s:%s:%S table=(%s%s)%s"
         name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
         (string-join (mapcar #'prin1-to-string cands) " ")
         (and (< limit 0) " ...")
         (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
-     `(,beg ,end
-            ,(cape--debug-table table name
-                                (copy-marker beg) (copy-marker end t))
-            . ,plist))
+     `(,beg ,end ,(cape--debug-table
+                   table name (copy-marker beg) (copy-marker end t))
+       . ,plist))
     (result
-     (message "%s() => %s (No completion)"
-              name (cape--debug-print result)))))
+     (message "%s() => %s (No completion)" name (cape--debug-print result)))))
 
 ;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)
