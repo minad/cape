@@ -899,30 +899,33 @@ changed.  The function `cape-company-to-capf' is experimental."
     (if interactive (cape-interactive capf) (funcall capf))))
 
 ;;;###autoload
-(defun cape-wrap-debug (capf)
-  "Call CAPF and return a completion table which prints trace messages."
-  (let ((name (if (symbolp capf) (symbol-name capf) "capf")))
-    (pcase (funcall capf)
-      (`(,beg ,end ,table . ,plist)
-       (let* (completion-ignore-case completion-regexp-list
-              (limit cape--debug-length)
-              (cands (all-completions
-                      "" table
-                      (lambda (&rest _)
-                        (>= (cl-decf limit) 0)))))
-         (message
-          "%s() => input=%s:%s:%S table=(%s%s)%s"
-          name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
-          (string-join (mapcar #'prin1-to-string cands) " ")
-          (and (< limit 0) " ...")
-          (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
-       `(,beg ,end
-         ,(cape--debug-table table name
-                             (copy-marker beg) (copy-marker end t))
-         . ,plist))
-      (result
-       (message "%s() => %s (No completion)"
-                name (cape--debug-print result))))))
+(defun cape-wrap-debug (capf &optional name)
+  "Call CAPF and return a completion table which prints trace messages.
+If CAPF is an anonymous lambda, pass the Capf NAME explicitly for
+meaningful debugging output."
+  (unless name
+    (setq name (if (symbolp capf) capf "capf")))
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     (let* (completion-ignore-case completion-regexp-list
+                                   (limit cape--debug-length)
+                                   (cands (all-completions
+                                           "" table
+                                           (lambda (&rest _)
+                                             (>= (cl-decf limit) 0)))))
+       (message
+        "%s() => input=%s:%s:%S table=(%s%s)%s"
+        name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
+        (string-join (mapcar #'prin1-to-string cands) " ")
+        (and (< limit 0) " ...")
+        (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
+     `(,beg ,end
+            ,(cape--debug-table table name
+                                (copy-marker beg) (copy-marker end t))
+            . ,plist))
+    (result
+     (message "%s() => %s (No completion)"
+              name (cape--debug-print result)))))
 
 ;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)
