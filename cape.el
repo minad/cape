@@ -933,6 +933,12 @@ meaningful debugging output."
         plist-str))
      `(,beg ,end ,(cape--debug-table
                    table name (copy-marker beg) (copy-marker end t))
+       ,@(when-let ((exit (plist-get plist :exit-function)))
+           (list :exit-function
+                 (lambda (cand status)
+                   (cape--debug-message "%s:exit(candidate=%S status=%s)"
+                                        name cand status)
+                   (funcall exit cand status))))
        . ,plist))
     (result
      (cape--debug-message "%s() => %s (No completion)"
