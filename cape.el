@@ -222,22 +222,23 @@ BODY is the wrapping expression."
    (t (let ((print-level 2))
         (prin1-to-string obj)))))
 
-(defun cape--debug-table (table name)
+(defun cape--debug-table (table name beg end)
   "Create completion TABLE with debug messages.
-NAME is the name of the Capf."
+NAME is the name of the Capf, BEG and END are the input markers."
   ;; TODO reuse `cape--wrapped-table'
   (lambda (str pred action)
     (let ((result (complete-with-action action table str pred)))
       (if (and (eq action 'completion--unquote) (functionp (cadr result)))
-          (cl-callf cape--debug-table (cadr result) name)
+          (cl-callf cape--debug-table (cadr result) name beg end)
         (message
-         "%s(action=%S prefix=%S ignore-case=%S%s%s) => %s"
+         "%s(action=%S input=%s:%s:%S prefix=%S ignore-case=%S%s%s) => %s"
          name
          (pcase action
            ('nil 'try)
            ('t 'all)
            ('lambda 'test)
            (_ action))
+         (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
          str completion-ignore-case
          (if completion-regexp-list
              (format " regexp=%s" (cape--debug-print completion-regexp-list t))
@@ -910,12 +911,15 @@ changed.  The function `cape-company-to-capf' is experimental."
                       (lambda (&rest _)
                         (>= (cl-decf limit) 0)))))
          (message
-          "%s() => beg=%s end=%s table=(%s%s)%s"
-          name beg end
+          "%s() => input=%s:%s:%S table=(%s%s)%s"
+          name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
           (string-join (mapcar #'prin1-to-string cands) " ")
           (and (< limit 0) " ...")
           (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
-       `(,beg ,end ,(cape--debug-table table name) . ,plist))
+       `(,beg ,end
+         ,(cape--debug-table table name
+                             (copy-marker beg) (copy-marker end t))
+         . ,plist))
       (result
        (message "%s() => %s (No completion)"
                 name (cape--debug-print result))))))
