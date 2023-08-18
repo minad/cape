@@ -203,6 +203,45 @@ BODY is the wrapping expression."
       (let ((default-directory dir)
             (non-essential t))))))
 
+(defun cape--debug-print (obj &optional full)
+  "Print OBJ as string, truncate lists if FULL is nil."
+  (cond
+   ((symbolp obj) (symbol-name obj))
+   ((functionp obj) "#<function>")
+   ((and (consp obj) (ignore-errors (length obj)))
+    (concat
+     "("
+     (string-join (mapcar #'cape--debug-print (if full obj (take 5 obj))) " ")
+     (if (and (not full) (length> obj 5)) " ...)" ")")))
+   (t (let ((print-level 2))
+        (prin1-to-string obj)))))
+
+(defun cape--debug-table (table name)
+  "Create completion TABLE with debug messages.
+NAME is the name of the Capf."
+  ;; TODO reuse `cape--wrapped-table'
+  (lambda (str pred action)
+    (let ((result (complete-with-action action table str pred)))
+      (if (and (eq action 'completion--unquote) (functionp (cadr result)))
+          (cl-callf cape--debug-table (cadr result) name)
+        (message
+         "%s(action=%S prefix=%S ignore-case=%S%s%s) => %s"
+         name
+         (pcase action
+           ('nil 'try)
+           ('t 'all)
+           ('lambda 'test)
+           (_ action))
+         str completion-ignore-case
+         (if completion-regexp-list
+             (format " regexp=%s" (cape--debug-print completion-regexp-list t))
+           "")
+         (if pred
+             (format " predicate=%s" (cape--debug-print pred))
+           "")
+         (cape--debug-print result)))
+      result)))
+
 (cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
@@ -853,6 +892,26 @@ changed.  The function `cape-company-to-capf' is experimental."
     (if interactive (cape-interactive capf) (funcall capf))))
 
 ;;;###autoload
+(defun cape-wrap-debug (capf)
+  "Call CAPF and return a completion table which prints trace messages."
+  (let ((name (if (symbolp capf) (symbol-name capf) "capf")))
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       (let* ((count 0)
+              (cands (all-completions "" table
+                                      (lambda (&rest _) (< (cl-incf count) 5)))))
+         (message
+          "%s() => beg=%s end=%s candidates=(%s%s)%s"
+          name beg end
+          (string-join (mapcar #'prin1-to-string cands) " ")
+          (and (> count 5) " ...")
+          (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
+       `(,beg ,end ,(cape--debug-table table name) . ,plist))
+      (result
+       (message "%s() => %s (No completion)"
+                name (cape--debug-print result))))))
+
+;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)
   "Call CAPF and return a completion table with cache busting.
 This function can be used as an advice around an existing Capf.
@@ -1014,6 +1073,8 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper buster)
 ;;;###autoload (autoload 'cape-capf-case-fold "cape")
 (cape--capf-wrapper case-fold)
+;;;###autoload (autoload 'cape-capf-debug "cape")
+(cape--capf-wrapper debug)
 ;;;###autoload (autoload 'cape-capf-inside-comment "cape")
 (cape--capf-wrapper inside-comment)
 ;;;###autoload (autoload 'cape-capf-inside-string "cape")
