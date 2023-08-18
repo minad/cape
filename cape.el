@@ -903,15 +903,17 @@ changed.  The function `cape-company-to-capf' is experimental."
   (let ((name (if (symbolp capf) (symbol-name capf) "capf")))
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
-       (let* ((count 0)
-              (cands (all-completions "" table
-                                      (lambda (&rest _)
-                                        (<= (cl-incf count) cape--debug-length)))))
+       (let* (completion-ignore-case completion-regexp-list
+              (limit cape--debug-length)
+              (cands (all-completions
+                      "" table
+                      (lambda (&rest _)
+                        (>= (cl-decf limit) 0)))))
          (message
-          "%s() => beg=%s end=%s candidates=(%s%s)%s"
+          "%s() => beg=%s end=%s table=(%s%s)%s"
           name beg end
           (string-join (mapcar #'prin1-to-string cands) " ")
-          (and (> count cape--debug-length) " ...")
+          (and (< limit 0) " ...")
           (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
        `(,beg ,end ,(cape--debug-table table name) . ,plist))
       (result
