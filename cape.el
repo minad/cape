@@ -913,7 +913,7 @@ meaningful debugging output."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      (let* (completion-ignore-case completion-regexp-list
-            (limit cape--debug-length)
+            (limit (1+ cape--debug-length))
             (pred (plist-get plist :predicate))
             (cands (all-completions
                     "" table
@@ -927,10 +927,9 @@ meaningful debugging output."
                                  (cape--debug-print (cadr plist-elt)))
                plist-elt (cddr plist-elt)))
        (cape--debug-message
-        "%s() => input=%s:%s:%S table=(%s%s)%s"
+        "%s() => input=%s:%s:%S table=%s%s"
         name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
-        (string-join (mapcar #'prin1-to-string cands) " ")
-        (and (< limit 0) " ...")
+        (cape--debug-print cands)
         plist-str))
      `(,beg ,end ,(cape--debug-table
                    table name (copy-marker beg) (copy-marker end t))
