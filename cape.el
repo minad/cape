@@ -206,12 +206,17 @@ BODY is the wrapping expression."
 (defvar cape--debug-length 5
   "Length of printed lists in `cape--debug-print'.")
 
+(defun cape--debug-message (&rest msg)
+  "Print debug MSG."
+  (let ((inhibit-message t))
+    (apply #'message msg)))
+
 (defun cape--debug-print (obj &optional full)
   "Print OBJ as string, truncate lists if FULL is nil."
   (cond
    ((symbolp obj) (symbol-name obj))
    ((functionp obj) "#<function>")
-   ((and (consp obj) (ignore-errors (length obj)))
+   ((proper-list-p obj)
     (concat
      "("
      (string-join
@@ -230,7 +235,7 @@ NAME is the name of the Capf, BEG and END are the input markers."
     (let ((result (complete-with-action action table str pred)))
       (if (and (eq action 'completion--unquote) (functionp (cadr result)))
           (cl-callf cape--debug-table (cadr result) name beg end)
-        (message
+        (cape--debug-message
          "%s(action=%S input=%s:%s:%S prefix=%S ignore-case=%S%s%s) => %s"
          name
          (pcase action
@@ -913,18 +918,26 @@ meaningful debugging output."
             (cands (all-completions
                     "" table
                     (lambda (&rest args)
-                      (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0))))))
-       (message
+                      (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0)))))
+            (plist-str "")
+            (plist-elt plist))
+       (while (cdr plist-elt)
+         (setq plist-str (format "%s %s=%s" plist-str
+                                 (substring (symbol-name (car plist-elt)) 1)
+                                 (cape--debug-print (cadr plist-elt)))
+               plist-elt (cddr plist-elt)))
+       (cape--debug-message
         "%s() => input=%s:%s:%S table=(%s%s)%s"
         name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
         (string-join (mapcar #'prin1-to-string cands) " ")
         (and (< limit 0) " ...")
-        (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
+        plist-str))
      `(,beg ,end ,(cape--debug-table
                    table name (copy-marker beg) (copy-marker end t))
        . ,plist))
     (result
-     (message "%s() => %s (No completion)" name (cape--debug-print result)))))
+     (cape--debug-message "%s() => %s (No completion)"
+                          name (cape--debug-print result)))))
 
 ;;;###autoload
 (defun cape-wrap-buster (capf &optional valid)
