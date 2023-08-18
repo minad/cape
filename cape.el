@@ -203,6 +203,9 @@ BODY is the wrapping expression."
       (let ((default-directory dir)
             (non-essential t))))))
 
+(defvar cape--debug-length 5
+  "Length of printed lists in `cape--debug-print'.")
+
 (defun cape--debug-print (obj &optional full)
   "Print OBJ as string, truncate lists if FULL is nil."
   (cond
@@ -211,8 +214,11 @@ BODY is the wrapping expression."
    ((and (consp obj) (ignore-errors (length obj)))
     (concat
      "("
-     (string-join (mapcar #'cape--debug-print (if full obj (take 5 obj))) " ")
-     (if (and (not full) (length> obj 5)) " ...)" ")")))
+     (string-join
+      (mapcar #'cape--debug-print
+              (if full obj (take cape--debug-length obj)))
+      " ")
+     (if (and (not full) (length> obj cape--debug-length)) " ...)" ")")))
    (t (let ((print-level 2))
         (prin1-to-string obj)))))
 
@@ -899,12 +905,13 @@ changed.  The function `cape-company-to-capf' is experimental."
       (`(,beg ,end ,table . ,plist)
        (let* ((count 0)
               (cands (all-completions "" table
-                                      (lambda (&rest _) (< (cl-incf count) 5)))))
+                                      (lambda (&rest _)
+                                        (<= (cl-incf count) cape--debug-length)))))
          (message
           "%s() => beg=%s end=%s candidates=(%s%s)%s"
           name beg end
           (string-join (mapcar #'prin1-to-string cands) " ")
-          (and (> count 5) " ...")
+          (and (> count cape--debug-length) " ...")
           (if plist (format " plist=%s" (cape--debug-print plist t)) "")))
        `(,beg ,end ,(cape--debug-table table name) . ,plist))
       (result
