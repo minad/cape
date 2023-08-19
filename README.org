@@ -65,7 +65,7 @@ Furthermore the =cape-*= functions are Capfs which you can add to the
 since each of the Capfs adds a small runtime cost. Note that the Capfs which
 occur earlier in the list take precedence, such that the first Capf returning a
 result will win and the later Capfs may not get a chance to run. In order to
-merge Capfs you can try the experimental function =cape-super-capf=.
+merge Capfs you can try the experimental function =cape-capf-super=.
 
 One must distinguish the buffer-local and the global value of the
 =completion-at-point-functions= variable. The buffer-local value of the list takes
@@ -175,7 +175,7 @@ It is possible to merge multiple Company backends and use them as a single Capf
 using the ~company--multi-backend-adapter~ function from Company. The adapter
 transforms multiple Company backends into a single Company backend, which can
 then be used as a Capf via ~cape-company-to-capf~. Capfs can be merged directly
-with ~cape-super-capf~.
+with ~cape-capf-super~.
 
 #+begin_src emacs-lisp
 (require 'company)
@@ -191,34 +191,34 @@ with ~cape-super-capf~.
 
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
 
-Cape supports merging multiple Capfs using the function ~cape-super-capf~. This
+Cape supports merging multiple Capfs using the function ~cape-capf-super~. This
 feature is *EXPERIMENTAL* and should only be used carefully in special scenarios.
 Due to some technical details, only a subset of Capfs can be merged. Merge Capfs
 one by one and make sure that you get the desired outcome on each step.
 
-Note that ~cape-super-capf~ is not needed if you want to use multiple Capfs which
+Note that ~cape-capf-super~ is not needed if you want to use multiple Capfs which
 are tried one after the other, for example you can use ~cape-file~ together with
 programming mode Capfs by adding ~cape-file~ to the ~completion-at-point-functions~
 list. File completion will then be available in comments and string literals,
-but not in normal code. ~cape-super-capf~ is only necessary if you want to combine
+but not in normal code. ~cape-capf-super~ is only necessary if you want to combine
 multiple Capfs, such that the candidates from multiple sources appear /together/
 in the completion list at the same time.
 
 Capf merging works only for completion functions which are sufficiently
 well-behaved and completion functions which do not define completion boundaries.
-~cape-super-capf~ has the same restrictions as ~completion-table-merge~ and
-~completion-table-in-turn~. As a simple rule of thumb, ~cape-super-capf~ works only
+~cape-capf-super~ has the same restrictions as ~completion-table-merge~ and
+~completion-table-in-turn~. As a simple rule of thumb, ~cape-capf-super~ works only
 for static completion functions like ~cape-dabbrev~, ~cape-keyword~, ~cape-dict~,
 etc., but not for multi-step completions like ~cape-file~.
 
 #+begin_src emacs-lisp
 ;; Merge the dabbrev, dict and keyword capfs, display candidates together.
 (setq-local completion-at-point-functions
-            (list (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword)))
+            (list (cape-capf-super #'cape-dabbrev #'cape-dict #'cape-keyword)))
 
 ;; Alternative: Define named Capf instead of using the anonymous Capf directly
-(defalias 'cape-dabbrev-dict-keyword
-  (cape-super-capf #'cape-dabbrev #'cape-dict #'cape-keyword))
+(defun cape-dabbrev-dict-keyword ()
+  (cape-wrap-super #'cape-dabbrev #'cape-dict #'cape-keyword))
 (setq-local completion-at-point-functions (list #'cape-dabbrev-dict-keyword))
 #+end_src
 
@@ -230,7 +230,7 @@ allows you to merge multiple Company backends.
 /The Capf-Buster ensures that you always get a fresh set of candidates!/
 
 If a Capf caches the candidates for too long we can use a cache busting
-Capf-transformer. For example the Capf merging function ~cape-super-capf~ creates
+Capf-transformer. For example the Capf merging function ~cape-capf-super~ creates
 a Capf, which caches the candidates for the whole lifetime of the Capf.
 Therefore you may want to combine a merged Capf with a cache buster under some
 circumstances. It is noteworthy that the ~company-capf~ backend from Company
@@ -261,6 +261,7 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
 - ~cape-wrap-predicate~, ~cape-capf-predicate~: Add candidate predicate to a Capf.
 - ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix length.
+- ~cape-wrap-super~, ~cape-capf-super~: Merge multiple Capfs into a Super-Capf.
 - ~cape-wrap-inside-comment~, ~cape-capf-inside-comment~: Ensure that Capf triggers only inside comment.
 - ~cape-wrap-inside-string~, ~cape-capf-inside-string~: Ensure that Capf triggers only inside a string literal.
 

@@ -5,6 +5,8 @@
 * Development
 
 - Add =cape-wrap-debug= and =cape-capf-debug= to add debug messages to a Capf.
+- Add =cape-wrap-super= and =cape-capf-super= for better consistency with the other
+  Capf combinators.
 
 * Version 0.17 (2023-08-14)
 
