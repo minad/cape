@@ -887,16 +887,14 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
                 (setq cand-ht ht)
                 (delq nil (apply #'nconc (nreverse candidates)))))
              (_ ;; try-completion and test-completion
-              (completion--some
-               (pcase-lambda (`(,table . ,plist))
-                 (complete-with-action
-                  action table str
-                  (if-let (pr (plist-get plist :predicate))
-                      (if pred
-                          (lambda (x) (and (funcall pr x) (funcall pred x)))
-                        pr)
-                    pred)))
-               tables))))
+              (cl-loop for (table . plist) in tables thereis
+                       (complete-with-action
+                        action table str
+                        (if-let (pr (plist-get plist :predicate))
+                            (if pred
+                                (lambda (x) (and (funcall pr x) (funcall pred x)))
+                              pr)
+                          pred))))))
         :exclusive no
         :company-prefix-length ,prefix-len
         ,@(mapcan
