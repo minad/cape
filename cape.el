@@ -206,6 +206,9 @@ BODY is the wrapping expression."
 (defvar cape--debug-length 5
   "Length of printed lists in `cape--debug-print'.")
 
+(defvar cape--debug-id 0
+  "Completion table identifier.")
+
 (defun cape--debug-message (&rest msg)
   "Print debug MSG."
   (let ((inhibit-message t))
@@ -910,6 +913,7 @@ If CAPF is an anonymous lambda, pass the Capf NAME explicitly for
 meaningful debugging output."
   (unless name
     (setq name (if (symbolp capf) capf "capf")))
+  (setq name (format "%s@%s" name (cl-incf cape--debug-id)))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      (let* (completion-ignore-case completion-regexp-list
@@ -927,7 +931,7 @@ meaningful debugging output."
                                  (cape--debug-print (cadr plist-elt)))
                plist-elt (cddr plist-elt)))
        (cape--debug-message
-        "%s() => input=%s:%s:%S table=%s%s"
+        "%s => input=%s:%s:%S table=%s%s"
         name (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
         (cape--debug-print cands)
         plist-str))
