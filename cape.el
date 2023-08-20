@@ -973,7 +973,8 @@ completion table is refreshed on every input change."
                     ;; Reset in case `all-completions' is used inside CAPF
                     (let (completion-ignore-case completion-regexp-list)
                       (funcall capf))
-                  (`(,_beg ,_end ,new-table . ,new-plist)
+                  ((and `(,new-beg ,new-end ,new-table . ,new-plist)
+                        (guard (and (= beg new-beg) (= end new-end))))
                    (let (throw-on-input) ;; No interrupt during state update
                      (setf table new-table
                            input new-input
