@@ -25,8 +25,8 @@ trigger the respective completion at point. You can bind them directly to a key
 in your user configuration. Notable commands/Capfs are ~cape-line~ for completion
 of a line from the current buffer, ~cape-history~ for history completion in shell
 or Comint modes and ~cape-file~ for completion of file names. The commands
-~cape-symbol~ and ~cape-elisp-block~ are useful for documentation of Elisp packages
-or configurations, since they complete Elisp anywhere.
+~cape-elisp-symbol~ and ~cape-elisp-block~ are useful for documentation of Elisp
+packages or configurations, since they complete Elisp anywhere.
 
 Cape has the super power to transform Company backends into Capfs and merge
 multiple Capfs into a Super-Capf! These transformers allow you to still take
@@ -39,10 +39,10 @@ advantage of Company backends even if you are not using Company as frontend.
 + ~cape-dabbrev~: Complete word from current buffers. See also ~dabbrev-capf~ on
   Emacs 29.
 + ~cape-elisp-block~: Complete Elisp in Org or Markdown code block.
++ ~cape-elisp-symbol~: Complete Elisp symbol.
 + ~cape-file~: Complete file name.
 + ~cape-history~: Complete from Eshell, Comint or minibuffer history.
 + ~cape-keyword~: Complete programming language keyword.
-+ ~cape-symbol~: Complete Elisp symbol.
 + ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~).
 + ~cape-dict~: Complete word from dictionary file.
 + ~cape-line~: Complete entire line from current buffer.
@@ -92,7 +92,7 @@ information.
          ("C-c p h" . cape-history)
          ("C-c p f" . cape-file)
          ("C-c p k" . cape-keyword)
-         ("C-c p s" . cape-symbol)
+         ("C-c p s" . cape-elisp-symbol)
          ("C-c p e" . cape-elisp-block)
          ("C-c p a" . cape-abbrev)
          ("C-c p l" . cape-line)
@@ -117,7 +117,7 @@ information.
   ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
   ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
   ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-  ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+  ;;(add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
 )
 #+end_src

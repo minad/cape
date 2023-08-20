@@ -35,7 +35,7 @@
 ;; `cape-file': Complete file name
 ;; `cape-history': Complete from Eshell, Comint or minibuffer history
 ;; `cape-keyword': Complete programming language keyword
-;; `cape-symbol': Complete Elisp symbol
+;; `cape-elisp-symbol': Complete Elisp symbol
 ;; `cape-abbrev': Complete abbreviation (add-global-abbrev, add-mode-abbrev)
 ;; `cape-dict': Complete word from dictionary file
 ;; `cape-line': Complete entire line from file
@@ -119,7 +119,7 @@ The buffers are scanned for completion candidates by `cape-line'."
                  (const :tag "Buffers with same major mode" cape--buffers-major-mode)
                  (function :tag "Custom function")))
 
-(defcustom cape-symbol-wrapper
+(defcustom cape-elisp-symbol-wrapper
   '((org-mode ?= ?=)
     (markdown-mode ?` ?`)
     (rst-mode "``" "``")
@@ -404,7 +404,7 @@ If INTERACTIVE is nil the function acts like a Capf."
               '(:company-prefix-length t))
           ,@cape--file-properties)))))
 
-;;;;; cape-symbol
+;;;;; cape-elisp-symbol
 
 (defvar cape--symbol-properties
   (append
@@ -421,17 +421,17 @@ If INTERACTIVE is nil the function acts like a Capf."
            :company-doc-buffer 'elisp--company-doc-buffer
            :company-docsig 'elisp--company-doc-string
            :company-location 'elisp--company-location)))
-  "Completion extra properties for `cape-symbol'.")
+  "Completion extra properties for `cape-elisp-symbol'.")
 
 (defun cape--symbol-predicate (sym)
   "Return t if SYM is bound, fbound or propertized."
   (or (fboundp sym) (boundp sym) (symbol-plist sym)))
 
 (defun cape--symbol-exit (name status)
-  "Wrap symbol NAME with `cape-symbol-wrapper' buffers.
+  "Wrap symbol NAME with `cape-elisp-symbol-wrapper' buffers.
 STATUS is the exit status."
   (when-let (((not (eq status 'exact)))
-             (c (cl-loop for (m . c) in cape-symbol-wrapper
+             (c (cl-loop for (m . c) in cape-elisp-symbol-wrapper
                          if (derived-mode-p m) return c)))
     (save-excursion
       (backward-char (length name))
@@ -453,14 +453,14 @@ STATUS is the exit status."
    (t " Symbol")))
 
 ;;;###autoload
-(defun cape-symbol (&optional interactive)
+(defun cape-elisp-symbol (&optional interactive)
   "Complete Elisp symbol at point.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
       ;; No cycling since it breaks the :exit-function.
       (let (completion-cycle-threshold)
-        (cape-interactive #'cape-symbol))
+        (cape-interactive #'cape-elisp-symbol))
     (pcase-let ((`(,beg . ,end) (cape--bounds 'symbol)))
       (when (eq (char-after beg) ?')
         (setq beg (1+ beg) end (max beg end)))
