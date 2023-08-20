@@ -478,7 +478,9 @@ This Capf is particularly useful for literate Emacs configurations.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape-interactive #'cape-elisp-block)
+      ;; No code block check. Always complete Elisp when the command was
+      ;; explicitly invoked interactively.
+      (cape-interactive #'elisp-completion-at-point)
     (when-let ((face (get-text-property (point) 'face))
                (lang (or (and (if (listp face)
                                   (memq 'org-block face)

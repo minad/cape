@@ -93,6 +93,7 @@ information.
          ("C-c p f" . cape-file)
          ("C-c p k" . cape-keyword)
          ("C-c p s" . cape-symbol)
+         ("C-c p e" . cape-elisp-block)
          ("C-c p a" . cape-abbrev)
          ("C-c p l" . cape-line)
          ("C-c p w" . cape-dict)
