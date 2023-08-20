@@ -838,9 +838,6 @@ changed.  The function `cape-company-to-capf' is experimental."
     (if interactive (cape-interactive capf) (funcall capf))))
 
 ;;;###autoload
-(defalias 'cape-super-capf #'cape-capf-super)
-
-;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
 The functions `cape-wrap-super' and `cape-capf-super' are experimental."
@@ -1137,6 +1134,12 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper purify)
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 (cape--capf-wrapper silent)
+
+;;;###autoload
+(define-obsolete-function-alias 'cape-super-capf #'cape-capf-super "0.17")
+
+;;;###autoload
+(define-obsolete-function-alias 'cape-symbol #'cape-elisp-symbol "0.17")
 
 (provide 'cape)
 ;;; cape.el ends here
