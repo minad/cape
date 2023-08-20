@@ -458,7 +458,9 @@ STATUS is the exit status."
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      (cape-interactive #'cape-symbol)
+      ;; No cycling since it breaks the :exit-function.
+      (let (completion-cycle-threshold)
+        (cape-interactive #'cape-symbol))
     (pcase-let ((`(,beg . ,end) (cape--bounds 'symbol)))
       (when (eq (char-after beg) ?')
         (setq beg (1+ beg) end (max beg end)))
@@ -661,7 +663,7 @@ INTERACTIVE is nil the function acts like a Capf."
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (if interactive
-      ;; NOTE: Disable cycling since abbreviation replacement breaks it.
+      ;; No cycling since it breaks the :exit-function.
       (let (completion-cycle-threshold)
         (cape-interactive #'cape-abbrev))
     (when-let (abbrevs (cape--abbrev-list))
