@@ -36,19 +36,18 @@ advantage of Company backends even if you are not using Company as frontend.
 
 * Available Capfs
 
-+ ~cape-dabbrev~: Complete word from current buffers. See also ~dabbrev-capf~ on
-  Emacs 29.
++ ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~).
++ ~cape-dabbrev~: Complete word from current buffers. See also ~dabbrev-capf~ on Emacs 29.
++ ~cape-dict~: Complete word from dictionary file.
 + ~cape-elisp-block~: Complete Elisp in Org or Markdown code block.
 + ~cape-elisp-symbol~: Complete Elisp symbol.
 + ~cape-file~: Complete file name.
 + ~cape-history~: Complete from Eshell, Comint or minibuffer history.
 + ~cape-keyword~: Complete programming language keyword.
-+ ~cape-abbrev~: Complete abbreviation (~add-global-abbrev~, ~add-mode-abbrev~).
-+ ~cape-dict~: Complete word from dictionary file.
 + ~cape-line~: Complete entire line from current buffer.
-+ ~cape-tex~: Complete Unicode char from TeX command, e.g. ~\hbar~.
-+ ~cape-sgml~: Complete Unicode char from SGML entity, e.g., ~&alpha~.
 + ~cape-rfc1345~: Complete Unicode char using RFC 1345 mnemonics.
++ ~cape-sgml~: Complete Unicode char from SGML entity, e.g., ~&alpha~.
++ ~cape-tex~: Complete Unicode char from TeX command, e.g. ~\hbar~.
 
 * Configuration
 
