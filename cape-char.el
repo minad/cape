@@ -19,8 +19,8 @@
 
 ;;; Commentary:
 
-;; This package provides the `cape-tex', `cape-sgml' and `cape-rfc1345'
-;; completion functions.
+;; This package provides the `cape-emoji', `cape-tex', `cape-sgml' and
+;; `cape-rfc1345' completion functions.
 
 ;;; Code:
 
