@@ -41,6 +41,7 @@ advantage of Company backends even if you are not using Company as frontend.
 + ~cape-dict~: Complete word from dictionary file.
 + ~cape-elisp-block~: Complete Elisp in Org or Markdown code block.
 + ~cape-elisp-symbol~: Complete Elisp symbol.
++ ~cape-emoji~: Complete Emoji. Available on Emacs 29 and newer.
 + ~cape-file~: Complete file name.
 + ~cape-history~: Complete from Eshell, Comint or minibuffer history.
 + ~cape-keyword~: Complete programming language keyword.
@@ -96,6 +97,7 @@ information.
          ("C-c p a" . cape-abbrev)
          ("C-c p l" . cape-line)
          ("C-c p w" . cape-dict)
+         ("C-c p :" . cape-emoji)
          ("C-c p \\" . cape-tex)
          ("C-c p _" . cape-tex)
          ("C-c p ^" . cape-tex)
@@ -145,30 +147,30 @@ small example completion backend, which can be used with both
 ~completion-at-point~ (Corfu, default completion) and Company.
 
 #+begin_src emacs-lisp
-(defvar emojis
+(defvar demo-alist
   '((":-D" . "😀")
     (";-)" . "😉")
     (":-/" . "😕")
     (":-(" . "🙁")
     (":-*" . "😙")))
 
-(defun emoji-backend (action &optional arg &rest _)
+(defun demo-backend (action &optional arg &rest _)
   (pcase action
     ('prefix (and (memq (char-before) '(?: ?\;))
                   (cons (string (char-before)) t)))
-    ('candidates (all-completions arg emojis))
-    ('annotation (concat " " (cdr (assoc arg emojis))))
+    ('candidates (all-completions arg demo-alist))
+    ('annotation (concat " " (cdr (assoc arg demo-alist))))
     ('post-completion
      (let ((str (buffer-substring (- (point) 3) (point))))
        (delete-region (- (point) 3) (point))
-     (insert (cdr (assoc str emojis)))))))
+     (insert (cdr (assoc str demo-alist)))))))
 
-;; Register emoji backend with `completion-at-point'
+;; Register demo backend with `completion-at-point'
 (setq completion-at-point-functions
-      (list (cape-company-to-capf #'emoji-backend)))
+      (list (cape-company-to-capf #'demo-backend)))
 
-;; Register emoji backend with Company.
-(setq company-backends '(emoji-backend))
+;; Register demo backend with Company.
+(setq company-backends '(demo-backend))
 #+end_src
 
 It is possible to merge multiple Company backends and use them as a single Capf

@@ -35,6 +35,7 @@
 ;; `cape-dict': Complete word from dictionary file.
 ;; `cape-elisp-block': Complete Elisp in Org or Markdown code block.
 ;; `cape-elisp-symbol': Complete Elisp symbol.
+;; `cape-emoji': Complete Emoji.
 ;; `cape-file': Complete file name.
 ;; `cape-history': Complete from Eshell, Comint or minibuffer history.
 ;; `cape-keyword': Complete programming language keyword.
