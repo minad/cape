@@ -4,7 +4,7 @@
 
 * Development
 
-- =cape-emoji=: New Capf available on Emacs 28 and newer.
+- =cape-emoji=: New Capf available on Emacs 29 and newer.
 - =cape-wrap-debug=, =cape-capf-debug=: New Capf transformers to add debug messages
   to a Capf.
 - Rename =cape-super-capf= to =cape-capf-super=. Add =cape-wrap-super= for consistency
