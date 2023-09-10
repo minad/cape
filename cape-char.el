@@ -65,8 +65,8 @@ REGEXP is the regular expression matching the names."
           hash)))))
 
 (defmacro cape-char--define (name method &rest prefix)
-  "Define character translation capf.
-NAME is the name of the capf.
+  "Define character translation Capf.
+NAME is the name of the Capf.
 METHOD is the input method.
 PREFIX are the prefix characters."
   (let ((capf (intern (format "cape-%s" name)))
@@ -108,13 +108,13 @@ PREFIX are the prefix characters."
                :exclusive 'no)
          ,(format "Completion extra properties for `%s'." name))
        (defun ,capf (&optional interactive)
-         ,(format "Complete unicode character at point.
+         ,(format "Complete Unicode character at point.
 Uses the same input format as the %s input method,
 see (describe-input-method %S). If INTERACTIVE
-is nil the function acts like a capf." method method)
+is nil the function acts like a Capf." method method)
          (interactive (list t))
          (if interactive
-             ;; NOTE: Disable cycling since replacement breaks it.
+             ;; No cycling since it breaks the :exit-function.
              (let (completion-cycle-threshold ,prefix-required)
                (when (and (memq last-input-event ',prefix)
                           (not (thing-at-point-looking-at ,thing-re)))
