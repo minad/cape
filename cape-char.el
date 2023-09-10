@@ -25,6 +25,7 @@
 ;;; Code:
 
 (require 'cape)
+(require 'quail)
 
 (autoload 'thing-at-point-looking-at "thingatpt")
 
@@ -32,37 +33,27 @@
 ;; macro for this computation since packages like `helpful' will
 ;; `macroexpand-all' the expensive `cape-char--define' macro calls.
 (eval-when-compile
-  (defun cape-char--translation (method regexp)
-    "Return character translation hash for METHOD.
-REGEXP is the regular expression matching the names."
+  (defun cape-char--translation (method)
+    "Return character translation hash for METHOD."
     (declare (pure t))
-    (save-window-excursion
-      (describe-input-method method)
-      (with-current-buffer "*Help*"
-        (let ((lines
-               (split-string
-                (replace-regexp-in-string
-                 "\n\n\\(\n\\|.\\)*" ""
-                 (replace-regexp-in-string
-                  "\\`\\(\n\\|.\\)*?----\n" ""
-                  (replace-regexp-in-string
-                   "\\`\\(\n\\|.\\)*?KEY SEQUENCE\n-+\n" ""
-                   (buffer-string))))
-                "\n"))
-              (hash (make-hash-table :test #'equal)))
-          (dolist (line lines)
-            (let ((beg 0) (len (length line)))
-              (while (< beg len)
-                (let* ((ename (next-single-property-change beg 'face line len))
-                       (echar (next-single-property-change ename 'face line len)))
-                  (when (and (get-text-property beg 'face line) (< ename len) (<= echar len))
-                    (let ((name (string-trim (substring-no-properties line beg ename)))
-                          (char (string-trim (substring-no-properties line ename echar))))
-                      (when (and (string-match-p regexp name) (length= char 1))
-                        (puthash name (aref char 0) hash))))
-                  (setq beg echar)))))
-          (kill-buffer)
-          hash)))))
+    (let* ((decode-map (list 'dm))
+           (quail-current-package (assoc method quail-package-alist))
+           (map-list (nth 2 quail-current-package))
+           (hash (make-hash-table :test #'equal)))
+      (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
+      (quail-build-decode-map (list map-list) "" decode-map 0)
+      (dolist (elem (cdr decode-map))
+        (let ((key (car elem))
+              (value (cdr elem)))
+          ;; Drop all translations that map to multiple candidates, like
+          ;; how quail hide them from "KEY SEQUENCES"
+          (if (not (vectorp value))
+              (puthash key (if (stringp value)
+                               (string-to-char value)
+                             value)
+                       hash))))
+      (quail-deactivate)
+      hash)))
 
 (defmacro cape-char--define (name method &rest prefix)
   "Define character translation Capf.
@@ -78,9 +69,7 @@ PREFIX are the prefix characters."
         (properties (intern (format "cape--%s-properties" name)))
         (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" )))
     `(progn
-       (defvar ,hash (cape-char--translation
-                      ,method
-                      ,(concat "\\`" (regexp-opt (mapcar #'char-to-string prefix)))))
+       (defvar ,hash (cape-char--translation ,method))
        (defcustom ,prefix-required t
          ,(format "Initial prefix is required for `%s' to trigger." capf)
          :type 'boolean
