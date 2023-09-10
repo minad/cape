@@ -25,33 +25,51 @@
 ;;; Code:
 
 (require 'cape)
-(require 'quail)
 
 (autoload 'thing-at-point-looking-at "thingatpt")
+
+(defun cape-char--ensure-str (char-or-str)
+  "Return CHAR-OR-STR as a string"
+  (if (characterp char-or-str)
+      (char-to-string char-or-str) char-or-str))
+
+(defun cape-char--ensure-char (char-or-str)
+  "Return CHAR-OR-STR as a char"
+  (if (stringp char-or-str)
+      (string-to-char char-or-str) char-or-str))
 
 ;; Declare as pure function which is evaluated at compile time. We don't use a
 ;; macro for this computation since packages like `helpful' will
 ;; `macroexpand-all' the expensive `cape-char--define' macro calls.
 (eval-when-compile
-  (defun cape-char--translation (method)
-    "Return character translation hash for METHOD."
+  (defun cape-char--translation-hash (method regexp)
+    "Return character translation hash for input method METHOD.
+REGEXP is the regular expression matching the names."
     (declare (pure t))
+    (require 'quail)
     (let* ((decode-map (list 'dm))
            (quail-current-package (assoc method quail-package-alist))
            (map-list (nth 2 quail-current-package))
            (hash (make-hash-table :test #'equal)))
       (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
       (quail-build-decode-map (list map-list) "" decode-map 0)
+      ;; decode-map now looks like: (dm (key . value) (key . value) ...)
       (dolist (elem (cdr decode-map))
-        (let ((key (car elem))
-              (value (cdr elem)))
-          ;; Drop all translations that map to multiple candidates, like
-          ;; how quail hide them from "KEY SEQUENCES"
-          (if (not (vectorp value))
-              (puthash key (if (stringp value)
-                               (string-to-char value)
-                             value)
-                       hash))))
+        (let ((name (car elem)) (value (cdr elem)) value-char value-str)
+          (if (vectorp value)
+              (if (= (length value) 1)
+                  (setq value (aref value 0))))
+          ;; Ignores all translations that map to multiple candidates
+          (when (char-or-string-p value)
+            (setq value-char (cape-char--ensure-char value)
+                  value-str (cape-char--ensure-str value))
+            (when (string-match-p regexp name)
+              ;; Store as string if converting it to char and back to
+              ;; string doesn't preserve the original string.
+              ;; Otherwise ensure it gets stored as char.
+              (puthash name (if (string= (char-to-string value-char) value-str)
+                                value-char value-str)
+                       hash)))))
       (quail-deactivate)
       hash)))
 
@@ -69,16 +87,18 @@ PREFIX are the prefix characters."
         (properties (intern (format "cape--%s-properties" name)))
         (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" )))
     `(progn
-       (defvar ,hash (cape-char--translation ,method))
+       (defvar ,hash (cape-char--translation-hash
+                      ,method
+                      ,(concat "\\`" (regexp-opt (mapcar #'char-to-string prefix)))))
        (defcustom ,prefix-required t
          ,(format "Initial prefix is required for `%s' to trigger." capf)
          :type 'boolean
          :group 'cape)
        (defun ,ann (name)
-         (when-let (char (gethash name ,hash))
-           (format " %c" char)))
+         (when-let (str (cape-char--ensure-str (gethash name ,hash)))
+           (format " %s" str)))
        (defun ,docsig (name)
-         (when-let (char (gethash name ,hash))
+         (when-let (char (cape-char--ensure-char (gethash name ,hash)))
            (format "%s (%s)"
                    (get-char-code-property char 'name)
                    (char-code-property-description
@@ -86,9 +106,9 @@ PREFIX are the prefix characters."
                     (get-char-code-property char 'general-category)))))
        (defun ,exit (name status)
          (unless (eq status 'exact)
-           (when-let (char (gethash name ,hash))
+           (when-let (str (cape-char--ensure-str (gethash name ,hash)))
              (delete-region (max (point-min) (- (point) (length name))) (point))
-             (insert (char-to-string char)))))
+             (insert str))))
        (defvar ,properties
          (list :annotation-function #',ann
                :company-docsig #',docsig
