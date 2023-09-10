@@ -130,12 +130,23 @@ is nil the function acts like a capf." method method)
                     (cape--table-with-properties ,hash :category ',capf))
               ,properties)))))))
 
+;; TODO: use static-if as soon as compat-30 is released
+(defmacro cape--static-if (cond then &rest else)
+  "Static if COND with THEN and ELSE branch."
+  (if (eval cond t) then (cons 'progn else)))
+
 ;;;###autoload (autoload 'cape-tex "cape-char" nil t)
-;;;###autoload (autoload 'cape-sgml "cape-char" nil t)
-;;;###autoload (autoload 'cape-rfc1345 "cape-char" nil t)
 (cape-char--define tex "TeX" ?\\ ?^ ?_)
+
+;;;###autoload (autoload 'cape-sgml "cape-char" nil t)
 (cape-char--define sgml "sgml" ?&)
+
+;;;###autoload (autoload 'cape-rfc1345 "cape-char" nil t)
 (cape-char--define rfc1345 "rfc1345" ?&)
+
+;;;###autoload (when (> emacs-major-version 28) (autoload 'cape-emoji "cape-char" nil t))
+(cape--static-if (> emacs-major-version 28)
+  (cape-char--define emoji "emoji" ?:))
 
 (provide 'cape-char)
 ;;; cape-char.el ends here
