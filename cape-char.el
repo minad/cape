@@ -44,29 +44,31 @@
 (eval-when-compile
   (defun cape-char--translation-hash (method regexp)
     "Return character translation hash for input method METHOD.
-REGEXP is the regular expression matching the names."
+REGEXP is the regular expression matching the names.
+
+Names (hash keys) that map to multiple candidates (hash values) in the
+quail translation map are not included.
+
+Hash values are either char or strings. They are stored as strings
+only if converting the string into char and back to string does not
+retain the original string; otherwise they are stored as chars."
     (declare (pure t))
     (require 'quail)
-    (let* ((decode-map (list 'dm))
-           (quail-current-package (assoc method quail-package-alist))
-           (map-list (nth 2 quail-current-package))
-           (hash (make-hash-table :test #'equal)))
-      (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
-      (quail-build-decode-map (list map-list) "" decode-map 0)
-      ;; decode-map now looks like: (dm (key . value) (key . value) ...)
-      (dolist (elem (cdr decode-map))
-        (let ((name (car elem)) (value (cdr elem)) value-char value-str)
-          (if (vectorp value)
-              (if (= (length value) 1)
-                  (setq value (aref value 0))))
-          ;; Ignores all translations that map to multiple candidates
+    ;; Load the quail input method and its required libraries
+    (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
+    (let ((hash (make-hash-table :test #'equal))
+          (decode-map (list 'dm)))
+      (quail-build-decode-map (list (nth 2 quail-current-package)) "" decode-map 0)
+      ;; Now decode-map contains: (dm (name . value) (name . value) ...)
+      (dolist (cell (cdr decode-map))
+        (let ((name (car cell)) (value (cdr cell))
+              value-char value-str)
+          (if (and (vectorp value) (= (length value) 1))
+              (setq value (aref value 0)))
           (when (char-or-string-p value)
             (setq value-char (cape-char--ensure-char value)
                   value-str (cape-char--ensure-str value))
             (when (string-match-p regexp name)
-              ;; Store as string if converting it to char and back to
-              ;; string doesn't preserve the original string.
-              ;; Otherwise ensure it gets stored as char.
               (puthash name (if (string= (char-to-string value-char) value-str)
                                 value-char value-str)
                        hash)))))
