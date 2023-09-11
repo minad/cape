@@ -58,7 +58,7 @@ retain the original string; otherwise they are stored as chars."
     (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
     (let ((hash (make-hash-table :test #'equal))
           (decode-map (list 'dm)))
-      (quail-build-decode-map (list (nth 2 quail-current-package)) "" decode-map 0)
+      (quail-build-decode-map (list (quail-map)) "" decode-map 0)
       ;; Now decode-map contains: (dm (name . value) (name . value) ...)
       (dolist (cell (cdr decode-map))
         (let ((name (car cell)) (value (cdr cell))
