@@ -28,15 +28,15 @@
 
 (autoload 'thing-at-point-looking-at "thingatpt")
 
-(defun cape-char--ensure-str (char-or-str)
-  "Return CHAR-OR-STR as a string"
-  (if (characterp char-or-str)
-      (char-to-string char-or-str) char-or-str))
+(defmacro cape-char--ensure-str (char-or-str)
+  "IF-expression to convert CHAR-OR-STR to string only if it's a char"
+  `(if (characterp ,char-or-str)
+      (char-to-string ,char-or-str) ,char-or-str))
 
-(defun cape-char--ensure-char (char-or-str)
-  "Return CHAR-OR-STR as a char"
-  (if (stringp char-or-str)
-      (string-to-char char-or-str) char-or-str))
+(defmacro cape-char--ensure-char (char-or-str)
+  "IF-expression to convert CHAR-OR-STR to char only if it's a string"
+  `(if (stringp ,char-or-str)
+      (string-to-char ,char-or-str) ,char-or-str))
 
 ;; Declare as pure function which is evaluated at compile time. We don't use a
 ;; macro for this computation since packages like `helpful' will
