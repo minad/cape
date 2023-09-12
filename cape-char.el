@@ -28,12 +28,8 @@
 
 (autoload 'thing-at-point-looking-at "thingatpt")
 
-;; Declare as pure function which is evaluated at compile time. We don't use a
-;; macro for this computation since packages like `helpful' will
-;; `macroexpand-all' the expensive `cape-char--define' macro calls.
-(eval-when-compile
-  (defun cape-char--translation-hash (method regexp)
-    "Return character translation hash for input method METHOD.
+(defun cape-char--translation-hash (method regexp)
+  "Return character translation hash for input method METHOD.
 REGEXP is the regular expression matching the names.
 
 Names (hash keys) that map to multiple candidates (hash values) in the
@@ -42,28 +38,27 @@ quail translation map are not included.
 Hash values are either char or strings. They are stored as strings
 only if converting the string into char and back to string does not
 retain the original string; otherwise they are stored as chars."
-    (declare (pure t))
-    (require 'quail)
-    ;; Load the quail input method and its required libraries
-    (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
-    (let ((hash (make-hash-table :test #'equal))
-          (decode-map (list 'dm)))
-      (quail-build-decode-map (list (quail-map)) "" decode-map 0)
-      ;; Now decode-map contains: (dm (name . value) (name . value) ...)
-      (dolist (cell (cdr decode-map))
-        (let ((name (car cell)) (value (cdr cell))
-              value-char value-str)
-          (if (and (vectorp value) (= (length value) 1))
-              (setq value (aref value 0)))
-          (when (char-or-string-p value)
-            (when (string-match-p regexp name)
-              (puthash name (if (string= (char-to-string value-char) value-str)
-                                value-char value-str)
-                       hash)))))
-      (quail-deactivate)
-      hash)))
+  (require 'quail)
+  ;; Load the quail input method and its required libraries
+  (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
+  (let ((hash (make-hash-table :test #'equal))
+        (decode-map (list 'dm)))
+    (quail-build-decode-map (list (quail-map)) "" decode-map 0)
+    ;; Now decode-map contains: (dm (name . value) (name . value) ...)
+    (dolist (cell (cdr decode-map))
+      (let ((name (car cell)) (value (cdr cell))
+            value-char value-str)
+        (if (and (vectorp value) (= (length value) 1))
+            (setq value (aref value 0)))
+        (when (char-or-string-p value)
           (setq value-char (if (stringp value) (string-to-char value) value)
                 value-str (if (characterp value) (char-to-string value) value))
+          (when (string-match-p regexp name)
+            (puthash name (if (string= (char-to-string value-char) value-str)
+                              value-char value-str)
+                     hash)))))
+    (quail-deactivate)
+    hash))
 
 (defmacro cape-char--define (name method &rest prefix)
   "Define character translation Capf.
