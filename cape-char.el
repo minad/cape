@@ -72,11 +72,12 @@ PREFIX are the prefix characters."
         (docsig (intern (format "cape--%s-docsig" name)))
         (exit (intern (format "cape--%s-exit" name)))
         (properties (intern (format "cape--%s-properties" name)))
-        (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" )))
+        (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
+        (hash-val (cape-char--translation-hash
+                   method
+                   (concat "\\`" (regexp-opt (mapcar #'char-to-string prefix))))))
     `(progn
-       (defvar ,hash (cape-char--translation-hash
-                      ,method
-                      ,(concat "\\`" (regexp-opt (mapcar #'char-to-string prefix)))))
+       (defvar ,hash ,hash-val)
        (defcustom ,prefix-required t
          ,(format "Initial prefix is required for `%s' to trigger." capf)
          :type 'boolean
