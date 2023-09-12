@@ -28,16 +28,6 @@
 
 (autoload 'thing-at-point-looking-at "thingatpt")
 
-(defmacro cape-char--ensure-str (char-or-str)
-  "IF-expression to convert CHAR-OR-STR to string only if it's a char"
-  `(if (characterp ,char-or-str)
-      (char-to-string ,char-or-str) ,char-or-str))
-
-(defmacro cape-char--ensure-char (char-or-str)
-  "IF-expression to convert CHAR-OR-STR to char only if it's a string"
-  `(if (stringp ,char-or-str)
-      (string-to-char ,char-or-str) ,char-or-str))
-
 ;; Declare as pure function which is evaluated at compile time. We don't use a
 ;; macro for this computation since packages like `helpful' will
 ;; `macroexpand-all' the expensive `cape-char--define' macro calls.
@@ -66,14 +56,14 @@ retain the original string; otherwise they are stored as chars."
           (if (and (vectorp value) (= (length value) 1))
               (setq value (aref value 0)))
           (when (char-or-string-p value)
-            (setq value-char (cape-char--ensure-char value)
-                  value-str (cape-char--ensure-str value))
             (when (string-match-p regexp name)
               (puthash name (if (string= (char-to-string value-char) value-str)
                                 value-char value-str)
                        hash)))))
       (quail-deactivate)
       hash)))
+          (setq value-char (if (stringp value) (string-to-char value) value)
+                value-str (if (characterp value) (char-to-string value) value))
 
 (defmacro cape-char--define (name method &rest prefix)
   "Define character translation Capf.
@@ -97,10 +87,11 @@ PREFIX are the prefix characters."
          :type 'boolean
          :group 'cape)
        (defun ,ann (name)
-         (when-let (str (cape-char--ensure-str (gethash name ,hash)))
-           (format " %s" str)))
+         (when-let (value (gethash name ,hash))
+           (format " %s" (if (characterp value) (char-to-string value) value))))
        (defun ,docsig (name)
-         (when-let (char (cape-char--ensure-char (gethash name ,hash)))
+         (when-let (char (gethash name ,hash))
+           (if (stringp char) (setq char (string-to-char char)))
            (format "%s (%s)"
                    (get-char-code-property char 'name)
                    (char-code-property-description
@@ -108,9 +99,9 @@ PREFIX are the prefix characters."
                     (get-char-code-property char 'general-category)))))
        (defun ,exit (name status)
          (unless (eq status 'exact)
-           (when-let (str (cape-char--ensure-str (gethash name ,hash)))
+           (when-let (value (gethash name ,hash))
              (delete-region (max (point-min) (- (point) (length name))) (point))
-             (insert str))))
+             (insert (if (characterp value) (char-to-string value) value)))))
        (defvar ,properties
          (list :annotation-function #',ann
                :company-docsig #',docsig
