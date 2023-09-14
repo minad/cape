@@ -131,7 +131,7 @@ is nil the function acts like a Capf." method method)
               ,properties)))))))
 
 ;; TODO: use static-if as soon as compat-30 is released
-(defmacro cape--static-if (cond then &rest else)
+(defmacro cape-char--static-if (cond then &rest else)
   "Static if COND with THEN and ELSE branch."
   (if (eval cond t) then (cons 'progn else)))
 
@@ -145,7 +145,7 @@ is nil the function acts like a Capf." method method)
 (cape-char--define rfc1345 "rfc1345" ?&)
 
 ;;;###autoload (when (> emacs-major-version 28) (autoload 'cape-emoji "cape-char" nil t))
-(cape--static-if (> emacs-major-version 28)
+(cape-char--static-if (> emacs-major-version 28)
   (cape-char--define emoji "emoji" ?:))
 
 (provide 'cape-char)
