@@ -27,111 +27,107 @@
 (require 'cape)
 
 (autoload 'thing-at-point-looking-at "thingatpt")
+(declare-function quail-deactivate "quail")
+(declare-function quail-build-decode-map "quail")
+(declare-function quail-map "quail")
 
-(defun cape-char--translation-hash (method regexp)
-  "Return character translation hash for input method METHOD.
-REGEXP is the regular expression matching the names.
+(eval-and-compile
+  (defun cape-char--translation (method prefix)
+    "Return character translation hash for input method METHOD.
+PREFIX are the prefix characters. Names (hash keys) that map to
+multiple candidates (hash values) in the quail translation map
+are not included. Hash values are either char or strings."
+    (when-let ((im (assoc method input-method-alist))
+               ((eq #'quail-use-package (nth 2 im))))
+      (let ((hash (make-hash-table :test #'equal))
+            (dm (list 'decode-map)))
+        (require 'quail)
+        (apply #'quail-use-package method (nthcdr 5 im))
+        (quail-build-decode-map (list (quail-map)) "" dm 0)
+        (pcase-dolist (`(,name . ,val) (cdr dm))
+          (when (memq (aref name 0) prefix)
+            (puthash
+             (if (equal method "emoji")
+                 (string-replace "_" "-" name)
+               name)
+             (if (vectorp val) (aref val 0) val) hash)))
+        (quail-deactivate)
+        hash))))
 
-Names (hash keys) that map to multiple candidates (hash values) in the
-quail translation map are not included.
+(defun cape-char--annotation (hash name)
+  "Lookup NAME in HASH and return annotation."
+  (when-let ((char (gethash name hash)))
+    (if (stringp char) (format " %s" char) (format " %c" char))))
 
-Hash values are either char or strings. They are stored as strings
-only if converting the string into char and back to string does not
-retain the original string; otherwise they are stored as chars."
-  (require 'quail)
-  ;; Load the quail input method and its required libraries
-  (apply #'quail-use-package method (nthcdr 5 (assoc method input-method-alist)))
-  (let ((hash (make-hash-table :test #'equal))
-        (decode-map (list 'dm)))
-    (quail-build-decode-map (list (quail-map)) "" decode-map 0)
-    ;; Now decode-map contains: (dm (name . value) (name . value) ...)
-    (dolist (cell (cdr decode-map))
-      (let ((name (car cell)) (value (cdr cell))
-            value-char value-str)
-        (if (and (vectorp value) (= (length value) 1))
-            (setq value (aref value 0)))
-        (when (char-or-string-p value)
-          (setq value-char (if (stringp value) (string-to-char value) value)
-                value-str (if (characterp value) (char-to-string value) value))
-          (when (string-match-p regexp name)
-            (puthash name (if (string= (char-to-string value-char) value-str)
-                              value-char value-str)
-                     hash)))))
-    (quail-deactivate)
-    hash))
+(defun cape-char--signature (hash name)
+  "Lookup NAME in HASH and return signature."
+  (when-let ((val (gethash name hash)))
+    (concat
+     (and (stringp val) (concat val " = "))
+     (mapconcat
+      (lambda (char)
+        (format "%c %s (%s)"
+                char
+                (get-char-code-property char 'name)
+                (char-code-property-description
+                 'general-category
+                 (get-char-code-property char 'general-category))))
+      (if (stringp val) val (list val))
+      " + "))))
+
+(defun cape-char--exit (hash name status)
+  "Exit function given completion status, looks-up NAME in HASH."
+  (when-let (((not (eq status 'exact)))
+             (char (gethash name hash)))
+    (delete-region (max (point-min) (- (point) (length name))) (point))
+    (insert char)))
 
 (defmacro cape-char--define (name method &rest prefix)
   "Define character translation Capf.
 NAME is the name of the Capf.
 METHOD is the input method.
 PREFIX are the prefix characters."
-  (let ((capf (intern (format "cape-%s" name)))
-        (prefix-required (intern (format "cape-%s-prefix-required" name)))
-        (hash (intern (format "cape--%s-hash" name)))
-        (ann (intern (format "cape--%s-annotation" name)))
-        (docsig (intern (format "cape--%s-docsig" name)))
-        (exit (intern (format "cape--%s-exit" name)))
-        (properties (intern (format "cape--%s-properties" name)))
-        (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
-        (hash-val (cape-char--translation-hash
-                   method
-                   (concat "\\`" (regexp-opt (mapcar #'char-to-string prefix))))))
+  (when-let ((capf (intern (format "cape-%s" name)))
+             (pre-req (intern (format "cape-%s-prefix-required" name)))
+             (props (intern (format "cape--%s-properties" name)))
+             (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
+             (hash (intern (format "cape--%s-hash" name)))
+             (hash-val (cape-char--translation method prefix)))
     `(progn
        (defvar ,hash ,hash-val)
-       (defcustom ,prefix-required t
+       (defcustom ,pre-req t
          ,(format "Initial prefix is required for `%s' to trigger." capf)
          :type 'boolean
          :group 'cape)
-       (defun ,ann (name)
-         (when-let (value (gethash name ,hash))
-           (format " %s" (if (characterp value) (char-to-string value) value))))
-       (defun ,docsig (name)
-         (when-let (char (gethash name ,hash))
-           (if (stringp char) (setq char (string-to-char char)))
-           (format "%s (%s)"
-                   (get-char-code-property char 'name)
-                   (char-code-property-description
-                    'general-category
-                    (get-char-code-property char 'general-category)))))
-       (defun ,exit (name status)
-         (unless (eq status 'exact)
-           (when-let (value (gethash name ,hash))
-             (delete-region (max (point-min) (- (point) (length name))) (point))
-             (insert (if (characterp value) (char-to-string value) value)))))
-       (defvar ,properties
-         (list :annotation-function #',ann
-               :company-docsig #',docsig
-               :exit-function #',exit
+       (defvar ,props
+         (list :annotation-function (apply-partially #'cape-char--annotation ,hash)
+               :company-docsig (apply-partially #'cape-char--signature ,hash)
+               :exit-function (apply-partially #'cape-char--exit ,hash)
                :company-kind (lambda (_) 'text)
                :exclusive 'no)
-         ,(format "Completion extra properties for `%s'." name))
+         ,(format "Completion extra properties for `%s'." capf))
        (defun ,capf (&optional interactive)
          ,(format "Complete Unicode character at point.
-Uses the same input format as the %s input method,
-see (describe-input-method %S). If INTERACTIVE
-is nil the function acts like a Capf." method method)
+Uses the input format of the %s input method,
+see (describe-input-method %S). If INTERACTIVE is nil the
+function acts like a Capf." method method)
          (interactive (list t))
          (if interactive
              ;; No cycling since it breaks the :exit-function.
-             (let (completion-cycle-threshold ,prefix-required)
+             (let (completion-cycle-threshold ,pre-req)
                (when (and (memq last-input-event ',prefix)
                           (not (thing-at-point-looking-at ,thing-re)))
                  (self-insert-command 1 last-input-event))
                (cape-interactive #',capf))
-           (when-let (bounds
-                      (cond
-                       ((thing-at-point-looking-at ,thing-re)
-                        (cons (match-beginning 0) (match-end 0)))
-                       ((not ,prefix-required) (cons (point) (point)))))
+           (when-let ((bounds
+                       (cond
+                        ((thing-at-point-looking-at ,thing-re)
+                         (cons (match-beginning 0) (match-end 0)))
+                        ((not ,pre-req) (cons (point) (point))))))
              (append
               (list (car bounds) (cdr bounds)
                     (cape--table-with-properties ,hash :category ',capf))
-              ,properties)))))))
-
-;; TODO: use static-if as soon as compat-30 is released
-(defmacro cape-char--static-if (cond then &rest else)
-  "Static if COND with THEN and ELSE branch."
-  (if (eval cond t) then (cons 'progn else)))
+              ,props)))))))
 
 ;;;###autoload (autoload 'cape-tex "cape-char" nil t)
 (cape-char--define tex "TeX" ?\\ ?^ ?_)
@@ -143,8 +139,7 @@ is nil the function acts like a Capf." method method)
 (cape-char--define rfc1345 "rfc1345" ?&)
 
 ;;;###autoload (when (> emacs-major-version 28) (autoload 'cape-emoji "cape-char" nil t))
-(cape-char--static-if (> emacs-major-version 28)
-  (cape-char--define emoji "emoji" ?:))
+(cape-char--define emoji "emoji" ?:)
 
 (provide 'cape-char)
 ;;; cape-char.el ends here
