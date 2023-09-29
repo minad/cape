@@ -259,9 +259,9 @@
      "in" "infix" "infixl" "infixr" "instance" "let" "module" "newtype" "of"
      "then" "type" "where")
     (python-mode ;; https://docs.python.org/3/reference/lexical_analysis.html#keywords
-     "False" "None" "True" "and" "as" "assert" "break" "case ""class" "continue"
+     "False" "None" "True" "and" "as" "assert" "break" "case" "class" "continue"
      "def" "del" "elif" "else" "except" "exec" "finally" "for" "from" "global"
-     "if" "import" "in" "is" "lambda" "match ""nonlocal" "not" "or" "pass"
+     "if" "import" "in" "is" "lambda" "match" "nonlocal" "not" "or" "pass"
      "print" "raise" "return" "try" "while" "with" "yield")
     (ruby-mode
      "BEGIN" "END" "alias" "and" "begin" "break" "case" "class" "def" "defined?"
