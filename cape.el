@@ -782,7 +782,7 @@ changed.  The function `cape-company-to-capf' is experimental."
              (dups (cape--company-call backend 'duplicates))
              (valid (if (cape--company-call backend 'no-cache initial-input)
                         #'equal (or valid #'string-prefix-p)))
-             candidates)
+             reset candidates)
         (list beg end
               (funcall
                (if (cape--company-call backend 'ignore-case)
@@ -792,6 +792,13 @@ changed.  The function `cape-company-to-capf' is experimental."
                 (cape--dynamic-table
                  beg end
                  (lambda (input)
+                   ;; HACK: Clear caches used internally by Company backends.
+                   ;; It would be better if backends support a `cache-clear'
+                   ;; action instead such that we wouldn't have to bypass the
+                   ;; backend and access Company directly.
+                   (when (and (not reset) (boundp 'company--cache))
+                     (clrhash company--cache)
+                     (setq reset t))
                    (setq candidates (cape--company-call backend 'candidates input))
                    (when dups (setq candidates (delete-dups candidates)))
                    (cons (apply-partially valid input) candidates)))
