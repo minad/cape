@@ -265,6 +265,7 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix length.
 - ~cape-wrap-super~, ~cape-capf-super~: Merge multiple Capfs into a Super-Capf.
 - ~cape-wrap-inside-comment~, ~cape-capf-inside-comment~: Ensure that Capf triggers only inside comment.
+- ~cape-wrap-inside-faces~, ~cape-capf-inside-faces~: Ensure that Capf triggers only inside text with certain faces.
 - ~cape-wrap-inside-string~, ~cape-capf-inside-string~: Ensure that Capf triggers only inside a string literal.
 
 In the following we show a few example configurations, which have come up on the

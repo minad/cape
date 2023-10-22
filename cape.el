@@ -1061,6 +1061,16 @@ If the prefix is long enough, enforce auto completion."
          ,@plist)))))
 
 ;;;###autoload
+(defun cape-wrap-inside-faces (capf &rest faces)
+  "Call CAPF only if inside FACES.
+This function can be used as an advice around an existing Capf."
+  (when-let ((fs (get-text-property (point) 'face))
+             ((if (listp fs)
+                  (cl-loop for f in fs thereis (memq f faces))
+                (memq fs faces))))
+    (funcall capf)))
+
+;;;###autoload
 (defun cape-wrap-inside-comment (capf)
   "Call CAPF only if inside comment.
 This function can be used as an advice around an existing Capf."
@@ -1117,6 +1127,8 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper debug)
 ;;;###autoload (autoload 'cape-capf-inside-comment "cape")
 (cape--capf-wrapper inside-comment)
+;;;###autoload (autoload 'cape-capf-inside-faces "cape")
+(cape--capf-wrapper inside-faces)
 ;;;###autoload (autoload 'cape-capf-inside-string "cape")
 (cape--capf-wrapper inside-string)
 ;;;###autoload (autoload 'cape-capf-super "cape")

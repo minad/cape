@@ -7,6 +7,7 @@
 - =cape-emoji=: New Capf available on Emacs 29 and newer.
 - =cape-wrap-debug=, =cape-capf-debug=: New Capf transformers to add debug messages
   to a Capf.
+- =cape-capf-inside-faces=, =cape-wrap-inside-faces=: New transformer
 - Rename =cape-super-capf= to =cape-capf-super=. Add =cape-wrap-super= for consistency
   with other Capf combinators.
 - Rename =cape-symbol= to =cape-elisp-symbol=.
