@@ -12,6 +12,8 @@
 - =cape-capf-inside-faces=, =cape-wrap-inside-faces=: New transformer
 - Rename =cape-super-capf= to =cape-capf-super=. Add =cape-wrap-super= for consistency
   with other Capf combinators.
+- Rename =cape-interactive-capf= to =cape-capf-interactive= for consistency with
+  other Capf combinators.
 - Rename =cape-symbol= to =cape-elisp-symbol=.
 
 * Version 0.17 (2023-08-14)
