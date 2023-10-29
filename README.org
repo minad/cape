@@ -260,8 +260,9 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-wrap-nonexclusive~, ~cape-capf-nonexclusive:~ Mark Capf as non-exclusive.
 - ~cape-wrap-noninterruptible~, ~cape-capf-noninterruptible:~ Protect a Capf which does not like to be interrupted.
 - ~cape-wrap-case-fold~, ~cape-capf-case-fold~: Create a Capf which is case insensitive.
-- ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
+- ~cape-wrap-passthrough~, ~cape-capf-passthrough~: Defeat entire completion style filtering.
 - ~cape-wrap-predicate~, ~cape-capf-predicate~: Add candidate predicate to a Capf.
+- ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
 - ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix length.
 - ~cape-wrap-super~, ~cape-capf-super~: Merge multiple Capfs into a Super-Capf.
 - ~cape-wrap-inside-comment~, ~cape-capf-inside-comment~: Ensure that Capf triggers only inside comment.

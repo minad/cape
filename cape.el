@@ -187,6 +187,11 @@ BODY is the wrapping expression."
   (cape--wrapped-table cape--accept-all-table
     (or (eq action 'lambda))))
 
+(defun cape--passthrough-table (table)
+  "Create completion TABLE disabling any filtering."
+  (cape--wrapped-table cape--passthrough-table
+    (let (completion-ignore-case completion-regexp-list (_ (setq str ""))))))
+
 (defun cape--noninterruptible-table (table)
   "Create non-interruptible completion TABLE."
   (cape--wrapped-table cape--noninterruptible-table
@@ -987,6 +992,13 @@ completion table is refreshed on every input change."
        ,@plist))))
 
 ;;;###autoload
+(defun cape-wrap-passthrough (capf)
+  "Call CAPF and make sure that no completion style filtering takes place."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--passthrough-table table) ,@plist))))
+
+;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
   "Call CAPF and add additional completion PROPERTIES.
 Completion properties include for example :exclusive, :annotation-function and
@@ -1139,6 +1151,8 @@ This function can be used as an advice around an existing Capf."
 (cape--capf-wrapper noninterruptible)
 ;;;###autoload (autoload 'cape-capf-nonexclusive "cape")
 (cape--capf-wrapper nonexclusive)
+;;;###autoload (autoload 'cape-capf-passthrough "cape")
+(cape--capf-wrapper passthrough)
 ;;;###autoload (autoload 'cape-capf-predicate "cape")
 (cape--capf-wrapper predicate)
 ;;;###autoload (autoload 'cape-capf-prefix-length "cape")
