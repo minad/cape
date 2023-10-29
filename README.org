@@ -252,22 +252,22 @@ interaction. These can either be used as advices (=cape-wrap-*)= or to create a
 new Capf from an existing Capf (=cape-capf-*=). You can bind the Capfs created by
 the Capf transformers with =defalias= to a function symbol.
 
+- ~cape-capf-accept-all~, ~cape-wrap-accept-all~: Create a Capf which accepts every input as valid.
+- ~cape-capf-case-fold~, ~cape-wrap-case-fold~: Create a Capf which is case insensitive.
+- ~cape-capf-debug~, ~cape-wrap-debug~: Create a Capf which prints debugging messages.
+- ~cape-capf-inside-comment~, ~cape-wrap-inside-comment~: Ensure that Capf triggers only inside comment.
+- ~cape-capf-inside-faces~, ~cape-wrap-inside-faces~: Ensure that Capf triggers only inside text with certain faces.
+- ~cape-capf-inside-string~, ~cape-wrap-inside-string~: Ensure that Capf triggers only inside a string literal.
 - ~cape-capf-interactive~, ~cape-interactive~: Create a Capf which can be called interactively.
-- ~cape-wrap-accept-all~, ~cape-capf-accept-all~: Create a Capf which accepts every input as valid.
-- ~cape-wrap-case-fold~, ~cape-capf-case-fold~: Create a Capf which is case insensitive.
-- ~cape-wrap-debug~, ~cape-capf-debug~: Create a Capf which prints debugging messages.
-- ~cape-wrap-inside-comment~, ~cape-capf-inside-comment~: Ensure that Capf triggers only inside comment.
-- ~cape-wrap-inside-faces~, ~cape-capf-inside-faces~: Ensure that Capf triggers only inside text with certain faces.
-- ~cape-wrap-inside-string~, ~cape-capf-inside-string~: Ensure that Capf triggers only inside a string literal.
-- ~cape-wrap-nonexclusive~, ~cape-capf-nonexclusive:~ Mark Capf as non-exclusive.
-- ~cape-wrap-noninterruptible~, ~cape-capf-noninterruptible:~ Protect a Capf which does not like to be interrupted.
-- ~cape-wrap-passthrough~, ~cape-capf-passthrough~: Defeat entire completion style filtering.
-- ~cape-wrap-predicate~, ~cape-capf-predicate~: Add candidate predicate to a Capf.
-- ~cape-wrap-prefix-length~, ~cape-capf-prefix-length~: Enforce a minimal prefix length.
-- ~cape-wrap-properties~, ~cape-capf-properties~: Add completion properties to a Capf.
-- ~cape-wrap-purify~, ~cape-capf-purify~: Purify a broken Capf and ensure that it does not modify the buffer.
-- ~cape-wrap-silent~, ~cape-capf-silent~: Wrap a chatty Capf and silence it.
-- ~cape-wrap-super~, ~cape-capf-super~: Merge multiple Capfs into a Super-Capf.
+- ~cape-capf-nonexclusive~, ~cape-wrap-nonexclusive~: Mark Capf as non-exclusive.
+- ~cape-capf-noninterruptible~, ~cape-wrap-noninterruptible~: Protect a Capf which does not like to be interrupted.
+- ~cape-capf-passthrough~, ~cape-wrap-passthrough~: Defeat entire completion style filtering.
+- ~cape-capf-predicate~, ~cape-wrap-predicate~: Add candidate predicate to a Capf.
+- ~cape-capf-prefix-length~, ~cape-wrap-prefix-length~: Enforce a minimal prefix length.
+- ~cape-capf-properties~, ~cape-wrap-properties~: Add completion properties to a Capf.
+- ~cape-capf-purify~, ~cape-wrap-purify~: Purify a broken Capf and ensure that it does not modify the buffer.
+- ~cape-capf-silent~, ~cape-wrap-silent~: Wrap a chatty Capf and silence it.
+- ~cape-capf-super~, ~cape-wrap-super~: Merge multiple Capfs into a Super-Capf.
 
 In the following we show a few example configurations, which have come up on the
 [[https://github.com/minad/cape/issues][Cape]] or [[https://github.com/minad/corfu/issues][Corfu issue tracker]] or the [[https://github.com/minad/corfu/wiki][Corfu wiki.]] I use some of these tweaks in my
