@@ -407,7 +407,7 @@ If INTERACTIVE is nil the function acts like a capf."
     (when-let (keywords (cape--keyword-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
-          ,(cape--table-with-properties keywords :category 'cape-keyword)
+          ,(cape--properties-table keywords :category 'cape-keyword)
           ,@cape--keyword-properties)))))
 
 (provide 'cape-keyword)

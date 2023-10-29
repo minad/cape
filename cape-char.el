@@ -126,7 +126,7 @@ function acts like a Capf." method method)
                         ((not ,pre-req) (cons (point) (point))))))
              (append
               (list (car bounds) (cdr bounds)
-                    (cape--table-with-properties ,hash :category ',capf))
+                    (cape--properties-table ,hash :category ',capf))
               ,props)))))))
 
 ;;;###autoload (autoload 'cape-tex "cape-char" nil t)

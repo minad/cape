@@ -258,7 +258,7 @@ NAME is the name of the Capf, BEG and END are the input markers."
          (cape--debug-print result)))
       result)))
 
-(cl-defun cape--table-with-properties (table &key category (sort t) &allow-other-keys)
+(cl-defun cape--properties-table (table &key category (sort t) &allow-other-keys)
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
 SORT should be nil to disable sorting."
@@ -356,7 +356,7 @@ See also `consult-history' for a more flexible variant based on
         (setq history (ring-elements history)))
       (when history
         `(,bol ,(point)
-          ,(cape--table-with-properties history :sort nil)
+          ,(cape--properties-table history :sort nil)
           ,@cape--history-properties)))))
 
 ;;;;; cape-file
@@ -466,7 +466,7 @@ If INTERACTIVE is nil the function acts like a Capf."
       (when (eq (char-after beg) ?')
         (setq beg (1+ beg) end (max beg end)))
       `(,beg ,end
-        ,(cape--table-with-properties obarray :category 'symbol)
+        ,(cape--properties-table obarray :category 'symbol)
         ,@cape--symbol-properties))))
 
 ;;;;; cape-elisp-block
@@ -564,7 +564,7 @@ See the user options `cape-dabbrev-min-length' and
       (cape-interactive '((cape-dabbrev-min-length 0)) #'cape-dabbrev)
     (when-let ((bounds (cape--dabbrev-bounds)))
       `(,(car bounds) ,(cdr bounds)
-        ,(cape--table-with-properties
+        ,(cape--properties-table
           (completion-table-case-fold
            (cape--dynamic-table (car bounds) (cdr bounds) #'cape--dabbrev-list)
            (not (cape--case-fold-p dabbrev-case-fold-search)))
@@ -613,7 +613,7 @@ INTERACTIVE is nil the function acts like a Capf."
       (cape-interactive #'cape-dict)
     (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
       `(,beg ,end
-        ,(cape--table-with-properties
+        ,(cape--properties-table
           (completion-table-case-fold
            (cape--dynamic-table beg end #'cape--dict-list)
            (not (cape--case-fold-p cape-dict-case-fold)))
@@ -670,7 +670,7 @@ If INTERACTIVE is nil the function acts like a Capf."
     (when-let (abbrevs (cape--abbrev-list))
       (let ((bounds (cape--bounds 'symbol)))
         `(,(car bounds) ,(cdr bounds)
-          ,(cape--table-with-properties abbrevs :category 'cape-abbrev)
+          ,(cape--properties-table abbrevs :category 'cape-abbrev)
           ,@cape--abbrev-properties)))))
 
 ;;;;; cape-line
@@ -717,7 +717,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (if interactive
       (cape-interactive #'cape-line)
     `(,(pos-bol) ,(point)
-      ,(cape--table-with-properties (cape--line-list) :sort nil)
+      ,(cape--properties-table (cape--line-list) :sort nil)
       ,@cape--line-properties)))
 
 ;;;; Capf combinators
@@ -788,7 +788,7 @@ changed.  The function `cape-company-to-capf' is experimental."
                (if (cape--company-call backend 'ignore-case)
                    #'completion-table-case-fold
                  #'identity)
-               (cape--table-with-properties
+               (cape--properties-table
                 (cape--dynamic-table
                  beg end
                  (lambda (input)
@@ -918,13 +918,15 @@ meaningful debugging output."
   (setq name (format "%s@%s" name (cl-incf cape--debug-id)))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     (let* (completion-ignore-case completion-regexp-list
-            (limit (1+ cape--debug-length))
+     (let* ((limit (1+ cape--debug-length))
             (pred (plist-get plist :predicate))
-            (cands (all-completions
-                    "" table
-                    (lambda (&rest args)
-                      (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0)))))
+            (cands
+             ;; Reset regexps for `all-completions'
+             (let (completion-ignore-case completion-regexp-list)
+               (all-completions
+                "" table
+                (lambda (&rest args)
+                  (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0))))))
             (plist-str "")
             (plist-elt plist))
        (while (cdr plist-elt)
@@ -993,7 +995,7 @@ completion :category symbol can be specified."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end
-            ,(apply #'cape--table-with-properties table properties)
+            ,(apply #'cape--properties-table table properties)
             ,@properties ,@plist))))
 
 ;;;###autoload
