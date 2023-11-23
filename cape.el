@@ -400,7 +400,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                      (file-exists-p (file-name-directory file))))
         `(,beg ,end
           ,(cape--nonessential-table
-            (if (derived-mode-p 'comint-mode 'eshell-mode)
+            (if (or (derived-mode-p 'comint-mode) (derived-mode-p 'eshell-mode))
                 (completion-table-with-quoting
                  #'read-file-name-internal
                  comint-unquote-function
