@@ -121,7 +121,7 @@ The buffers are scanned for completion candidates by `cape-line'."
                  (function :tag "Custom function")))
 
 (defcustom cape-elisp-symbol-wrapper
-  '((org-mode ?= ?=)
+  '((org-mode ?~ ?~)
     (markdown-mode ?` ?`)
     (rst-mode "``" "``")
     (log-edit-mode "`" "'")
