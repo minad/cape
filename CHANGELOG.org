@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 1.0 (2023-12-01)
 
 - =cape-emoji=: New Capf available on Emacs 29 and newer.
 - =cape-wrap-debug=, =cape-capf-debug=: New Capf transformers to add debug messages
