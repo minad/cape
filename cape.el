@@ -784,7 +784,6 @@ changed.  The function `cape-company-to-capf' is experimental."
     (when-let ((prefix (cape--company-call backend 'prefix))
                (initial-input (if (stringp prefix) prefix (car-safe prefix))))
       (let* ((end (point)) (beg (- end (length initial-input)))
-             (dups (cape--company-call backend 'duplicates))
              (valid (if (cape--company-call backend 'no-cache initial-input)
                         #'equal (or valid #'string-prefix-p)))
              candidates)
@@ -798,7 +797,6 @@ changed.  The function `cape-company-to-capf' is experimental."
                  beg end
                  (lambda (input)
                    (setq candidates (cape--company-call backend 'candidates input))
-                   (when dups (setq candidates (delete-dups candidates)))
                    (cons (apply-partially valid input) candidates)))
                 :category backend
                 :sort (not (cape--company-call backend 'sorted))))
