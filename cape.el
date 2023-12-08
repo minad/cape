@@ -387,7 +387,6 @@ If INTERACTIVE is nil the function acts like a Capf."
                                       ('nil default-directory)
                                       ((pred stringp) cape-file-directory)
                                       (_ (funcall cape-file-directory))))
-                 ;; TODO: Bounds are not correct in comint/eshell buffers
                  (`(,beg . ,end) (cape--bounds 'filename))
                  (non-essential t)
                  (file (buffer-substring-no-properties beg end))
