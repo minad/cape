@@ -786,7 +786,7 @@ changed.  The function `cape-company-to-capf' is experimental."
       (let* ((end (point)) (beg (- end (length initial-input)))
              (valid (if (cape--company-call backend 'no-cache initial-input)
                         #'equal (or valid #'string-prefix-p)))
-             candidates)
+             restore-props)
         (list beg end
               (funcall
                (if (cape--company-call backend 'ignore-case)
@@ -796,8 +796,15 @@ changed.  The function `cape-company-to-capf' is experimental."
                 (cape--dynamic-table
                  beg end
                  (lambda (input)
-                   (setq candidates (cape--company-call backend 'candidates input))
-                   (cons (apply-partially valid input) candidates)))
+                   (let ((cands (cape--company-call backend 'candidates input)))
+                     ;; The candidate string including text properties should be
+                     ;; restored in the :exit-function, if the UI does not
+                     ;; guarantee this itself.  Restoration is not necessary for
+                     ;; Corfu since the introduction of `corfu--exit-function'.
+                     (unless (and (eq completion-in-region-function 'corfu--in-region)
+                                  (fboundp 'corfu--exit-function))
+                       (setq restore-props cands))
+                     (cons (apply-partially valid input) cands))))
                 :category backend
                 :sort (not (cape--company-call backend 'sorted))))
               :exclusive 'no
@@ -809,13 +816,13 @@ changed.  The function `cape-company-to-capf' is experimental."
               :company-kind (lambda (x) (cape--company-call backend 'kind x))
               :annotation-function (lambda (x)
                                      (when-let (ann (cape--company-call backend 'annotation x))
-                                       (if (string-match-p "^[ \t]" ann)
-                                           ann
-                                         (concat " " ann))))
-              :exit-function
-              (lambda (x _status)
-                (cape--company-call backend 'post-completion
-                                    (or (car (member x candidates)) x))))))))
+                                       (concat " " (string-trim ann))))
+              :exit-function (lambda (x _status)
+                               ;; Restore the candidate string including
+                               ;; properties if restore-props is non-nil.  See
+                               ;; the comment above.
+                               (setq x (or (car (member x restore-props)) x))
+                               (cape--company-call backend 'post-completion x)))))))
 
 ;;;###autoload
 (defun cape-interactive (&rest capfs)
