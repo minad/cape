@@ -2,6 +2,10 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- =cape-capf-super=, =cape-company-to-capf=: Support duplicate candidates.
+
 * Version 1.0 (2023-12-01)
 
 - =cape-emoji=: New Capf available on Emacs 29 and newer.
