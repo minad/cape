@@ -853,7 +853,7 @@ changed.  The function `cape-company-to-capf' is experimental."
 The functions `cape-wrap-super' and `cape-capf-super' are experimental."
   (when-let ((results (delq nil (mapcar #'funcall capfs))))
     (pcase-let* ((`((,beg ,end . ,_)) results)
-                 (cand-ht (make-hash-table :test #'equal))
+                 (cand-ht nil)
                  (tables nil)
                  (prefix-len nil))
       (cl-loop for (beg2 end2 . rest) in results do
@@ -889,14 +889,15 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
                                 (sort (or (completion-metadata-get md 'display-sort-function)
                                           #'identity))
                                 (cands (funcall sort (all-completions str table pr))))
-                           (cl-loop for cell on cands
-                                    for cand = (car cell) do
-                                    (if (eq (gethash cand ht t) t)
-                                        (puthash cand plist ht)
-                                      (setcar cell nil)))
+                           (cl-loop
+                            for cand in cands do
+                            (if (eq (gethash cand ht t) t)
+                                (puthash cand plist ht)
+                              (setf cand (propertize cand #'cape-capf-super
+                                                     (cons cand plist)))))
                            (push cands candidates)))
                 (setq cand-ht ht)
-                (delq nil (apply #'nconc (nreverse candidates)))))
+                (apply #'nconc (nreverse candidates))))
              (_ ;; try-completion and test-completion
               (cl-loop for (table . plist) in tables thereis
                        (complete-with-action
@@ -911,8 +912,12 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
         ,@(mapcan
            (lambda (prop)
              (list prop (lambda (cand &rest args)
-                          (when-let (fun (plist-get (gethash cand cand-ht) prop))
-                            (apply fun cand args)))))
+                          (let ((ref (get-text-property 0 #'cape-capf-super cand)))
+                            (when-let ((fun (plist-get
+                                             (or (cdr ref)
+                                                 (and cand-ht (gethash cand cand-ht)))
+                                             prop)))
+                              (apply fun (or (car ref) cand) args))))))
            '(:company-docsig :company-location :company-kind
              :company-doc-buffer :company-deprecated
              :annotation-function :exit-function))))))
