@@ -88,16 +88,16 @@ See `dabbrev-case-fold-search' for details."
                  (other :tag "on" t)))
 
 (defcustom cape-dabbrev-min-length 4
-  "Minimum length of dabbrev expansions.
+  "Minimum length of Dabbrev expansions.
 This setting ensures that words which are too short
 are not offered as completion candidates, such that
 auto completion does not pop up too aggressively."
   :type 'natnum)
 
 (defcustom cape-dabbrev-check-other-buffers t
-  "Buffers to check for dabbrev.
+  "Buffers to check for Dabbrev.
 
-If t, check all other buffers (subject to dabbrev ignore rules).
+If t, check all other buffers (subject to Dabbrev ignore rules).
 Any other non-nil value only checks some other buffers, as per
 `dabbrev-select-buffers-function'."
   :type '(choice (const :tag "off" nil)
@@ -519,7 +519,7 @@ If INTERACTIVE is nil the function acts like a Capf."
 (declare-function dabbrev--reset-global-variables "dabbrev")
 
 (defun cape--dabbrev-list (input)
-  "Find all dabbrev expansions for INPUT."
+  "Find all Dabbrev expansions for INPUT."
   (cape--silent
     (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
@@ -559,7 +559,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   "Complete with Dabbrev at point.
 
 If INTERACTIVE is nil the function acts like a Capf.  In case you
-observe a performance issue with autocompletion and `cape-dabbrev'
+observe a performance issue with auto-completion and `cape-dabbrev'
 it is strongly recommended to disable scanning in other buffers.
 See the user options `cape-dabbrev-min-length' and
 `cape-dabbrev-check-other-buffers'."
@@ -1131,7 +1131,7 @@ This function can be used as an advice around an existing Capf."
      `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
 
 (defmacro cape--capf-wrapper (wrapper)
-  "Create a capf transformer from WRAPPER."
+  "Create a Capf transformer from WRAPPER."
   `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
      (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
 
