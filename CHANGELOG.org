@@ -5,6 +5,8 @@
 * Development
 
 - =cape-capf-super=, =cape-company-to-capf=: Support duplicate candidates.
+- Remove obsolete function aliases ~cape-super-capf~, ~cape-interactive-capf~ and
+  ~cape-symbol~.
 
 * Version 1.0 (2023-12-01)
 

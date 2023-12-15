@@ -1173,14 +1173,5 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 (cape--capf-wrapper silent)
 
-;;;###autoload
-(define-obsolete-function-alias 'cape-interactive-capf #'cape-capf-interactive "0.17")
-
-;;;###autoload
-(define-obsolete-function-alias 'cape-super-capf #'cape-capf-super "0.17")
-
-;;;###autoload
-(define-obsolete-function-alias 'cape-symbol #'cape-elisp-symbol "0.17")
-
 (provide 'cape)
 ;;; cape.el ends here
