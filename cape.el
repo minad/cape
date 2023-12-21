@@ -158,6 +158,17 @@ The buffers are scanned for completion candidates by `cape-line'."
                   (replace-match str nil nil input))))
       str))
 
+(defun cape--separator-p (str)
+  "Return non-nil if input STR has a separator character.
+Separator characters are used by completion styles like Orderless
+to split filter words.  In Corfu, the separator is configurable
+via the variable `corfu-separator'."
+  (string-search (string ;; Support `corfu-separator' and Orderless
+                  (or (and (bound-and-true-p corfu-mode)
+                           (bound-and-true-p corfu-separator))
+                      ?\s))
+                 str))
+
 (defmacro cape--silent (&rest body)
   "Silence BODY."
   (declare (indent 0))
@@ -311,9 +322,9 @@ string as first argument to the completion table."
       ;; a thing.
       (unless (or (eq action 'metadata) (eq (car-safe action) 'boundaries))
         (let ((input (buffer-substring-no-properties beg end)))
-          (when (or (not valid)
-                    (not (or (string-match-p "\\s-" input) ;; Support Orderless
-                             (funcall valid input))))
+          (unless (and valid
+                       (or (cape--separator-p input)
+                           (funcall valid input)))
             (let* (;; Reset in case `all-completions' is used inside FUN
                    completion-ignore-case completion-regexp-list
                    ;; Retrieve new state by calling FUN
@@ -800,8 +811,7 @@ changed.  The function `cape-company-to-capf' is experimental."
                      ;; restored in the :exit-function, if the UI does not
                      ;; guarantee this itself.  Restoration is not necessary for
                      ;; Corfu since the introduction of `corfu--exit-function'.
-                     (unless (and (eq completion-in-region-function 'corfu--in-region)
-                                  (fboundp 'corfu--exit-function))
+                     (unless (and (bound-and-true-p corfu-mode) (fboundp 'corfu--exit-function))
                        (setq restore-props cands))
                      (cons (apply-partially valid input) cands))))
                 :category backend
@@ -985,7 +995,7 @@ completion table is refreshed on every input change."
                (input (buffer-substring-no-properties beg end)))
           (lambda (str pred action)
             (let ((new-input (buffer-substring-no-properties beg end)))
-              (unless (or (string-match-p "\\s-" new-input) ;; Support Orderless
+              (unless (or (cape--separator-p new-input)
                           (funcall valid input new-input))
                 (pcase
                     ;; Reset in case `all-completions' is used inside CAPF
