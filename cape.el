@@ -900,7 +900,7 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
                                           #'identity))
                                 (cands (funcall sort (all-completions str table pr))))
                            (cl-loop
-                            for cand in cands do
+                            for cand in-ref cands do
                             (if (eq (gethash cand ht t) t)
                                 (puthash cand plist ht)
                               (setf cand (propertize cand #'cape-capf-super
