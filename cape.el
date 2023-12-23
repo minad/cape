@@ -278,16 +278,19 @@ NAME is the name of the Capf, BEG and END are the input markers."
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
 SORT should be nil to disable sorting."
-  (if (or (not table) (and (not category) sort))
-      table
-    (let ((metadata `(metadata
-                      ,@(and category `((category . ,category)))
-                      ,@(and (not sort) '((display-sort-function . identity)
-                                          (cycle-sort-function . identity))))))
-      (lambda (str pred action)
-        (if (eq action 'metadata)
-            metadata
-          (complete-with-action action table str pred))))))
+  ;; The metadata will be overridden if the category is non-nil, if the table is
+  ;; a function table or if sorting should be disabled for a non-nil
+  ;; non-function table.
+  (if (or category (functionp table) (and (not sort) table))
+      (let ((metadata `(metadata
+                        ,@(and category `((category . ,category)))
+                        ,@(and (not sort) '((display-sort-function . identity)
+                                            (cycle-sort-function . identity))))))
+        (lambda (str pred action)
+          (if (eq action 'metadata)
+              metadata
+            (complete-with-action action table str pred))))
+    table))
 
 (defun cape--dynamic-table (beg end fun)
   "Create dynamic completion table from FUN with caching.
