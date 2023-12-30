@@ -1148,45 +1148,31 @@ This function can be used as an advice around an existing Capf."
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
 
-(defmacro cape--capf-wrapper (wrapper)
-  "Create a Capf transformer from WRAPPER."
-  `(defun ,(intern (format "cape-capf-%s" wrapper)) (capf &rest args)
-     ,(format "Create a %s Capf from CAPF.
-The Capf calls `cape-wrap-%s' with CAPF and ARGS as arguments." wrapper wrapper)
-     (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) capf args))))
-
 ;;;###autoload (autoload 'cape-capf-accept-all "cape")
-(cape--capf-wrapper accept-all)
 ;;;###autoload (autoload 'cape-capf-buster "cape")
-(cape--capf-wrapper buster)
 ;;;###autoload (autoload 'cape-capf-case-fold "cape")
-(cape--capf-wrapper case-fold)
 ;;;###autoload (autoload 'cape-capf-debug "cape")
-(cape--capf-wrapper debug)
 ;;;###autoload (autoload 'cape-capf-inside-comment "cape")
-(cape--capf-wrapper inside-comment)
 ;;;###autoload (autoload 'cape-capf-inside-faces "cape")
-(cape--capf-wrapper inside-faces)
 ;;;###autoload (autoload 'cape-capf-inside-string "cape")
-(cape--capf-wrapper inside-string)
-;;;###autoload (autoload 'cape-capf-super "cape")
-(cape--capf-wrapper super)
-;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
-(cape--capf-wrapper noninterruptible)
 ;;;###autoload (autoload 'cape-capf-nonexclusive "cape")
-(cape--capf-wrapper nonexclusive)
+;;;###autoload (autoload 'cape-capf-noninterruptible "cape")
 ;;;###autoload (autoload 'cape-capf-passthrough "cape")
-(cape--capf-wrapper passthrough)
 ;;;###autoload (autoload 'cape-capf-predicate "cape")
-(cape--capf-wrapper predicate)
 ;;;###autoload (autoload 'cape-capf-prefix-length "cape")
-(cape--capf-wrapper prefix-length)
 ;;;###autoload (autoload 'cape-capf-properties "cape")
-(cape--capf-wrapper properties)
 ;;;###autoload (autoload 'cape-capf-purify "cape")
-(cape--capf-wrapper purify)
 ;;;###autoload (autoload 'cape-capf-silent "cape")
-(cape--capf-wrapper silent)
+;;;###autoload (autoload 'cape-capf-super "cape")
+
+(dolist (name '(accept-all buster case-fold debug inside-comment inside-faces
+                inside-string nonexclusive  noninterruptible passthrough
+                predicate prefix-length properties purify silent super))
+  (let ((wrapper (intern (format "cape-wrap-%s" name))))
+    (defalias (intern (format "cape-capf-%s" name))
+      (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
+      (format "Create a %s Capf from CAPF.
+The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
 
 (provide 'cape)
 ;;; cape.el ends here
