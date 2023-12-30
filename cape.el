@@ -1165,10 +1165,15 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 ;;;###autoload (autoload 'cape-capf-super "cape")
 
-(dolist (name '(accept-all buster case-fold debug inside-comment inside-faces
-                inside-string nonexclusive  noninterruptible passthrough
-                predicate prefix-length properties purify silent super))
-  (let ((wrapper (intern (format "cape-wrap-%s" name))))
+(dolist (wrapper (list #'cape-wrap-accept-all #'cape-wrap-buster
+                       #'cape-wrap-case-fold #'cape-wrap-debug
+                       #'cape-wrap-inside-comment #'cape-wrap-inside-faces
+                       #'cape-wrap-inside-string #'cape-wrap-nonexclusive
+                       #'cape-wrap-noninterruptible #'cape-wrap-passthrough
+                       #'cape-wrap-predicate #'cape-wrap-prefix-length
+                       #'cape-wrap-properties #'cape-wrap-purify
+                       #'cape-wrap-silent #'cape-wrap-super))
+  (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
     (defalias (intern (format "cape-capf-%s" name))
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
       (format "Create a %s Capf from CAPF.
