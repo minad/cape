@@ -1150,8 +1150,10 @@ This function can be used as an advice around an existing Capf."
 
 (defmacro cape--capf-wrapper (wrapper)
   "Create a Capf transformer from WRAPPER."
-  `(defun ,(intern (format "cape-capf-%s" wrapper)) (&rest args)
-     (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) args))))
+  `(defun ,(intern (format "cape-capf-%s" wrapper)) (capf &rest args)
+     ,(format "Create a %s Capf from CAPF.
+The Capf calls `cape-wrap-%s' with CAPF and ARGS as arguments." wrapper wrapper)
+     (lambda () (apply #',(intern (format "cape-wrap-%s" wrapper)) capf args))))
 
 ;;;###autoload (autoload 'cape-capf-accept-all "cape")
 (cape--capf-wrapper accept-all)
