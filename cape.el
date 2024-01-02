@@ -998,7 +998,8 @@ completion table is refreshed on every input change."
                (input (buffer-substring-no-properties beg end)))
           (lambda (str pred action)
             (let ((new-input (buffer-substring-no-properties beg end)))
-              (unless (or (cape--separator-p new-input)
+              (unless (or (not (eq action t))
+                          (cape--separator-p new-input)
                           (funcall valid input new-input))
                 (pcase
                     ;; Reset in case `all-completions' is used inside CAPF
