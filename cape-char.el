@@ -76,7 +76,7 @@ are not included. Hash values are either char or strings."
       " + "))))
 
 (defun cape-char--exit (hash name status)
-  "Exit function given completion status, looks-up NAME in HASH."
+  "Exit function given completion STATUS, looks-up NAME in HASH."
   (when-let (((not (eq status 'exact)))
              (char (gethash name hash)))
     (delete-region (max (point-min) (- (point) (length name))) (point))
