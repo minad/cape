@@ -906,7 +906,7 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
                             for cand in-ref cands do
                             (if (eq (gethash cand ht t) t)
                                 (puthash cand plist ht)
-                              (setf cand (propertize cand #'cape-capf-super
+                              (setf cand (propertize cand 'cape-capf-super
                                                      (cons cand plist)))))
                            (push cands candidates)))
                 (setq cand-ht ht)
@@ -925,7 +925,7 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
         ,@(mapcan
            (lambda (prop)
              (list prop (lambda (cand &rest args)
-                          (let ((ref (get-text-property 0 #'cape-capf-super cand)))
+                          (let ((ref (get-text-property 0 'cape-capf-super cand)))
                             (when-let ((fun (plist-get
                                              (or (cdr ref)
                                                  (and cand-ht (gethash cand cand-ht)))
