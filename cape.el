@@ -902,12 +902,18 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
                                 (sort (or (completion-metadata-get md 'display-sort-function)
                                           #'identity))
                                 (cands (funcall sort (all-completions str table pr))))
+                           ;; Handle duplicates with a hash table.
                            (cl-loop
                             for cand in-ref cands
-                            for other = (gethash cand ht t) do
+                            for dup = (gethash cand ht t) do
                             (cond
-                             ((eq other t) (puthash cand plist ht))
-                             ((not (equal other plist))
+                             ((eq dup t)
+                              ;; Candidate does not yet exist.
+                              (puthash cand plist ht))
+                             ((not (equal dup plist))
+                              ;; Duplicate candidate. Candidate plist is
+                              ;; different, therefore disambiguate the
+                              ;; candidates.
                               (setf cand (propertize cand 'cape-capf-super
                                                      (cons cand plist))))))
                            (push cands candidates)))
