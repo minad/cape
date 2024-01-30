@@ -374,6 +374,7 @@
     (js-mode javascript-mode)
     (js2-jsx-mode javascript-mode)
     (js2-mode javascript-mode)
+    (php-ts-mode php-mode)
     (phps-mode php-mode)
     (rjsx-mode javascript-mode)
     (tuareg-mode caml-mode)
