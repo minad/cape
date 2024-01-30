@@ -5,6 +5,8 @@
 * Development
 
 - Add =cape-wrap-inside-code= and =cape-capf-inside-code=.
+=- =cape--dynamic-table=, =cape-capf-buster=: Recompute the completion table when the
+  input prefix changes, even in the presence of trailing Orderless input.
 
 * Version 1.2 (2024-01-23)
 

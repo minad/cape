@@ -158,16 +158,19 @@ The buffers are scanned for completion candidates by `cape-line'."
                   (replace-match str nil nil input))))
       str))
 
-(defun cape--separator-p (str)
-  "Return non-nil if input STR has a separator character.
+(defun cape--input-string (beg end)
+  "Return input string between BEG and END up to a separator character.
 Separator characters are used by completion styles like Orderless
 to split filter words.  In Corfu, the separator is configurable
 via the variable `corfu-separator'."
-  (string-search (string ;; Support `corfu-separator' and Orderless
-                  (or (and (bound-and-true-p corfu-mode)
-                           (bound-and-true-p corfu-separator))
-                      ?\s))
-                 str))
+  (save-excursion
+    (goto-char beg)
+    (if (search-forward (string (or (and (bound-and-true-p corfu-mode)
+                                         (bound-and-true-p corfu-separator))
+                                    ?\s))
+                        end t)
+        (buffer-substring-no-properties beg (1- (point)))
+      (buffer-substring-no-properties beg end))))
 
 (defmacro cape--silent (&rest body)
   "Silence BODY."
@@ -324,10 +327,8 @@ string as first argument to the completion table."
       ;; `all-completions' must surely be most expensive, so nobody will suspect
       ;; a thing.
       (unless (or (eq action 'metadata) (eq (car-safe action) 'boundaries))
-        (let ((input (buffer-substring-no-properties beg end)))
-          (unless (and valid
-                       (or (cape--separator-p input)
-                           (funcall valid input)))
+        (let ((input (cape--input-string beg end)))
+          (unless (and valid (funcall valid input))
             (let* (;; Reset in case `all-completions' is used inside FUN
                    completion-ignore-case completion-regexp-list
                    ;; Retrieve new state by calling FUN
@@ -1005,16 +1006,22 @@ completion table is refreshed on every input change."
                (end (copy-marker end t))
                (input (buffer-substring-no-properties beg end)))
           (lambda (str pred action)
-            (let ((new-input (buffer-substring-no-properties beg end)))
-              (unless (or (not (eq action t))
-                          (cape--separator-p new-input)
-                          (funcall valid input new-input))
+            (let ((new-input (cape--input-string beg end)))
+              (when (and
+                     ;; Only refresh table for the `all-completions' action.
+                     (eq action t)
+                     ;; Point must be inside the input string. It could lie
+                     ;; outside if the Orderless completion style is used.
+                     (<= beg (point) (+ beg (length new-input)))
+                     ;; Current input is not valid.
+                     (not (funcall valid input new-input)))
                 (pcase
                     ;; Reset in case `all-completions' is used inside CAPF
                     (let (completion-ignore-case completion-regexp-list)
                       (funcall capf))
                   ((and `(,new-beg ,new-end ,new-table . ,new-plist)
-                        (guard (and (= beg new-beg) (= end new-end))))
+                        ;; new-end can be before end for Orderless completion.
+                        (guard (and (= new-beg beg) (<= new-end end))))
                    (let (throw-on-input) ;; No interrupt during state update
                      (setf table new-table
                            input new-input
