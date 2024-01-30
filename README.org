@@ -255,8 +255,8 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-capf-accept-all~, ~cape-wrap-accept-all~: Create a Capf which accepts every input as valid.
 - ~cape-capf-case-fold~, ~cape-wrap-case-fold~: Create a Capf which is case insensitive.
 - ~cape-capf-debug~, ~cape-wrap-debug~: Create a Capf which prints debugging messages.
-- ~cape-capf-inside-code~, ~cape-wrap-inside-code~: Ensure that Capf triggers only inside code (not comments).
-- ~cape-capf-inside-comment~, ~cape-wrap-inside-comment~: Ensure that Capf triggers only inside comment.
+- ~cape-capf-inside-code~, ~cape-wrap-inside-code~: Ensure that Capf triggers only inside code.
+- ~cape-capf-inside-comment~, ~cape-wrap-inside-comment~: Ensure that Capf triggers only inside comments.
 - ~cape-capf-inside-faces~, ~cape-wrap-inside-faces~: Ensure that Capf triggers only inside text with certain faces.
 - ~cape-capf-inside-string~, ~cape-wrap-inside-string~: Ensure that Capf triggers only inside a string literal.
 - ~cape-capf-interactive~, ~cape-interactive~: Create a Capf which can be called interactively.
