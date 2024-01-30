@@ -1119,7 +1119,8 @@ This function can be used as an advice around an existing Capf."
 (defun cape-wrap-inside-code (capf)
   "Call CAPF only if inside code, not inside a comment or string.
 This function can be used as an advice around an existing Capf."
-  (and (not (or (nth 3 (syntax-ppss)) (nth 4 (syntax-ppss)))) (funcall capf)))
+  (let ((s (syntax-ppss)))
+    (and (not (nth 3 s)) (not (nth 4 s)) (funcall capf))))
 
 ;;;###autoload
 (defun cape-wrap-inside-comment (capf)
