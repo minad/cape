@@ -1116,6 +1116,12 @@ This function can be used as an advice around an existing Capf."
     (funcall capf)))
 
 ;;;###autoload
+(defun cape-wrap-inside-code (capf)
+  "Call CAPF only if inside not inside a comment.
+This function can be used as an advice around an existing Capf."
+  (and (not (nth 4 (syntax-ppss))) (funcall capf)))
+
+;;;###autoload
 (defun cape-wrap-inside-comment (capf)
   "Call CAPF only if inside comment.
 This function can be used as an advice around an existing Capf."
@@ -1161,6 +1167,7 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload (autoload 'cape-capf-buster "cape")
 ;;;###autoload (autoload 'cape-capf-case-fold "cape")
 ;;;###autoload (autoload 'cape-capf-debug "cape")
+;;;###autoload (autoload 'cape-capf-inside-code "cape")
 ;;;###autoload (autoload 'cape-capf-inside-comment "cape")
 ;;;###autoload (autoload 'cape-capf-inside-faces "cape")
 ;;;###autoload (autoload 'cape-capf-inside-string "cape")
@@ -1176,12 +1183,12 @@ This function can be used as an advice around an existing Capf."
 
 (dolist (wrapper (list #'cape-wrap-accept-all #'cape-wrap-buster
                        #'cape-wrap-case-fold #'cape-wrap-debug
-                       #'cape-wrap-inside-comment #'cape-wrap-inside-faces
-                       #'cape-wrap-inside-string #'cape-wrap-nonexclusive
-                       #'cape-wrap-noninterruptible #'cape-wrap-passthrough
-                       #'cape-wrap-predicate #'cape-wrap-prefix-length
-                       #'cape-wrap-properties #'cape-wrap-purify
-                       #'cape-wrap-silent #'cape-wrap-super))
+                       #'cape-wrap-inside-code #'cape-wrap-inside-comment
+                       #'cape-wrap-inside-faces #'cape-wrap-inside-string
+                       #'cape-wrap-nonexclusive #'cape-wrap-noninterruptible
+                       #'cape-wrap-passthrough #'cape-wrap-predicate
+                       #'cape-wrap-prefix-length #'cape-wrap-properties
+                       #'cape-wrap-purify #'cape-wrap-silent #'cape-wrap-super))
   (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
     (defalias (intern (format "cape-capf-%s" name))
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
