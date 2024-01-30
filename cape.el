@@ -1007,18 +1007,19 @@ completion table is refreshed on every input change."
                (input (buffer-substring-no-properties beg end)))
           (lambda (str pred action)
             (let ((new-input (cape--input-string beg end)))
-              (when (and
-                     ;; Only refresh table for the `all-completions' action.
-                     (eq action t)
-                     ;; Point must be inside the input string. It could lie
-                     ;; outside if the Orderless completion style is used.
-                     (<= beg (point) (+ beg (length new-input)))
-                     ;; Current input is not valid.
-                     (not (funcall valid input new-input)))
+              ;; Only refresh table for the `all-completions' action if the
+              ;; input is not valid (has changed).
+              (when (and (eq action t) (not (funcall valid input new-input)))
                 (pcase
-                    ;; Reset in case `all-completions' is used inside CAPF
-                    (let (completion-ignore-case completion-regexp-list)
-                      (funcall capf))
+                    (save-excursion
+                      ;; Point must be inside the input string. It could lie
+                      ;; outside if the Orderless completion style is used.
+                      (let ((end (+ beg (length new-input))))
+                        (unless (<= beg (point) end)
+                          (goto-char end)))
+                      ;; Reset in case `all-completions' is used inside CAPF.
+                      (let (completion-ignore-case completion-regexp-list)
+                        (funcall capf)))
                   ((and `(,new-beg ,new-end ,new-table . ,new-plist)
                         ;; new-end can be before end for Orderless completion.
                         (guard (and (= new-beg beg) (<= new-end end))))
