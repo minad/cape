@@ -602,10 +602,12 @@ See the user options `cape-dabbrev-min-length' and
   (unless (equal input "")
      (let* ((inhibit-message t)
             (message-log-max nil)
-            (files (ensure-list
-                    (if (functionp cape-dict-file)
-                        (funcall cape-dict-file)
-                      cape-dict-file)))
+            (files (mapcar #'expand-file-name
+                           (ensure-list
+                            (if (functionp cape-dict-file)
+                                (funcall cape-dict-file)
+                              cape-dict-file))))
+            (default-directory user-emacs-directory)
             (words
              (apply #'process-lines-ignore-status
                     "grep"
