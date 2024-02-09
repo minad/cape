@@ -125,6 +125,7 @@ The buffers are scanned for completion candidates by `cape-line'."
     (markdown-mode ?` ?`)
     (rst-mode "``" "``")
     (log-edit-mode "`" "'")
+    (change-log-mode "`" "'")
     (message-mode "`" "'")
     (rcirc-mode "`" "'"))
   "Wrapper characters for symbols."
