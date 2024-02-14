@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 1.3 (2024-02-14)
 
 - Add =cape-wrap-inside-code= and =cape-capf-inside-code=.
 
