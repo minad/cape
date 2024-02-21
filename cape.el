@@ -1116,7 +1116,7 @@ If the prefix is long enough, enforce auto completion."
 (defun cape-wrap-inside-faces (capf &rest faces)
   "Call CAPF only if inside FACES.
 This function can be used as an advice around an existing Capf."
-  (when-let ((fs (get-text-property (point) 'face))
+  (when-let ((fs (get-pos-property (point) 'face))
              ((if (listp fs)
                   (cl-loop for f in fs thereis (memq f faces))
                 (memq fs faces))))
