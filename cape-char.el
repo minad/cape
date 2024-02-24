@@ -26,7 +26,6 @@
 
 (require 'cape)
 
-(autoload 'thing-at-point-looking-at "thingatpt")
 (declare-function quail-deactivate "quail")
 (declare-function quail-build-decode-map "quail")
 (declare-function quail-map "quail")
@@ -90,7 +89,7 @@ PREFIX are the prefix characters."
   (when-let ((capf (intern (format "cape-%s" name)))
              (pre-req (intern (format "cape-%s-prefix-required" name)))
              (props (intern (format "cape--%s-properties" name)))
-             (thing-re (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
+             (pre-rx (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
              (hash (intern (format "cape--%s-hash" name)))
              (hash-val (cape-char--translation method prefix)))
     `(progn
@@ -116,13 +115,13 @@ function acts like a Capf." method method)
              ;; No cycling since it breaks the :exit-function.
              (let (completion-cycle-threshold ,pre-req)
                (when (and (memq last-input-event ',prefix)
-                          (not (thing-at-point-looking-at ,thing-re)))
+                          (not (looking-back ,pre-rx (pos-bol))))
                  (self-insert-command 1 last-input-event))
                (cape-interactive #',capf))
            (when-let ((bounds
                        (cond
-                        ((thing-at-point-looking-at ,thing-re)
-                         (cons (match-beginning 0) (match-end 0)))
+                        ((looking-back ,pre-rx (pos-bol))
+                         (cons (match-beginning 0) (point)))
                         ((not ,pre-req) (cons (point) (point))))))
              (append
               (list (car bounds) (cdr bounds)
