@@ -493,28 +493,33 @@ If INTERACTIVE is nil the function acts like a Capf."
 (declare-function org-element-context "org-element")
 (declare-function markdown-code-block-lang "ext:markdown-mode")
 
+(defun cape--inside-block-p (&rest langs)
+  "Return non-nil if inside LANGS code block."
+  (when-let ((face (get-text-property (point) 'face))
+             (lang (or (and (if (listp face)
+                                (memq 'org-block face)
+                              (eq 'org-block face))
+                            (plist-get (cadr (org-element-context)) :language))
+                       (and (if (listp face)
+                                (memq 'markdown-code-face face)
+                              (eq 'markdown-code-face face))
+                            (save-excursion
+                              (markdown-code-block-lang))))))
+    (member lang langs)))
+
 ;;;###autoload
 (defun cape-elisp-block (&optional interactive)
   "Complete Elisp in Org or Markdown code block.
 This Capf is particularly useful for literate Emacs configurations.
 If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
-  (if interactive
-      ;; No code block check. Always complete Elisp when the command was
-      ;; explicitly invoked interactively.
-      (cape-interactive #'elisp-completion-at-point)
-    (when-let ((face (get-text-property (point) 'face))
-               (lang (or (and (if (listp face)
-                                  (memq 'org-block face)
-                                (eq 'org-block face))
-                              (plist-get (cadr (org-element-context)) :language))
-                         (and (if (listp face)
-                                  (memq 'markdown-code-face face)
-                                (eq 'markdown-code-face face))
-                              (save-excursion
-                                (markdown-code-block-lang)))))
-               ((member lang '("elisp" "emacs-lisp"))))
-      (elisp-completion-at-point))))
+  (cond
+   (interactive
+    ;; No code block check. Always complete Elisp when the command was
+    ;; explicitly invoked interactively.
+    (cape-interactive #'elisp-completion-at-point))
+   ((cape--inside-block-p "elisp" "emacs-lisp")
+    (elisp-completion-at-point))))
 
 ;;;;; cape-dabbrev
 
