@@ -515,7 +515,7 @@ If INTERACTIVE is nil the function acts like a Capf."
   (interactive (list t))
   (cond
    (interactive
-    ;; No code block check. Always complete Elisp when the command was
+    ;; No code block check. Always complete Elisp when command was
     ;; explicitly invoked interactively.
     (cape-interactive #'elisp-completion-at-point))
    ((cape--inside-block-p "elisp" "emacs-lisp")
