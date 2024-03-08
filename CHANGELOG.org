@@ -2,6 +2,14 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- =cape-char=: Look back from point, instead of using the match at point. This
+  makes sure that double quotes of a string literal behind point are not
+  included in the completion.
+- =cape-capf-inside-faces=: Use the face before point to handle completion at the
+  end of comments more gracefully.
+
 * Version 1.3 (2024-02-14)
 
 - Add =cape-wrap-inside-code= and =cape-capf-inside-code=.
