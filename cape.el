@@ -108,6 +108,13 @@ Any other non-nil value only checks some other buffers, as per
   "Base directory used by `cape-file."
   :type '(choice (const nil) string function))
 
+(defcustom cape-file-prefix "file:"
+  "File completion trigger prefixes.
+The value can be a string or a list of strings.  The default
+`file:' is the prefix of Org file links which work in arbitrary
+buffers via `org-open-at-point-global'."
+  :type '(choice string (repeat string)))
+
 (defcustom cape-file-directory-must-exist t
   "The parent directory must exist for file completion."
   :type 'boolean)
@@ -402,13 +409,19 @@ If INTERACTIVE is nil the function acts like a Capf."
                                       ('nil default-directory)
                                       ((pred stringp) cape-file-directory)
                                       (_ (funcall cape-file-directory))))
-                 (`(,beg . ,end) (cape--bounds 'filename))
+                 (prefix (and cape-file-prefix
+                              (looking-back
+                               (concat
+                                (regexp-opt (ensure-list cape-file-prefix) t)
+                                "[^ \n\t]*")
+                               (pos-bol))
+                              (match-end 1)))
+                 (`(,beg . ,end) (if prefix
+                                     (cons prefix (point))
+                                   (cape--bounds 'filename)))
                  (non-essential t)
-                 (file (buffer-substring-no-properties beg end))
-                 ;; Support org links globally, see `org-open-at-point-global'.
-                 (org (string-prefix-p "file:" file)))
-      (when org (setq beg (+ 5 beg)))
-      (when (or org
+                 (file (buffer-substring-no-properties beg end)))
+      (when (or prefix
                 (not cape-file-directory-must-exist)
                 (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
@@ -420,7 +433,7 @@ If INTERACTIVE is nil the function acts like a Capf."
                  comint-unquote-function
                  comint-requote-function)
               #'read-file-name-internal))
-          ,@(when (or org (string-match-p "./" file))
+          ,@(when (or prefix (string-match-p "./" file))
               '(:company-prefix-length t))
           ,@cape--file-properties)))))
 

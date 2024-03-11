@@ -2,6 +2,11 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- ~cape-file-prefix~: New variable to customize file name completion prefix. If
+  the input matches one of the configured prefixes, file completion is started.
+
 * Version 1.4 (2024-03-08)
 
 - =cape-char=: Look back from point, instead of using the match at point. This
