@@ -148,7 +148,7 @@ The buffers are scanned for completion candidates by `cape-line'."
 (defun cape--case-replace-list (flag input strs)
   "Replace case of STRS depending on INPUT and FLAG."
   (if (and (if (eq flag 'case-replace) case-replace flag)
-           (string-match-p "\\`[[:upper:]]" input))
+           (let (case-fold-search) (string-match-p "\\`[[:upper:]]" input)))
       (mapcar (apply-partially #'cape--case-replace flag input) strs)
     strs))
 
@@ -156,7 +156,7 @@ The buffers are scanned for completion candidates by `cape-line'."
   "Replace case of STR depending on INPUT and FLAG."
   (or (and (if (eq flag 'case-replace) case-replace flag)
            (string-prefix-p input str t)
-           (string-match-p "\\`[[:upper:]]" input)
+           (let (case-fold-search) (string-match-p "\\`[[:upper:]]" input))
            (save-match-data
              ;; Ensure that single character uppercase input does not lead to an
              ;; all uppercase result.
