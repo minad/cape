@@ -6,6 +6,7 @@
 
 - ~cape-file-prefix~: New variable to customize file name completion prefix. If
   the input matches one of the configured prefixes, file completion is started.
+- ~cape-capf-super~: Support Capfs which return different prefix lengths.
 
 * Version 1.4 (2024-03-08)
 

@@ -895,8 +895,9 @@ The functions `cape-wrap-super' and `cape-capf-super' are experimental."
                  (tables nil)
                  (prefix-len nil))
       (cl-loop for (beg2 end2 . rest) in results do
-               (when (and (= beg beg2) (= end end2))
+               (when (= beg beg2)
                  (push rest tables)
+                 (setq end (max end end2))
                  (let ((plen (plist-get (cdr rest) :company-prefix-length)))
                    (cond
                     ((eq plen t)
