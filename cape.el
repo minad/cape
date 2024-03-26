@@ -888,9 +888,28 @@ changed.  The function `cape-company-to-capf' is experimental."
 ;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
-The functions `cape-wrap-super' and `cape-capf-super' are experimental."
-  (when-let ((results (delq nil (mapcar #'funcall capfs))))
-    (pcase-let* ((`((,beg ,end . ,_)) results)
+The CAPFS list can contain the keyword `:with' to mark the Capfs
+afterwards as auxiliary One of the non-auxiliary Capfs before
+`:with' must return non-nil for the super Capf to set in and
+return a non-nil result.  Such behavior is useful when listing
+multiple super Capfs in the `completion-at-point-functions':
+
+  (setq completion-at-point-functions
+        (list (cape-capf-super \\='eglot-completion-at-point
+                               :with \\='tempel-complete)
+              (cape-capf-super \\='cape-dabbrev
+                               :with \\='tempel-complete)))
+
+The functions `cape-wrap-super' and `cape-capf-super' are
+experimental."
+  (when-let ((results (cl-loop for capf in capfs until (eq capf :with)
+                               for res = (funcall capf)
+                               if res collect res)))
+    (pcase-let* ((results (nconc results
+                                 (cl-loop for capf in (cdr (memq :with capfs))
+                                          for res = (funcall capf)
+                                          if res collect res)))
+                 (`((,beg ,end . ,_)) results)
                  (cand-ht nil)
                  (tables nil)
                  (prefix-len nil))

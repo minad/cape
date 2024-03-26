@@ -6,7 +6,10 @@
 
 - ~cape-file-prefix~: New variable to customize file name completion prefix. If
   the input matches one of the configured prefixes, file completion is started.
-- ~cape-capf-super~: Support Capfs which return different prefix lengths.
+- ~cape-capf-super~: Support Capfs which return different prefix lengths. This
+  change improves compatibility with Company.
+- ~cape-capf-super~: Add support for the ~:with~ keyword. See the docstring of
+  ~cape-wrap-super~ for details. This change improves compatibility with Company.
 
 * Version 1.4 (2024-03-08)
 
