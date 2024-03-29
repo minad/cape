@@ -914,6 +914,11 @@ experimental."
                  (tables nil)
                  (prefix-len nil))
       (cl-loop for (beg2 end2 . rest) in results do
+               ;; TODO `cape-capf-super' currently cannot merge Capfs which
+               ;; trigger at different beginning positions.  In order to support
+               ;; this, take the smallest BEG value and then normalize all
+               ;; candidates by prefixing them such that they all start at the
+               ;; smallest BEG position.
                (when (= beg beg2)
                  (push rest tables)
                  (setq end (max end end2))
