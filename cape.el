@@ -904,23 +904,23 @@ The functions `cape-wrap-super' and `cape-capf-super' are
 experimental."
   (when-let ((results (cl-loop for capf in capfs until (eq capf :with)
                                for res = (funcall capf)
-                               if res collect (cons t res))))
+                               if res collect res)))
     (pcase-let* ((results (nconc results
                                  (cl-loop for capf in (cdr (memq :with capfs))
                                           for res = (funcall capf)
-                                          if res collect (cons nil res))))
-                 (`((,_ ,beg ,end . ,_)) results)
+                                          if res collect res)))
+                 (`((,beg ,end . ,_)) results)
                  (cand-ht nil)
                  (tables nil)
                  (prefix-len nil))
-      (cl-loop for (main beg2 end2 . rest) in results do
+      (cl-loop for (beg2 end2 . rest) in results do
                ;; TODO `cape-capf-super' currently cannot merge Capfs which
                ;; trigger at different beginning positions.  In order to support
                ;; this, take the smallest BEG value and then normalize all
                ;; candidates by prefixing them such that they all start at the
                ;; smallest BEG position.
                (when (= beg beg2)
-                 (push (cons main rest) tables)
+                 (push rest tables)
                  (setq end (max end end2))
                  (let ((plen (plist-get (cdr rest) :company-prefix-length)))
                    (cond
@@ -941,9 +941,8 @@ experimental."
                          (cycle-sort-function . identity)))
              ('t ;; all-completions
               (let ((ht (make-hash-table :test #'equal))
-                    (main-cands nil)
                     (candidates nil))
-                (cl-loop for (main table . plist) in tables do
+                (cl-loop for (table . plist) in tables do
                          (let* ((pr (if-let (pr (plist-get plist :predicate))
                                         (if pred
                                             (lambda (x) (and (funcall pr x) (funcall pred x)))
@@ -953,7 +952,6 @@ experimental."
                                 (sort (or (completion-metadata-get md 'display-sort-function)
                                           #'identity))
                                 (cands (funcall sort (all-completions str table pr))))
-                           (setq main-cands (or main-cands (and main cands)))
                            ;; Handle duplicates with a hash table.
                            (cl-loop
                             for cand in-ref cands
@@ -969,14 +967,10 @@ experimental."
                               (setf cand (propertize cand 'cape-capf-super
                                                      (cons cand plist))))))
                            (push cands candidates)))
-                ;; The backend is available if it has either been available
-                ;; before (cand-ht non-nil) or if a main backend returned
-                ;; candidates.
-                (when (or cand-ht main-cands)
-                  (setq cand-ht ht)
-                  (apply #'nconc (nreverse candidates)))))
+                (setq cand-ht ht)
+                (apply #'nconc (nreverse candidates))))
              (_ ;; try-completion and test-completion
-              (cl-loop for (_main table . plist) in tables thereis
+              (cl-loop for (table . plist) in tables thereis
                        (complete-with-action
                         action table str
                         (if-let (pr (plist-get plist :predicate))
