@@ -10,6 +10,8 @@
   change improves compatibility with Company.
 - ~cape-capf-super~: Add support for the ~:with~ keyword. See the docstring of
   ~cape-wrap-super~ for details. This change improves compatibility with Company.
+- ~cape-capf-super~: The returned Capf is exclusive if one of the main Capfs (the
+  Capfs listed before the ~:with~ keyword) is exclusive.
 
 * Version 1.4 (2024-03-08)
 

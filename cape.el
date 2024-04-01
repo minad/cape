@@ -904,16 +904,17 @@ The functions `cape-wrap-super' and `cape-capf-super' are
 experimental."
   (when-let ((results (cl-loop for capf in capfs until (eq capf :with)
                                for res = (funcall capf)
-                               if res collect res)))
+                               if res collect (cons t res))))
     (pcase-let* ((results (nconc results
                                  (cl-loop for capf in (cdr (memq :with capfs))
                                           for res = (funcall capf)
-                                          if res collect res)))
-                 (`((,beg ,end . ,_)) results)
+                                          if res collect (cons nil res))))
+                 (`((,_main ,beg ,end . ,_)) results)
                  (cand-ht nil)
                  (tables nil)
+                 (exclusive nil)
                  (prefix-len nil))
-      (cl-loop for (beg2 end2 . rest) in results do
+      (cl-loop for (main beg2 end2 . rest) in results do
                ;; TODO `cape-capf-super' currently cannot merge Capfs which
                ;; trigger at different beginning positions.  In order to support
                ;; this, take the smallest BEG value and then normalize all
@@ -921,6 +922,10 @@ experimental."
                ;; smallest BEG position.
                (when (= beg beg2)
                  (push rest tables)
+                 ;; The resulting merged Capf is exclusive if one of the main
+                 ;; Capfs is exclusive.
+                 (when (and main (not (eq (plist-get (cdr rest) :exclusive) 'no)))
+                   (setq exclusive t))
                  (setq end (max end end2))
                  (let ((plen (plist-get (cdr rest) :company-prefix-length)))
                    (cond
@@ -978,8 +983,8 @@ experimental."
                                 (lambda (x) (and (funcall pr x) (funcall pred x)))
                               pr)
                           pred))))))
-        :exclusive no
         :company-prefix-length ,prefix-len
+        ,@(and (not exclusive) '(:exclusive no))
         ,@(mapcan
            (lambda (prop)
              (list prop (lambda (cand &rest args)
