@@ -914,20 +914,20 @@ experimental."
                  (tables nil)
                  (exclusive nil)
                  (prefix-len nil))
-      (cl-loop for (main beg2 end2 . rest) in results do
+      (cl-loop for (main beg2 end2 table . plist) in results do
                ;; TODO `cape-capf-super' currently cannot merge Capfs which
                ;; trigger at different beginning positions.  In order to support
                ;; this, take the smallest BEG value and then normalize all
                ;; candidates by prefixing them such that they all start at the
                ;; smallest BEG position.
                (when (= beg beg2)
-                 (push rest tables)
+                 (push `(,main ,table ,@plist) tables)
                  ;; The resulting merged Capf is exclusive if one of the main
                  ;; Capfs is exclusive.
-                 (when (and main (not (eq (plist-get (cdr rest) :exclusive) 'no)))
+                 (when (and main (not (eq (plist-get plist :exclusive) 'no)))
                    (setq exclusive t))
                  (setq end (max end end2))
-                 (let ((plen (plist-get (cdr rest) :company-prefix-length)))
+                 (let ((plen (plist-get plist :company-prefix-length)))
                    (cond
                     ((eq plen t)
                      (setq prefix-len t))
@@ -947,7 +947,7 @@ experimental."
              ('t ;; all-completions
               (let ((ht (make-hash-table :test #'equal))
                     (candidates nil))
-                (cl-loop for (table . plist) in tables do
+                (cl-loop for (main table . plist) in tables do
                          (let* ((pr (if-let (pr (plist-get plist :predicate))
                                         (if pred
                                             (lambda (x) (and (funcall pr x) (funcall pred x)))
@@ -956,7 +956,13 @@ experimental."
                                 (md (completion-metadata "" table pr))
                                 (sort (or (completion-metadata-get md 'display-sort-function)
                                           #'identity))
-                                (cands (funcall sort (all-completions str table pr))))
+                                ;; Always compute candidates of the main Capf
+                                ;; tables, which come first in the tables
+                                ;; list. For the :with Capfs only compute
+                                ;; candidates if we've already determined that
+                                ;; main candidates are available.
+                                (cands (when (or main (or exclusive cand-ht candidates))
+                                         (funcall sort (all-completions str table pr)))))
                            ;; Handle duplicates with a hash table.
                            (cl-loop
                             for cand in-ref cands
@@ -971,11 +977,13 @@ experimental."
                               ;; candidates.
                               (setf cand (propertize cand 'cape-capf-super
                                                      (cons cand plist))))))
-                           (push cands candidates)))
-                (setq cand-ht ht)
-                (apply #'nconc (nreverse candidates))))
+                           (when cands (push cands candidates))))
+                (when (or cand-ht candidates)
+                  (setq candidates (apply #'nconc (nreverse candidates))
+                        cand-ht ht)
+                  candidates)))
              (_ ;; try-completion and test-completion
-              (cl-loop for (table . plist) in tables thereis
+              (cl-loop for (_main table . plist) in tables thereis
                        (complete-with-action
                         action table str
                         (if-let (pr (plist-get plist :predicate))
