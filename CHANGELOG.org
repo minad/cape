@@ -15,6 +15,9 @@
 - ~cape-capf-super~: If the resulting Capf is non-exclusive, one of the main Capfs
   must have returned candidates, in order for the resulting Capf to return
   candidates.
+- ~cape-capf-super~: Normalize plists which are attached to candidates. This helps
+  with deduplication, such that only candidates with different annotations or
+  icons appear twice.
 - ~cape-dabbrev-check-other-buffers~: Support function as customization value. The
   function should return the exact list of buffers to search.
 
