@@ -97,10 +97,13 @@ auto completion does not pop up too aggressively."
 (defcustom cape-dabbrev-check-other-buffers t
   "Buffers to check for Dabbrev.
 
-If t, check all other buffers (subject to Dabbrev ignore rules).
+If t, check all other buffers, subject to Dabbrev ignore rules.
+If a function, only search the buffers returned by this function.
 Any other non-nil value only checks some other buffers, as per
 `dabbrev-select-buffers-function'."
-  :type '(choice (const :tag "off" nil)
+  :type `(choice (const :tag "off" nil)
+                 (const :tag "same-mode buffers" ,#'cape--buffers-major-mode)
+                 (function :tag "function")
                  (const :tag "some" some)
                  (other :tag "all" t)))
 
@@ -542,8 +545,6 @@ If INTERACTIVE is nil the function acts like a Capf."
         :exclusive 'no)
   "Completion extra properties for `cape-dabbrev'.")
 
-(defvar dabbrev-check-all-buffers)
-(defvar dabbrev-check-other-buffers)
 (defvar dabbrev-case-replace)
 (defvar dabbrev-case-fold-search)
 (defvar dabbrev-abbrev-char-regexp)
@@ -554,16 +555,22 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defun cape--dabbrev-list (input)
   "Find all Dabbrev expansions for INPUT."
   (cape--silent
-    (let ((dabbrev-check-other-buffers (not (null cape-dabbrev-check-other-buffers)))
-          (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t)))
-      (dabbrev--reset-global-variables))
-    (cons
-     (apply-partially #'string-prefix-p input)
-     (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-              with ic = (cape--case-fold-p dabbrev-case-fold-search)
-              for w in (dabbrev--find-all-expansions input ic)
-              if (>= (length w) min-len) collect
-              (cape--case-replace (and ic dabbrev-case-replace) input w)))))
+    (dlet ((dabbrev-check-other-buffers
+            (and cape-dabbrev-check-other-buffers
+                 (not (functionp cape-dabbrev-check-other-buffers))))
+           (dabbrev-check-all-buffers
+            (eq cape-dabbrev-check-other-buffers t))
+           (dabbrev-search-these-buffers-only
+            (and (functionp cape-dabbrev-check-other-buffers)
+                 (funcall cape-dabbrev-check-other-buffers))))
+      (dabbrev--reset-global-variables)
+      (cons
+       (apply-partially #'string-prefix-p input)
+       (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
+                with ic = (cape--case-fold-p dabbrev-case-fold-search)
+                for w in (dabbrev--find-all-expansions input ic)
+                if (>= (length w) min-len) collect
+                (cape--case-replace (and ic dabbrev-case-replace) input w))))))
 
 (defun cape--dabbrev-bounds ()
   "Return bounds of abbreviation."
