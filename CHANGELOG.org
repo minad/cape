@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 1.5 (2024-04-12)
 
 - ~cape-file-prefix~: New variable to customize file name completion prefix. If
   the input matches one of the configured prefixes, file completion is started.
