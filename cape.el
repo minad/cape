@@ -354,7 +354,7 @@ string as first argument to the completion table."
 
 (declare-function ring-elements "ring")
 (declare-function eshell-bol "eshell")
-(declare-function comint-bol "comint")
+(declare-function comint-line-beginning-position "comint")
 (defvar eshell-history-ring)
 (defvar comint-input-ring)
 
@@ -375,10 +375,12 @@ See also `consult-history' for a more flexible variant based on
       (cond
        ((derived-mode-p 'eshell-mode)
         (setq history eshell-history-ring
-              bol (save-excursion (eshell-bol) (point))))
+              bol (if (eval-when-compile (< emacs-major-version 30))
+                      (save-excursion (eshell-bol) (point))
+                    (line-beginning-position))))
        ((derived-mode-p 'comint-mode)
         (setq history comint-input-ring
-              bol (save-excursion (comint-bol) (point))))
+              bol (comint-line-beginning-position)))
        ((and (minibufferp) (not (eq minibuffer-history-variable t)))
         (setq history (symbol-value minibuffer-history-variable)
               bol (line-beginning-position))))
