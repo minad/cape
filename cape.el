@@ -824,6 +824,8 @@ changed.  The function `cape-company-to-capf' is experimental."
   (lambda ()
     (when (and (symbolp backend) (not (fboundp backend)))
       (ignore-errors (require backend nil t)))
+    (when (bound-and-true-p company-mode)
+      (error "`cape-company-to-capf' should not be used with `company-mode', use the Company backend directly instead"))
     (when (and (symbolp backend) (not (alist-get backend cape--company-init)))
       (funcall backend 'init)
       (put backend 'company-init t)
