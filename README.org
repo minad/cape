@@ -65,7 +65,7 @@ Furthermore the =cape-*= functions are Capfs which you can add to the
 since each of the Capfs adds a small runtime cost. Note that the Capfs which
 occur earlier in the list take precedence, such that the first Capf returning a
 result will win and the later Capfs may not get a chance to run. In order to
-merge Capfs you can try the experimental function =cape-capf-super=.
+merge Capfs you can try the function =cape-capf-super=.
 
 One must distinguish the buffer-local and the global value of the
 =completion-at-point-functions= variable. The buffer-local value of the list takes
@@ -193,10 +193,9 @@ with ~cape-capf-super~.
 
 /Throw multiple Capfs under the Cape and get a Super-Capf!/
 
-Cape supports merging multiple Capfs using the function ~cape-capf-super~. This
-feature is *EXPERIMENTAL* and should only be used carefully in special scenarios.
-Due to some technical details, not all Capfs can be merged successfully. Merge
-Capfs one by one and make sure that you get the desired outcome.
+Cape supports merging multiple Capfs using the function ~cape-capf-super~. Due to
+some technical details, not all Capfs can be merged successfully. Merge Capfs
+one by one and make sure that you get the desired outcome.
 
 Note that ~cape-capf-super~ is not needed if multiple Capfs should betried one
 after the other, for example you can use ~cape-file~ together with programming

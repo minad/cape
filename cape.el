@@ -816,11 +816,10 @@ If INTERACTIVE is nil the function acts like a Capf."
 ;;;###autoload
 (defun cape-company-to-capf (backend &optional valid)
   "Convert Company BACKEND function to Capf.
-VALID is a function taking the old and new input string.  It
-should return nil if the cached candidates became invalid.  The
-default value for VALID is `string-prefix-p' such that the
-candidates are only fetched again if the input prefix
-changed.  The function `cape-company-to-capf' is experimental."
+VALID is a function taking the old and new input string.  It should
+return nil if the cached candidates became invalid.  The default value
+for VALID is `string-prefix-p' such that the candidates are only fetched
+again if the input prefix changed."
   (lambda ()
     (when (and (symbolp backend) (not (fboundp backend)))
       (ignore-errors (require backend nil t)))
@@ -909,10 +908,7 @@ multiple super Capfs in the `completion-at-point-functions':
         (list (cape-capf-super \\='eglot-completion-at-point
                                :with \\='tempel-complete)
               (cape-capf-super \\='cape-dabbrev
-                               :with \\='tempel-complete)))
-
-The functions `cape-wrap-super' and `cape-capf-super' are
-experimental."
+                               :with \\='tempel-complete)))"
   (when-let ((results (cl-loop for capf in capfs until (eq capf :with)
                                for res = (funcall capf)
                                if res collect (cons t res))))
