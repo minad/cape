@@ -375,7 +375,7 @@ See also `consult-history' for a more flexible variant based on
       (cond
        ((derived-mode-p 'eshell-mode)
         (setq history eshell-history-ring
-              bol (if (eval-when-compile (< emacs-major-version 30))
+              bol (static-if (< emacs-major-version 30)
                       (save-excursion (eshell-bol) (point))
                     (line-beginning-position))))
        ((derived-mode-p 'comint-mode)
