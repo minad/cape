@@ -1271,5 +1271,29 @@ This function can be used as an advice around an existing Capf."
       (format "Create a %s Capf from CAPF.
 The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
 
+(defvar-keymap cape-prefix-map
+  :doc "Keymap used as completion entry point.
+The keymap should be installed globally under a prefix."
+  "p" #'completion-at-point
+  "t" #'complete-tag
+  "d" #'cape-dabbrev
+  "h" #'cape-history
+  "f" #'cape-file
+  "s" #'cape-elisp-symbol
+  "e" #'cape-elisp-block
+  "a" #'cape-abbrev
+  "l" #'cape-line
+  "w" #'cape-dict
+  "k"  'cape-keyword
+  ":"  'cape-emoji
+  "\\" 'cape-tex
+  "_"  'cape-tex
+  "^"  'cape-tex
+  "&"  'cape-sgml
+  "r"  'cape-rfc1345)
+
+;;;###autoload (autoload 'cape-prefix-map "cape" nil t 'keymap)
+(defalias 'cape-prefix-map cape-prefix-map)
+
 (provide 'cape)
 ;;; cape.el ends here
