@@ -1008,13 +1008,14 @@ multiple super Capfs in the `completion-at-point-functions':
         ,@(and (not exclusive) '(:exclusive no))
         ,@(mapcan
            (lambda (prop)
-             (list prop (lambda (cand &rest args)
-                          (let ((ref (get-text-property 0 'cape-capf-super cand)))
-                            (when-let ((fun (plist-get
-                                             (or (cdr ref)
-                                                 (and cand-ht (gethash cand cand-ht)))
-                                             prop)))
-                              (apply fun (or (car ref) cand) args))))))
+             (list prop
+                   (lambda (cand &rest args)
+                     (if-let ((ref (get-text-property 0 'cape-capf-super cand)))
+                         (when-let ((fun (plist-get (cdr ref) prop)))
+                           (apply fun (car ref) args))
+                       (when-let ((plist (and cand-ht (gethash cand cand-ht)))
+                                  (fun (plist-get plist prop)))
+                         (apply fun cand args))))))
            cand-functions)))))
 
 ;;;###autoload
