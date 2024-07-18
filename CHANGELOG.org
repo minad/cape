@@ -5,6 +5,9 @@
 * Development
 
 - Add ~cape-prefix-map~ for simplified configuration.
+- ~cape-wrap-super~: Bugfix. Ensure that annotation functions are called with
+  candidates belonging to the originating Capf.
+- Disallow ~cape-company-to-capf~ if ~company-mode~ is enabled.
 
 * Version 1.5 (2024-04-12)
 
