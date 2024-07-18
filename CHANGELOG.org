@@ -8,6 +8,7 @@
 - ~cape-wrap-super~: Bugfix. Ensure that annotation functions are called with
   candidates belonging to the originating Capf.
 - Disallow ~cape-company-to-capf~ if ~company-mode~ is enabled.
+- Bump Compat dependency to Compat 30.
 
 * Version 1.5 (2024-04-12)
 
