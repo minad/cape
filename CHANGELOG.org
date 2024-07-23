@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 1.6 (2024-07-23)
 
 - Add ~cape-prefix-map~ for simplified configuration.
 - ~cape-wrap-super~: Bugfix. Ensure that annotation functions are called with
