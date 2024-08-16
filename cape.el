@@ -142,6 +142,10 @@ The buffers are scanned for completion candidates by `cape-line'."
   :type '(alist :key-type symbol :value-type (list (choice character string)
                                                    (choice character string))))
 
+(defcustom cape-elisp-symbol-bare-only nil
+  "When nil, `cape-elisp-symbol' inserts wrappers even when they're already there."
+  :type 'boolean)
+
 ;;;; Helpers
 
 (defun cape--case-fold-p (fold)
@@ -471,10 +475,27 @@ STATUS is the exit status."
   (when-let (((not (eq status 'exact)))
              (c (cl-loop for (m . c) in cape-elisp-symbol-wrapper
                          if (derived-mode-p m) return c)))
-    (save-excursion
-      (backward-char (length name))
-      (insert (car c)))
-    (insert (cadr c))))
+    (pcase-let ((`(,before ,after) c))
+      (when (characterp before)
+        (setq before (string before)))
+      (when (characterp after)
+        (setq after (string after)))
+      (save-excursion
+        (backward-char (length name))
+        (when (or (not cape-elisp-symbol-bare-only)
+                  (bobp)
+                  (not (equal (buffer-substring-no-properties
+                               (max (point-min) (- (point) (length before)))
+                               (point))
+                              before)))
+          (insert before)))
+      (when (or (not cape-elisp-symbol-bare-only)
+                (eobp)
+                (not (equal (buffer-substring-no-properties
+                             (point)
+                             (min (point-max) (+ (point) (length after))))
+                            after)))
+        (insert after)))))
 
 (defun cape--symbol-annotation (sym)
   "Return kind of SYM."
