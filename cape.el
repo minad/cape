@@ -104,7 +104,7 @@ Any other non-nil value only checks some other buffers, as per
   :type `(choice (const :tag "off" nil)
                  (const :tag "same-mode buffers" ,#'cape--buffers-major-mode)
                  (function :tag "function")
-                 (const :tag "some" some)
+                 (const :tag "by dabbrev" by-dabbrev)
                  (other :tag "all" t)))
 
 (defcustom cape-file-directory nil
