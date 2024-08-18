@@ -567,22 +567,19 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defun cape--dabbrev-list (input)
   "Find all Dabbrev expansions for INPUT."
   (cape--silent
-    (dlet ((dabbrev-check-other-buffers
-            (and cape-dabbrev-check-other-buffers
-                 (not (functionp cape-dabbrev-check-other-buffers))))
-           (dabbrev-check-all-buffers
-            (eq cape-dabbrev-check-other-buffers t))
-           (dabbrev-search-these-buffers-only
-            (and (functionp cape-dabbrev-check-other-buffers)
-                 (funcall cape-dabbrev-check-other-buffers))))
-      (dabbrev--reset-global-variables)
-      (cons
-       (apply-partially #'string-prefix-p input)
-       (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-                with ic = (cape--case-fold-p dabbrev-case-fold-search)
-                for w in (dabbrev--find-all-expansions input ic)
-                if (>= (length w) min-len) collect
-                (cape--case-replace (and ic dabbrev-case-replace) input w))))))
+    (let* ((chk cape-dabbrev-check-other-buffers)
+           (funp (and (not (memq chk '(nil t some))) (functionp chk))))
+      (dlet ((dabbrev-check-other-buffers (and chk (not funp)))
+             (dabbrev-check-all-buffers (eq chk t))
+             (dabbrev-search-these-buffers-only (and funp (funcall chk))))
+        (dabbrev--reset-global-variables)
+        (cons
+         (apply-partially #'string-prefix-p input)
+         (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
+                  with ic = (cape--case-fold-p dabbrev-case-fold-search)
+                  for w in (dabbrev--find-all-expansions input ic)
+                  if (>= (length w) min-len) collect
+                  (cape--case-replace (and ic dabbrev-case-replace) input w)))))))
 
 (defun cape--dabbrev-bounds ()
   "Return bounds of abbreviation."
