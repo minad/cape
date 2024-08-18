@@ -567,14 +567,13 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defun cape--dabbrev-list (input)
   "Find all Dabbrev expansions for INPUT."
   (cape--silent
-    (dlet ((dabbrev-check-other-buffers
-            (and cape-dabbrev-check-other-buffers
-                 (not (functionp cape-dabbrev-check-other-buffers))))
-           (dabbrev-check-all-buffers
-            (eq cape-dabbrev-check-other-buffers t))
+    (dlet ((fun-p (and (not (memq cape-dabbrev-check-other-buffers '(nil t some)))
+                       (functionp cape-dabbrev-check-other-buffers)))
+           (dabbrev-check-other-buffers
+            (and cape-dabbrev-check-other-buffers (not fun-p)))
+           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t))
            (dabbrev-search-these-buffers-only
-            (and (functionp cape-dabbrev-check-other-buffers)
-                 (funcall cape-dabbrev-check-other-buffers))))
+            (and fun-p (funcall cape-dabbrev-check-other-buffers))))
       (dabbrev--reset-global-variables)
       (cons
        (apply-partially #'string-prefix-p input)
