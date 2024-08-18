@@ -2,6 +2,11 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- ~cape-elisp-symbol~: Add wrappers only if not yet there.
+- ~cape-elisp-symbol~: Add wrappers in ~emacs-lisp-mode~ inside strings/comments.
+
 * Version 1.6 (2024-07-23)
 
 - Add ~cape-prefix-map~ for simplified configuration.
