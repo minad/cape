@@ -933,7 +933,7 @@ multiple super Capfs in the `completion-at-point-functions':
                     :company-doc-buffer :company-deprecated
                     :annotation-function :exit-function)))
       (cl-loop for (main beg2 end2 table . plist) in results do
-               ;; TODO `cape-capf-super' currently cannot merge Capfs which
+               ;; Note: `cape-capf-super' currently cannot merge Capfs which
                ;; trigger at different beginning positions.  In order to support
                ;; this, take the smallest BEG value and then normalize all
                ;; candidates by prefixing them such that they all start at the
@@ -1160,13 +1160,13 @@ This function can be used as an advice around an existing Capf."
      `(,beg ,end ,(cape--silent-table table) ,@plist))))
 
 ;;;###autoload
-(defun cape-wrap-case-fold (capf &optional dont-fold)
+(defun cape-wrap-case-fold (capf &optional nofold)
   "Call CAPF and return a case-insensitive completion table.
-If DONT-FOLD is non-nil return a case sensitive table instead.
-This function can be used as an advice around an existing Capf."
+If NOFOLD is non-nil return a case sensitive table instead.  This
+function can be used as an advice around an existing Capf."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     `(,beg ,end ,(completion-table-case-fold table dont-fold) ,@plist))))
+     `(,beg ,end ,(completion-table-case-fold table nofold) ,@plist))))
 
 ;;;###autoload
 (defun cape-wrap-noninterruptible (capf)
