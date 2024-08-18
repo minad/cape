@@ -465,16 +465,22 @@ If INTERACTIVE is nil the function acts like a Capf."
   "Return t if SYM is bound, fbound or propertized."
   (or (fboundp sym) (boundp sym) (symbol-plist sym)))
 
-(defun cape--symbol-exit (name status)
-  "Wrap symbol NAME with `cape-elisp-symbol-wrapper' buffers.
+(defun cape--symbol-exit (sym status)
+  "Wrap symbol SYM with `cape-elisp-symbol-wrapper' buffers.
 STATUS is the exit status."
   (when-let (((not (eq status 'exact)))
              (c (cl-loop for (m . c) in cape-elisp-symbol-wrapper
-                         if (derived-mode-p m) return c)))
+                         if (derived-mode-p m) return c))
+             (x (if (stringp (car c)) (car c) (string (car c))))
+             (y (if (stringp (cadr c)) (cadr c) (string (cadr c)))))
     (save-excursion
-      (backward-char (length name))
-      (insert (car c)))
-    (insert (cadr c))))
+      (backward-char (length sym))
+      (unless (save-excursion
+                (and (ignore-errors (or (backward-char (length x)) t))
+                     (looking-at-p (regexp-quote x))))
+        (insert x)))
+    (unless (looking-at-p (regexp-quote y))
+      (insert y))))
 
 (defun cape--symbol-annotation (sym)
   "Return kind of SYM."
