@@ -567,21 +567,21 @@ If INTERACTIVE is nil the function acts like a Capf."
 (defun cape--dabbrev-list (input)
   "Find all Dabbrev expansions for INPUT."
   (cape--silent
-    (dlet ((fun-p (and (not (memq cape-dabbrev-check-other-buffers '(nil t some)))
-                       (functionp cape-dabbrev-check-other-buffers)))
-           (dabbrev-check-other-buffers
-            (and cape-dabbrev-check-other-buffers (not fun-p)))
-           (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t))
-           (dabbrev-search-these-buffers-only
-            (and fun-p (funcall cape-dabbrev-check-other-buffers))))
-      (dabbrev--reset-global-variables)
-      (cons
-       (apply-partially #'string-prefix-p input)
-       (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
-                with ic = (cape--case-fold-p dabbrev-case-fold-search)
-                for w in (dabbrev--find-all-expansions input ic)
-                if (>= (length w) min-len) collect
-                (cape--case-replace (and ic dabbrev-case-replace) input w))))))
+    (let ((fun-p (and (not (memq cape-dabbrev-check-other-buffers '(nil t some)))
+                      (functionp cape-dabbrev-check-other-buffers))))
+      (dlet ((dabbrev-check-other-buffers
+              (and cape-dabbrev-check-other-buffers (not fun-p)))
+             (dabbrev-check-all-buffers (eq cape-dabbrev-check-other-buffers t))
+             (dabbrev-search-these-buffers-only
+              (and fun-p (funcall cape-dabbrev-check-other-buffers))))
+        (dabbrev--reset-global-variables)
+        (cons
+         (apply-partially #'string-prefix-p input)
+         (cl-loop with min-len = (+ cape-dabbrev-min-length (length input))
+                  with ic = (cape--case-fold-p dabbrev-case-fold-search)
+                  for w in (dabbrev--find-all-expansions input ic)
+                  if (>= (length w) min-len) collect
+                  (cape--case-replace (and ic dabbrev-case-replace) input w)))))))
 
 (defun cape--dabbrev-bounds ()
   "Return bounds of abbreviation."
