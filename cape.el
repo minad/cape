@@ -133,6 +133,7 @@ The buffers are scanned for completion candidates by `cape-line'."
 (defcustom cape-elisp-symbol-wrapper
   '((org-mode ?~ ?~)
     (markdown-mode ?` ?`)
+    (emacs-lisp-mode ?` ?')
     (rst-mode "``" "``")
     (log-edit-mode "`" "'")
     (change-log-mode "`" "'")
@@ -471,6 +472,9 @@ STATUS is the exit status."
   (when-let (((not (eq status 'exact)))
              (c (cl-loop for (m . c) in cape-elisp-symbol-wrapper
                          if (derived-mode-p m) return c))
+             ((or (not (derived-mode-p 'emacs-lisp-mode))
+                  ;; Inside comment or string
+                  (let ((s (syntax-ppss))) (or (nth 3 s) (nth 4 s)))))
              (x (if (stringp (car c)) (car c) (string (car c))))
              (y (if (stringp (cadr c)) (cadr c) (string (cadr c)))))
     (save-excursion
