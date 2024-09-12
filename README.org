@@ -257,8 +257,8 @@ personal configuration.
 
 #+begin_src emacs-lisp
 ;; Example 1: Sanitize the `pcomplete-completions-at-point' Capf.  The Capf has
-;; undesired side effects on Emacs 28 and earlier.  These advices are not needed
-;; on Emacs 29 and newer.
+;; undesired side effects on Emacs 28.  These advices are not needed on Emacs 29
+;; and newer.
 (when (< emacs-major-version 29)
   (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
   (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))

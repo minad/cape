@@ -2,6 +2,10 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- Require Emacs 28.1.
+
 * Version 1.7 (2024-08-26)
 
 - ~cape-elisp-symbol~: Add wrappers only if not yet there.

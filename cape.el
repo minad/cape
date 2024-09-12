@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 1.7
-;; Package-Requires: ((emacs "27.1") (compat "30"))
+;; Package-Requires: ((emacs "28.1") (compat "30"))
 ;; Homepage: https://github.com/minad/cape
 ;; Keywords: abbrev, convenience, matching, completion, text
 
@@ -445,21 +445,20 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 ;;;;; cape-elisp-symbol
 
+(autoload 'elisp--company-kind "elisp-mode")
+(autoload 'elisp--company-doc-buffer "elisp-mode")
+(autoload 'elisp--company-doc-string "elisp-mode")
+(autoload 'elisp--company-location "elisp-mode")
+
 (defvar cape--symbol-properties
-  (append
-   (list :annotation-function #'cape--symbol-annotation
-         :exit-function #'cape--symbol-exit
-         :predicate #'cape--symbol-predicate
-         :exclusive 'no)
-   (when (eval-when-compile (>= emacs-major-version 28))
-     (autoload 'elisp--company-kind "elisp-mode")
-     (autoload 'elisp--company-doc-buffer "elisp-mode")
-     (autoload 'elisp--company-doc-string "elisp-mode")
-     (autoload 'elisp--company-location "elisp-mode")
-     (list :company-kind 'elisp--company-kind
-           :company-doc-buffer 'elisp--company-doc-buffer
-           :company-docsig 'elisp--company-doc-string
-           :company-location 'elisp--company-location)))
+  (list :annotation-function #'cape--symbol-annotation
+        :exit-function #'cape--symbol-exit
+        :predicate #'cape--symbol-predicate
+        :company-kind #'elisp--company-kind
+        :company-doc-buffer #'elisp--company-doc-buffer
+        :company-docsig #'elisp--company-doc-string
+        :company-location #'elisp--company-location
+        :exclusive 'no)
   "Completion extra properties for `cape-elisp-symbol'.")
 
 (defun cape--symbol-predicate (sym)
@@ -682,17 +681,10 @@ INTERACTIVE is nil the function acts like a Capf."
 
 ;;;;; cape-abbrev
 
-(defun cape--abbrev-tables ()
-  "Return list of all active abbrev tables, including parents."
-  ;; Emacs 28: See abbrev--suggest-get-active-tables-including-parents.
-  (let ((tables (abbrev--active-tables)))
-    (append tables (cl-loop for table in tables
-                            append (abbrev-table-get table :parents)))))
-
 (defun cape--abbrev-list ()
   "Abbreviation list."
-  (delete "" (cl-loop for table in (cape--abbrev-tables)
-                      nconc (all-completions "" table))))
+  (delete "" (cl-loop for x in (abbrev--suggest-get-active-tables-including-parents)
+                      nconc (all-completions "" x))))
 
 (defun cape--abbrev-annotation (abbrev)
   "Annotate ABBREV with expansion."
@@ -701,8 +693,8 @@ INTERACTIVE is nil the function acts like a Capf."
            (format
             "%s"
             (symbol-value
-             (cl-loop for table in (cape--abbrev-tables)
-                      thereis (abbrev--symbol abbrev table))))
+             (cl-loop for x in (abbrev--suggest-get-active-tables-including-parents)
+                      thereis (abbrev--symbol abbrev x))))
            30 0 nil t)))
 
 (defun cape--abbrev-exit (_str status)
