@@ -450,10 +450,10 @@ If INTERACTIVE is nil the function acts like a Capf."
 (autoload 'elisp--company-doc-string "elisp-mode")
 (autoload 'elisp--company-location "elisp-mode")
 
-(defvar cape--symbol-properties
-  (list :annotation-function #'cape--symbol-annotation
-        :exit-function #'cape--symbol-exit
-        :predicate #'cape--symbol-predicate
+(defvar cape--elisp-symbol-properties
+  (list :annotation-function #'cape--elisp-symbol-annotation
+        :exit-function #'cape--elisp-symbol-exit
+        :predicate #'cape--elisp-symbol-predicate
         :company-kind #'elisp--company-kind
         :company-doc-buffer #'elisp--company-doc-buffer
         :company-docsig #'elisp--company-doc-string
@@ -461,11 +461,11 @@ If INTERACTIVE is nil the function acts like a Capf."
         :exclusive 'no)
   "Completion extra properties for `cape-elisp-symbol'.")
 
-(defun cape--symbol-predicate (sym)
+(defun cape--elisp-symbol-predicate (sym)
   "Return t if SYM is bound, fbound or propertized."
   (or (fboundp sym) (boundp sym) (symbol-plist sym)))
 
-(defun cape--symbol-exit (sym status)
+(defun cape--elisp-symbol-exit (sym status)
   "Wrap symbol SYM with `cape-elisp-symbol-wrapper' buffers.
 STATUS is the exit status."
   (when-let (((not (eq status 'exact)))
@@ -485,7 +485,7 @@ STATUS is the exit status."
     (unless (looking-at-p (regexp-quote y))
       (insert y))))
 
-(defun cape--symbol-annotation (sym)
+(defun cape--elisp-symbol-annotation (sym)
   "Return kind of SYM."
   (setq sym (intern-soft sym))
   (cond
@@ -513,7 +513,7 @@ If INTERACTIVE is nil the function acts like a Capf."
         (setq beg (1+ beg) end (max beg end)))
       `(,beg ,end
         ,(cape--properties-table obarray :category 'symbol)
-        ,@cape--symbol-properties))))
+        ,@cape--elisp-symbol-properties))))
 
 ;;;;; cape-elisp-block
 
