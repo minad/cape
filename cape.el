@@ -845,10 +845,9 @@ again if the input prefix changed."
                  (lambda (input)
                    (let ((cands (cape--company-call backend 'candidates input)))
                      ;; The candidate string including text properties should be
-                     ;; restored in the :exit-function, if the UI does not
-                     ;; guarantee this itself.  Restoration is not necessary for
-                     ;; Corfu since the introduction of `corfu--exit-function'.
-                     (unless (and (bound-and-true-p corfu-mode) (fboundp 'corfu--exit-function))
+                     ;; restored in the :exit-function, unless the UI guarantees
+                     ;; this itself, like Corfu.
+                     (unless (bound-and-true-p corfu-mode)
                        (setq restore-props cands))
                      (cons (apply-partially valid input) cands))))
                 :category backend
