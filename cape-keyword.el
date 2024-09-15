@@ -364,6 +364,20 @@
      "binary" "bool" "byte" "const" "double" "enum" "exception" "extends" "i16"
      "i32" "i64" "include" "list" "map" "oneway" "optional" "required" "service"
      "set" "string" "struct" "throws" "typedef" "void")
+    (sparql-mode ;; https://www.w3.org/TR/2013/REC-sparql11-query-20130321/
+     "ADD" "ASC" "ASK" "BIND" "CLEAR" "CONSTRUCT" "COPY" "CREATE" "DATA"
+     "DELETE" "DEFAULT" "DESC" "DESCRIBE" "DISTINCT" "DROP" "EXISTS" "FILTER"
+     "FROM" "GRAPH" "GROUP BY" "HAVING" "INSERT" "LIMIT" "LOAD" "MINUS" "MOVE"
+     "NAMED" "NOT EXISTS" "OFFSET" "OPTIONAL" "ORDER BY" "PREFIX" "REGEX"
+     "REPLACE" "SELECT" "SERVICE" "SILENT" "SUBSTR" "UNION" "USING" "VALUES"
+     "WITH" "WHERE" "ABS" "BNODE" "BOUND" "CEIL" "COALESCE" "CONCAT" "CONTAINS"
+     "DATATYPE" "DAY" "ENCODE_FOR_URI" "FLOOR" "HOURS" "IF" "IRI" "isIRI"
+     "isBLANK" "isLITERAL" "isNUMERIC" "isURI" "LANG" "LANGMATCHES" "LCASE"
+     "MD5" "MINUTES" "MONTH" "NOW" "RAND" "ROUND" "sameTerm" "SECONDS" "SHA1"
+     "SHA256" "SHA384" "SHA512" "STR" "STRAFTER" "STRBEFORE" "STRDT" "STRENDS"
+     "STRLANG" "STRLEN" "STRSTARTS" "STRUUID" "UCASE" "TIMEZONE" "TZ" "UUID"
+     "URI" "YEAR" "AVG ""COUNT" "GROUP_CONCAT" "MAX" "MIN" "SAMPLE" "SUM" "true"
+     "false")
     ;; Aliases
     (cperl-mode perl-mode)
     (enh-ruby-mode ruby-mode)
