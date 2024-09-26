@@ -7,7 +7,7 @@
 ;; Created: 2021
 ;; Version: 1.7
 ;; Package-Requires: ((emacs "28.1") (compat "30"))
-;; Homepage: https://github.com/minad/cape
+;; URL: https://github.com/minad/cape
 ;; Keywords: abbrev, convenience, matching, completion, text
 
 ;; This file is part of GNU Emacs.
@@ -56,7 +56,7 @@
 (defgroup cape nil
   "Completion At Point Extensions."
   :link '(info-link :tag "Info Manual" "(cape)")
-  :link '(url-link :tag "Homepage" "https://github.com/minad/cape")
+  :link '(url-link :tag "Website" "https://github.com/minad/cape")
   :link '(emacs-library-link :tag "Library Source" "cape.el")
   :group 'convenience
   :group 'tools
