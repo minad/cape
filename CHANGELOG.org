@@ -5,6 +5,7 @@
 * Development
 
 - Require Emacs 28.1.
+- ~cape-capf-properties~: Add ~:strip~ keyword to strip a Capf of its metadata.
 
 * Version 1.7 (2024-08-26)
 

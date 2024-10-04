@@ -286,18 +286,20 @@ NAME is the name of the Capf, BEG and END are the input markers."
          (cape--debug-print result)))
       result)))
 
-(cl-defun cape--properties-table (table &key category (sort t) &allow-other-keys)
+(cl-defun cape--properties-table (table &key category (sort t) strip &allow-other-keys)
   "Create completion TABLE with properties.
 CATEGORY is the optional completion category.
-SORT should be nil to disable sorting."
+SORT should be nil to disable sorting.
+STRIP means to strip all metadata."
   ;; The metadata will be overridden if the category is non-nil, if the table is
   ;; a function table or if sorting should be disabled for a non-nil
   ;; non-function table.
   (if (or category (functionp table) (and (not sort) table))
-      (let ((metadata `(metadata
-                        ,@(and category `((category . ,category)))
-                        ,@(and (not sort) '((display-sort-function . identity)
-                                            (cycle-sort-function . identity))))))
+      (let ((metadata (and (not strip)
+                           `(metadata
+                             ,@(and category `((category . ,category)))
+                             ,@(and (not sort) '((display-sort-function . identity)
+                                                 (cycle-sort-function . identity)))))))
         (lambda (str pred action)
           (if (eq action 'metadata)
               metadata
@@ -1104,15 +1106,17 @@ completion table is refreshed on every input change."
 
 ;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
-  "Call CAPF and add additional completion PROPERTIES.
-Completion properties include for example :exclusive, :annotation-function and
-the various :company-* extensions.  Furthermore a boolean :sort flag and a
-completion :category symbol can be specified."
+  "Call CAPF and strip or add completion PROPERTIES.
+Completion properties include for example :exclusive,
+:annotation-function and the various :company-* extensions.  Furthermore
+a boolean :sort flag and a completion :category symbol can be specified.
+The boolean :strip flag means to strip all completion properties."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end
             ,(apply #'cape--properties-table table properties)
-            ,@properties ,@plist))))
+            ,@(and (not (plist-get properties :strip))
+                   (append properties plist))))))
 
 ;;;###autoload
 (defun cape-wrap-nonexclusive (capf)
