@@ -433,14 +433,14 @@ If INTERACTIVE is nil the function acts like a Capf."
                 (not cape-file-directory-must-exist)
                 (and (string-search "/" file)
                      (file-exists-p (file-name-directory file))))
+        (unless (boundp 'comint-unquote-function)
+          (require 'comint))
         `(,beg ,end
           ,(cape--nonessential-table
-            (if (or (derived-mode-p 'comint-mode) (derived-mode-p 'eshell-mode))
-                (completion-table-with-quoting
-                 #'read-file-name-internal
-                 comint-unquote-function
-                 comint-requote-function)
-              #'read-file-name-internal))
+            (completion-table-with-quoting
+             #'read-file-name-internal
+             comint-unquote-function
+             comint-requote-function))
           ,@(when (or prefix (string-match-p "./" file))
               '(:company-prefix-length t))
           ,@cape--file-properties)))))
