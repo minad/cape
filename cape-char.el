@@ -56,7 +56,7 @@ are not included. Hash values are either char or strings."
 (defun cape-char--annotation (hash name)
   "Lookup NAME in HASH and return annotation."
   (when-let ((char (gethash name hash)))
-    (if (stringp char) (format " %s" char) (format " %c" char))))
+    (format (if (stringp char) " %s " " %c ") char)))
 
 (defun cape-char--signature (hash name)
   "Lookup NAME in HASH and return signature."
