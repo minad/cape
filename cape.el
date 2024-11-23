@@ -345,7 +345,7 @@ string as first argument to the completion table."
             (let* (;; Reset in case `all-completions' is used inside FUN
                    completion-ignore-case completion-regexp-list
                    ;; Retrieve new state by calling FUN
-                   (new (funcall fun input))
+                   (new (and (< beg end) (funcall fun input)))
                    ;; No interrupt during state update
                    throw-on-input)
               (setq valid (car new) table (cdr new)))))
@@ -635,32 +635,31 @@ See the user options `cape-dabbrev-min-length' and
 
 (defun cape--dict-list (input)
   "Return all words from `cape-dict-file' matching INPUT."
-  (unless (equal input "")
-     (let* ((inhibit-message t)
-            (message-log-max nil)
-            (default-directory
-             (if (and (not (file-remote-p default-directory))
-                      (file-directory-p default-directory))
-                 default-directory
-               user-emacs-directory))
-            (files (mapcar #'expand-file-name
-                           (ensure-list
-                            (if (functionp cape-dict-file)
-                                (funcall cape-dict-file)
-                              cape-dict-file))))
-            (words
-             (apply #'process-lines-ignore-status
-                    "grep"
-                    (concat "-Fh"
-                            (and (cape--case-fold-p cape-dict-case-fold) "i")
-                            (and cape-dict-limit (format "m%d" cape-dict-limit)))
-                    input files)))
-       (cons
-        (apply-partially
-          (if (and cape-dict-limit (length= words cape-dict-limit))
-             #'equal #'string-search)
-         input)
-        (cape--case-replace-list cape-dict-case-replace input words)))))
+  (let* ((inhibit-message t)
+         (message-log-max nil)
+         (default-directory
+          (if (and (not (file-remote-p default-directory))
+                   (file-directory-p default-directory))
+              default-directory
+            user-emacs-directory))
+         (files (mapcar #'expand-file-name
+                        (ensure-list
+                         (if (functionp cape-dict-file)
+                             (funcall cape-dict-file)
+                           cape-dict-file))))
+         (words
+          (apply #'process-lines-ignore-status
+                 "grep"
+                 (concat "-Fh"
+                         (and (cape--case-fold-p cape-dict-case-fold) "i")
+                         (and cape-dict-limit (format "m%d" cape-dict-limit)))
+                 input files)))
+    (cons
+     (apply-partially
+      (if (and cape-dict-limit (length= words cape-dict-limit))
+          #'equal #'string-search)
+      input)
+     (cape--case-replace-list cape-dict-case-replace input words))))
 
 ;;;###autoload
 (defun cape-dict (&optional interactive)
