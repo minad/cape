@@ -1276,6 +1276,8 @@ The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
 (defvar-keymap cape-prefix-map
   :doc "Keymap used as completion entry point.
 The keymap should be installed globally under a prefix."
+  "TAB" #'completion-at-point
+  "M-TAB" #'completion-at-point
   "p" #'completion-at-point
   "t" #'complete-tag
   "d" #'cape-dabbrev
