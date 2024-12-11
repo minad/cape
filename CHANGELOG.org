@@ -6,6 +6,9 @@
 
 - Require Emacs 28.1.
 - ~cape-capf-properties~: Add ~:strip~ keyword to strip a Capf of its metadata.
+- ~cape-capf-sort~: New function.
+- Add ~:display-sort-function~ and ~:cycle-sort-function~ functions to the various
+  Capf property lists.
 
 * Version 1.7 (2024-08-26)
 

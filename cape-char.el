@@ -103,6 +103,7 @@ PREFIX are the prefix characters."
                :company-docsig (apply-partially #'cape-char--signature ,hash)
                :exit-function (apply-partially #'cape-char--exit ,hash)
                :company-kind (lambda (_) 'text)
+               :category ',capf
                :exclusive 'no)
          ,(format "Completion extra properties for `%s'." capf))
        (defun ,capf (&optional interactive)
@@ -123,10 +124,7 @@ function acts like a Capf." method method)
                         ((looking-back ,pre-rx (pos-bol))
                          (cons (match-beginning 0) (point)))
                         ((not ,pre-req) (cons (point) (point))))))
-             (append
-              (list (car bounds) (cdr bounds)
-                    (cape--properties-table ,hash :category ',capf))
-              ,props)))))))
+             (append (list (car bounds) (cdr bounds) ,hash) ,props)))))))
 
 ;;;###autoload (autoload 'cape-tex "cape-char" nil t)
 (cape-char--define tex "TeX" ?\\ ?^ ?_)
