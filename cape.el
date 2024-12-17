@@ -345,7 +345,8 @@ string as first argument to the completion table."
   (list :company-kind (lambda (_) 'text)
         :exclusive 'no
         :display-sort-function #'identity
-        :cycle-sort-function #'identity)
+        :cycle-sort-function #'identity
+        :category 'cape-history)
   "Completion extra properties for `cape-history'.")
 
 ;;;###autoload
@@ -382,7 +383,8 @@ See also `consult-history' for a more flexible variant based on
 (defvar cape--file-properties
   (list :annotation-function (lambda (s) (if (string-suffix-p "/" s) " Dir" " File"))
         :company-kind (lambda (s) (if (string-suffix-p "/" s) 'folder 'file))
-        :exclusive 'no)
+        :exclusive 'no
+        :category 'file)
   "Completion extra properties for `cape-file'.")
 
 ;;;###autoload
@@ -706,7 +708,9 @@ If INTERACTIVE is nil the function acts like a Capf."
 
 (defvar cape--line-properties
   (list :display-sort-function #'identity
-        :cycle-sort-function #'identity)
+        :cycle-sort-function #'identity
+        :exclusive 'no
+        :category 'cape-line)
   "Completion extra properties for `cape-line'.")
 
 (defun cape--buffers-major-mode ()
