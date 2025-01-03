@@ -937,11 +937,7 @@ multiple super Capfs in the `completion-at-point-functions':
       `( ,beg ,end
          ,(lambda (str pred action)
             (pcase action
-              (`(boundaries . ,_) nil)
-              ('metadata
-               '(metadata (category . cape-super)
-                          (display-sort-function . identity)
-                          (cycle-sort-function . identity)))
+              ((or `(boundaries . ,_) 'metadata) nil)
               ('t ;; all-completions
                (let ((ht (make-hash-table :test #'equal))
                      (candidates nil))
@@ -986,6 +982,9 @@ multiple super Capfs in the `completion-at-point-functions':
                              (lambda (x) (and (funcall table-pred x) (funcall pred x)))
                            (or table-pred pred)))))))
          :company-prefix-length ,prefix-len
+         :category cape-super
+         :display-sort-function identity
+         :cycle-sort-function identity
          ,@(and (not exclusive) '(:exclusive no))
          ,@(mapcan
             (lambda (prop)
