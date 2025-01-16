@@ -44,12 +44,17 @@ are not included. Hash values are either char or strings."
         (apply #'quail-use-package method (nthcdr 5 im))
         (quail-build-decode-map (list (quail-map)) "" dm 0)
         (pcase-dolist (`(,name . ,val) (cdr dm))
+          (when (equal method "emoji")
+            (setq name (replace-regexp-in-string
+                        ": " "-"
+                        (replace-regexp-in-string
+                         "[’“”!()]" ""
+                         (replace-regexp-in-string
+                          "[_ &.]+" "-" name))))
+            (when (string-match-p "\\`[[:alnum:]-]*\\'" name)
+              (setq name (format ":%s:" name))))
           (when (memq (aref name 0) prefix)
-            (puthash
-             (if (equal method "emoji")
-                 (string-replace "_" "-" name)
-               name)
-             (if (vectorp val) (aref val 0) val) hash)))
+            (puthash name (if (vectorp val) (aref val 0) val) hash)))
         (quail-deactivate)
         hash))))
 
