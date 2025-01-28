@@ -2,6 +2,11 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Version 1.9 (2025-01-28)
+
+- ~cape-capf-super~: Use extra metadata instead of completion table metadata.
+- ~cape-emoji~: Improve emoji name normalization.
+
 * Version 1.8 (2024-12-22)
 
 - Require Emacs 28.1.
