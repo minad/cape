@@ -414,7 +414,8 @@ If INTERACTIVE is nil the function acts like a Capf."
       (when (or prefix
                 (not cape-file-directory-must-exist)
                 (and (string-search "/" file)
-                     (file-exists-p (file-name-directory file))))
+                     (file-exists-p (file-name-directory
+                                     (substitute-in-file-name file)))))
         (unless (boundp 'comint-unquote-function)
           (require 'comint))
         `( ,beg ,end
