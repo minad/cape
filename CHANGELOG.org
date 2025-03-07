@@ -2,6 +2,13 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- ~cape-file~: Improve handling of environment variables as part of the path,
+  e.g., $HOME.
+- ~cape-company-to-capf~: Handle updated return value convention of the ~prefix~
+  action of Company backends.
+
 * Version 1.9 (2025-01-28)
 
 - ~cape-capf-super~: Use extra metadata instead of completion table metadata.
