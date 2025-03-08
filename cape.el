@@ -87,6 +87,12 @@ See `dabbrev-case-fold-search' for details."
                  (const :tag "use `case-fold-search'" case-fold-search)
                  (other :tag "on" t)))
 
+(defcustom cape-dict-search-method 'grep
+  "Program to use to generate word lists for `cape-dict'."
+  :type '(choice (const :tag "grep" grep)
+                 (const :tag "ripgrep" rg)
+                 (const :tag "lisp" lisp)))
+
 (defcustom cape-dabbrev-min-length 4
   "Minimum length of Dabbrev expansions.
 This setting ensures that words which are too short
@@ -617,6 +623,44 @@ See the user options `cape-dabbrev-min-length' and
         :category 'cape-dict)
   "Completion extra properties for `cape-dict'.")
 
+(defun cape--dict-list-grep (program flags input files)
+  "Use a specific grep PROGRAM to get words matching INPUT for the given FLAGS and dictionary FILES."
+  (apply #'process-lines-ignore-status
+                 program
+                 flags
+                 input files))
+
+(defvar cape--dictionary nil "Cached dictionary for `cape--dict-list-lisp'.")
+
+(defun cape--dict-load ()
+  "Load or reload the `cape--dictionary' wordlist."
+  (interactive)
+  (let ((files (mapcar #'expand-file-name
+                       (ensure-list
+                        (if (functionp cape-dict-file)
+                            (funcall cape-dict-file)
+                          cape-dict-file)))))
+    (setq cape--dictionary
+          (split-string
+           (with-temp-buffer
+             (dolist (file files) (insert-file-contents file))
+             (buffer-string))
+           "\n"))))
+
+(defun cape--dict-list-lisp (input)
+  "Return all words from `cape-dict-file' matching INPUT in pure elisp."
+  (let ((matches nil))
+    (if (eq cape--dictionary nil)
+        (cape--dict-load))
+    (catch 'maxed
+      (dolist (word cape--dictionary)
+        (if (length< matches cape-dict-limit)
+            (when (and (not (eq word nil))
+                       (string-match-p input word))
+              (setf matches (append matches (list word))))
+          (throw 'maxed nil))))
+    matches))
+
 (defun cape--dict-list (input)
   "Return all words from `cape-dict-file' matching INPUT."
   (let* ((inhibit-message t)
@@ -632,12 +676,23 @@ See the user options `cape-dabbrev-min-length' and
                              (funcall cape-dict-file)
                            cape-dict-file))))
          (words
-          (apply #'process-lines-ignore-status
-                 "grep"
-                 (concat "-Fh"
-                         (and (cape--case-fold-p cape-dict-case-fold) "i")
-                         (and cape-dict-limit (format "m%d" cape-dict-limit)))
-                 input files)))
+          (cond
+           ((eq cape-dict-search-method 'grep)
+            (cape--dict-list-grep
+             "grep"
+             (concat "-Fh"
+                     (and (cape--case-fold-p cape-dict-case-fold) "i")
+                     (and cape-dict-limit (format "m%d" cape-dict-limit)))
+             input files))
+           ((eq cape-dict-search-method 'rg)
+            (cape--dict-list-grep
+             "rg"
+             (concat "-FI"
+                     (and (cape--case-fold-p cape-dict-case-fold) "i")
+                     (and cape-dict-limit (format "m%d" cape-dict-limit)))
+             input files))
+           ((eq cape-dict-search-method 'lisp)
+            (cape--dict-list-lisp input)))))
     (cons
      (apply-partially
       (if (and cape-dict-limit (length= words cape-dict-limit))
