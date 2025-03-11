@@ -4,10 +4,8 @@
 
 * Development
 
-- ~cape-dict~: Add new customization variable ~cape-dict-grep~. Set to ~nil~ to filter
-  the dictionary in Lisp.
 - ~cape-file~: Improve handling of environment variables as part of the path,
-  e.g., ~$HOME~.
+  e.g., $HOME.
 - ~cape-company-to-capf~: Handle updated return value convention of the ~prefix~
   action of Company backends.
 

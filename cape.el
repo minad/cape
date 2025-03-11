@@ -67,11 +67,6 @@
   "Maximal number of completion candidates returned by `cape-dict'."
   :type '(choice (const nil) natnum))
 
-(defcustom cape-dict-grep t
-  "Filter the dictionary via grep instead of in Lisp.
-It may be beneficial to disable this setting depending on your system."
-  :type 'boolean)
-
 (defcustom cape-dict-file "/usr/share/dict/words"
   "Path to dictionary word list file.
 This variable can also be a list of paths or
@@ -622,8 +617,6 @@ See the user options `cape-dabbrev-min-length' and
         :category 'cape-dict)
   "Completion extra properties for `cape-dict'.")
 
-(defvar cape--dict-cache nil)
-
 (defun cape--dict-list (input)
   "Return all words from `cape-dict-file' matching INPUT."
   (let* ((inhibit-message t)
@@ -633,40 +626,18 @@ See the user options `cape-dabbrev-min-length' and
                    (file-directory-p default-directory))
               default-directory
             user-emacs-directory))
-         (files (sort (mapcar #'expand-file-name
-                              (ensure-list
-                               (if (functionp cape-dict-file)
-                                   (funcall cape-dict-file)
-                                 cape-dict-file)))
-                      #'string<))
-         (words nil))
-    (if cape-dict-grep
-        (setq words (apply #'process-lines-ignore-status
-                           "grep"
-                           (concat "-Fh"
-                                   (and (cape--case-fold-p cape-dict-case-fold) "i")
-                                   (and cape-dict-limit (format "m%d" cape-dict-limit)))
-                           input files))
-      (let ((completion-ignore-case (cape--case-fold-p cape-dict-case-fold))
-            (completion-regexp-list (list (regexp-quote input)))
-            (count 0))
-        (catch 'limit
-          (all-completions
-           ""
-           (with-memoization (alist-get files cape--dict-cache nil nil #'equal)
-             (with-temp-buffer
-               (dolist (file files)
-                 (insert-file-contents file)
-                 (insert "\n"))
-               (when (> (count-lines (point-min) (point-max)) 100000)
-                 (error "Too many words in `cape-dict-file'.  Use `cape-dict-grep'"))
-               (split-string (buffer-string) "[\r\n]+" t)))
-           (lambda (word)
-             (when cape-dict-limit
-               (when (>= count cape-dict-limit) (throw 'limit nil))
-               (cl-incf count))
-             (push word words)
-             nil)))))
+         (files (mapcar #'expand-file-name
+                        (ensure-list
+                         (if (functionp cape-dict-file)
+                             (funcall cape-dict-file)
+                           cape-dict-file))))
+         (words
+          (apply #'process-lines-ignore-status
+                 "grep"
+                 (concat "-Fh"
+                         (and (cape--case-fold-p cape-dict-case-fold) "i")
+                         (and cape-dict-limit (format "m%d" cape-dict-limit)))
+                 input files)))
     (cons
      (apply-partially
       (if (and cape-dict-limit (length= words cape-dict-limit))
