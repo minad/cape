@@ -658,6 +658,8 @@ See the user options `cape-dabbrev-min-length' and
                (dolist (file files)
                  (insert-file-contents file)
                  (insert "\n"))
+               (when (> (count-lines (point-min) (point-max)) 100000)
+                 (error "Too many words in `cape-dict-file'.  Use `cape-dict-grep'"))
                (split-string (buffer-string) "[\r\n]+" t)))
            (lambda (word)
              (when cape-dict-limit
