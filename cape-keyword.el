@@ -387,6 +387,7 @@
     (go-ts-mode go-mode)
     (java-ts-mode java-mode)
     (js-ts-mode javascript-mode)
+    (lua-ts-mode lua-mode)
     (python-ts-mode python-mode)
     (ruby-ts-mode ruby-mode)
     (rust-ts-mode rust-mode))
