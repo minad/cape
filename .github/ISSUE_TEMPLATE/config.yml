@@ -18,6 +18,9 @@ contact_links:
 #  - name: "📝 Cape wiki"
 #    url: https://github.com/minad/cape/wiki
 #    about: Additional configuration tips are covered there. Feel free to edit!
+  - name: "📝 Corfu wiki"
+    url: https://github.com/minad/corfu/wiki
+    about: Additional configuration tips are covered there. Feel free to edit!
   - name: "📖 Cape manual"
     url: https://github.com/minad/cape/blob/main/README.org
     about: The manual covers the basic setup and workflow.
