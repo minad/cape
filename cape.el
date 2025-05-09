@@ -133,25 +133,30 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 ;;;; Helpers
 
-(defun cape-same-mode-buffers ()
-  "Return buffers with same major mode as current buffer."
+(defun cape--buffer-list (pred)
+  "Return list of buffers satisfying PRED."
   (let ((cur (current-buffer)))
     (cons cur
-          (cl-loop for buf in (buffer-list)
-                   if (and (not (eq buf cur))
-                           (eq major-mode (buffer-local-value 'major-mode buf)))
-                   collect buf))))
+          (if (minibufferp)
+              (cl-loop for win in (window-list)
+                       for buf = (window-buffer win)
+                       unless (eq buf cur) collect buf)
+            (cl-loop for buf in (buffer-list)
+                     if (and (not (eq buf cur)) (funcall pred buf))
+                     collect buf)))))
+
+(defun cape-same-mode-buffers ()
+  "Return buffers with same major mode as current buffer."
+  (cape--buffer-list
+   (lambda (buf) (eq major-mode (buffer-local-value 'major-mode buf)))))
 
 (defun cape-text-buffers ()
   "Return `text-mode' and `prog-mode' buffers."
-  (let ((cur (current-buffer)))
-    (cons cur
-          (cl-loop for buf in (buffer-list)
-                   for mode = (buffer-local-value 'major-mode buf)
-                   if (and (not (eq buf cur))
-                           (or (provided-mode-derived-p mode #'text-mode)
-                               (provided-mode-derived-p mode #'prog-mode)))
-                   collect buf))))
+  (cape--buffer-list
+   (lambda (buf)
+     (let ((mode (buffer-local-value 'major-mode buf)))
+       (or (provided-mode-derived-p mode #'text-mode)
+           (provided-mode-derived-p mode #'prog-mode))))))
 
 (defun cape--case-fold-p (fold)
   "Return non-nil if case folding is enabled for FOLD."
