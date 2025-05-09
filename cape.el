@@ -886,10 +886,10 @@ again if the input prefix changed."
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
 The CAPFS list can contain the keyword `:with' to mark the Capfs
-afterwards as auxiliary One of the non-auxiliary Capfs before
-`:with' must return non-nil for the super Capf to set in and
-return a non-nil result.  Such behavior is useful when listing
-multiple super Capfs in the `completion-at-point-functions':
+afterwards as auxiliary.  One of the non-auxiliary Capfs before `:with'
+must return non-nil for the super Capf to set in and return a non-nil
+result.  Such behavior is useful when listing multiple super Capfs in
+the `completion-at-point-functions':
 
   (setq completion-at-point-functions
         (list (cape-capf-super \\='eglot-completion-at-point
