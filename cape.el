@@ -135,15 +135,13 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 (defun cape--buffer-list (pred)
   "Return list of buffers satisfying PRED."
-  (let ((cur (current-buffer)))
-    (cons cur
-          (if (minibufferp)
-              (cl-loop for win in (window-list)
-                       for buf = (window-buffer win)
-                       unless (eq buf cur) collect buf)
-            (cl-loop for buf in (buffer-list)
-                     if (and (not (eq buf cur)) (funcall pred buf))
-                     collect buf)))))
+  (let* ((cur (current-buffer))
+         (orig (and (minibufferp) (window-buffer (minibuffer-selected-window))))
+         (list (cl-loop for buf in (buffer-list)
+                        if (and (not (eq buf cur)) (not (eq buf orig))
+                                (funcall pred buf))
+                        collect buf)))
+    `(,cur ,@(and orig (list orig)) ,@list)))
 
 (defun cape-same-mode-buffers ()
   "Return buffers with same major mode as current buffer."
