@@ -566,6 +566,8 @@ If INTERACTIVE is nil the function acts like a Capf."
   (cape--silent
     (dlet ((dabbrev-check-other-buffers nil)
            (dabbrev-check-all-buffers nil)
+           (dabbrev-backward-only nil)
+           (dabbrev-limit nil)
            (dabbrev-search-these-buffers-only
             (ensure-list (funcall cape-dabbrev-buffer-function))))
       (dabbrev--reset-global-variables)
