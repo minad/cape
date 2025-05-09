@@ -2,10 +2,24 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- Simplify ~cape-dabbrev~ configuration.
+- ~cape-dabbrev-buffer-function~: New variable to configure the buffers searched
+  by ~cape-dabbrev~.
+- ~cape-dabbrev-check-other-buffers~: Removed in favor of ~cape-dabbrev-buffer-function~.
+- ~cape-dabbrev-min-length~: Remove variable, since it leads to confusion due to
+  missing completion candidates.
+- ~cape-same-mode-buffers~: New public function, renamed from
+  ~cape--buffers-major-mode~.
+- ~cape-text-buffers~: New function.
+- ~cape-dabbrev-buffer-function~, ~cape-line-buffer-function~: Use
+  ~cape-same-mode-buffers~.
+
 * Version 2.0 (2025-03-11)
 
 - ~cape-file~: Improve handling of environment variables as part of the path,
-  e.g., $HOME.
+  e.g., ~$HOME~.
 - ~cape-company-to-capf~: Handle updated return value convention of the ~prefix~
   action of Company backends.
 
