@@ -364,6 +364,11 @@
      "binary" "bool" "byte" "const" "double" "enum" "exception" "extends" "i16"
      "i32" "i64" "include" "list" "map" "oneway" "optional" "required" "service"
      "set" "string" "struct" "throws" "typedef" "void")
+    (sh-mode
+     "break" "case" "continue" "do" "done" "elif" "else" "esac" "eval"
+     "exec" "exit" "export" "false" "fi" "for" "function" "if" "in" "readonly"
+     "return" "set" "shift" "test" "then" "time" "times" "trap" "true" "unset"
+     "until" "while")
     ;; Aliases
     (cperl-mode perl-mode)
     (enh-ruby-mode ruby-mode)
@@ -390,7 +395,8 @@
     (lua-ts-mode lua-mode)
     (python-ts-mode python-mode)
     (ruby-ts-mode ruby-mode)
-    (rust-ts-mode rust-mode))
+    (rust-ts-mode rust-mode)
+    (bash-ts-mode sh-mode))
   "Alist of major modes and keywords."
   :type 'alist
   :group 'cape)
