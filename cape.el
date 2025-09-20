@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 2.1
-;; Package-Requires: ((emacs "28.1") (compat "30"))
+;; Package-Requires: ((emacs "29.1") (compat "30"))
 ;; URL: https://github.com/minad/cape
 ;; Keywords: abbrev, convenience, matching, completion, text
 
@@ -1207,9 +1207,7 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not illegally modify the buffer.
-This function can be used as an advice around an existing
-Capf.  It has been introduced mainly to fix the broken
-`pcomplete-completions-at-point' function in Emacs versions < 29."
+This function can be used as an advice around an existing Capf."
   ;; bug#50470: Fix Capfs which illegally modify the buffer or which illegally
   ;; call `completion-in-region'.  The workaround here was proposed by
   ;; @jakanakaevangeli and is used in his capf-autosuggest package.  In Emacs 29

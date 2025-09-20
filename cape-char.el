@@ -140,7 +140,7 @@ function acts like a Capf." method method)
 ;;;###autoload (autoload 'cape-rfc1345 "cape-char" nil t)
 (cape-char--define rfc1345 "rfc1345" ?&)
 
-;;;###autoload (when (> emacs-major-version 28) (autoload 'cape-emoji "cape-char" nil t))
+;;;###autoload (autoload 'cape-emoji "cape-char" nil t)
 (cape-char--define emoji "emoji" ?:)
 
 (provide 'cape-char)
