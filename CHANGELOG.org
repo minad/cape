@@ -2,6 +2,10 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- Require Emacs 29.
+
 * Version 2.1 (2025-05-21)
 
 - Simplify ~cape-dabbrev~ configuration.
