@@ -288,11 +288,11 @@ personal configuration.
             (list (cape-capf-predicate #'elisp-completion-at-point
                                        #'ignore-elisp-keywords)))
 
-;; Example 7: Sanitize the `pcomplete-completions-at-point' Capf.  The Capf has
-;; undesired side effects on Emacs 28.  These advices are not needed anymore.
-(when (< emacs-major-version 29)
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent)
-  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify))
+;; Example 7: Sanitize broken Capfs. Catch errors with `cape-wrap-silent' or
+;; make sure that the Capf does not modify the buffer itself.
+(advice-add 'dabbrev-capf :around #'cape-wrap-silent)
+(advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
+(advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify) ;; Was necessary on Emacs 28
 #+end_src
 
 * Contributions
