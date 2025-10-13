@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 2.2 (2025-10-13)
 
 - Minor improvements.
 - Require Emacs 29.
