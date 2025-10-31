@@ -1208,11 +1208,6 @@ This function can be used as an advice around an existing Capf."
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not illegally modify the buffer.
 This function can be used as an advice around an existing Capf."
-  ;; bug#50470: Fix Capfs which illegally modify the buffer or which illegally
-  ;; call `completion-in-region'.  The workaround here was proposed by
-  ;; @jakanakaevangeli and is used in his capf-autosuggest package.  In Emacs 29
-  ;; the purity bug of Pcomplete has been fixed, such that make
-  ;; `cape-wrap-purify' is not necessary anymore.
   (catch 'cape--illegal-completion-in-region
     (condition-case nil
         (let ((buffer-read-only t)
@@ -1223,6 +1218,8 @@ This function can be used as an advice around an existing Capf."
                         (list beg end coll :predicate pred)))))
           (funcall capf))
       (buffer-read-only nil))))
+(make-obsolete 'cape-wrap-purify nil "2.2")
+(make-obsolete 'cape-capf-purify nil "2.2")
 
 ;;;###autoload
 (defun cape-wrap-accept-all (capf)

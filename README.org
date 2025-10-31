@@ -247,7 +247,6 @@ the Capf transformers with =defalias= to a function symbol.
 - ~cape-capf-predicate~, ~cape-wrap-predicate~: Add candidate predicate to a Capf.
 - ~cape-capf-prefix-length~, ~cape-wrap-prefix-length~: Enforce a minimal prefix length.
 - ~cape-capf-properties~, ~cape-wrap-properties~: Add completion properties to a Capf.
-- ~cape-capf-purify~, ~cape-wrap-purify~: Purify a broken Capf and ensure that it does not modify the buffer.
 - ~cape-capf-silent~, ~cape-wrap-silent~: Silence Capf messages and errors.
 - ~cape-capf-sort~, ~cape-wrap-sort~: Add sort function to a Capf.
 - ~cape-capf-super~, ~cape-wrap-super~: Merge multiple Capfs into a Super-Capf.
@@ -288,11 +287,9 @@ personal configuration.
             (list (cape-capf-predicate #'elisp-completion-at-point
                                        #'ignore-elisp-keywords)))
 
-;; Example 7: Sanitize broken Capfs. Catch errors with `cape-wrap-silent' or
-;; make sure that the Capf does not modify the buffer itself.
+;; Example 7: Catch errors with `cape-wrap-silent'.
 (advice-add 'dabbrev-capf :around #'cape-wrap-silent)
 (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
-(advice-add 'pcomplete-completions-at-point :around #'cape-wrap-purify) ;; Was necessary on Emacs 28
 #+end_src
 
 * Contributions

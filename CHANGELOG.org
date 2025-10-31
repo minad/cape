@@ -2,6 +2,10 @@
 #+author: Daniel Mendler
 #+language: en
 
+* Development
+
+- Mark ~cape-capf-purify~ and ~cape-wrap-purify~ as obsolete.
+
 * Version 2.2 (2025-10-13)
 
 - Minor improvements.
