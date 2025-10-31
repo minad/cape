@@ -1205,6 +1205,15 @@ This function can be used as an advice around an existing Capf."
   (and (nth 3 (syntax-ppss)) (funcall capf)))
 
 ;;;###autoload
+(defun cape-wrap-accept-all (capf)
+  "Call CAPF and return a completion table which accepts every input.
+This function can be used as an advice around an existing Capf."
+  (pcase (funcall capf)
+    (`(,beg ,end ,table . ,plist)
+     `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
+
+;;;###autoload (autoload 'cape-capf-purify "cape")
+;;;###autoload
 (defun cape-wrap-purify (capf)
   "Call CAPF and ensure that it does not illegally modify the buffer.
 This function can be used as an advice around an existing Capf."
@@ -1221,13 +1230,20 @@ This function can be used as an advice around an existing Capf."
 (make-obsolete 'cape-wrap-purify nil "2.2")
 (make-obsolete 'cape-capf-purify nil "2.2")
 
-;;;###autoload
-(defun cape-wrap-accept-all (capf)
-  "Call CAPF and return a completion table which accepts every input.
-This function can be used as an advice around an existing Capf."
-  (pcase (funcall capf)
-    (`(,beg ,end ,table . ,plist)
-     `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
+(dolist (wrapper (list #'cape-wrap-accept-all #'cape-wrap-buster
+                       #'cape-wrap-case-fold #'cape-wrap-debug
+                       #'cape-wrap-inside-code #'cape-wrap-inside-comment
+                       #'cape-wrap-inside-faces #'cape-wrap-inside-string
+                       #'cape-wrap-nonexclusive #'cape-wrap-noninterruptible
+                       #'cape-wrap-passthrough #'cape-wrap-predicate
+                       #'cape-wrap-prefix-length #'cape-wrap-properties
+                       'cape-wrap-purify #'cape-wrap-silent
+                       #'cape-wrap-sort #'cape-wrap-super))
+  (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
+    (defalias (intern (format "cape-capf-%s" name))
+      (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
+      (format "Create a %s Capf from CAPF.
+The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
 
 ;;;###autoload (autoload 'cape-capf-accept-all "cape")
 ;;;###autoload (autoload 'cape-capf-buster "cape")
@@ -1243,24 +1259,8 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload (autoload 'cape-capf-predicate "cape")
 ;;;###autoload (autoload 'cape-capf-prefix-length "cape")
 ;;;###autoload (autoload 'cape-capf-properties "cape")
-;;;###autoload (autoload 'cape-capf-purify "cape")
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 ;;;###autoload (autoload 'cape-capf-super "cape")
-
-(dolist (wrapper (list #'cape-wrap-accept-all #'cape-wrap-buster
-                       #'cape-wrap-case-fold #'cape-wrap-debug
-                       #'cape-wrap-inside-code #'cape-wrap-inside-comment
-                       #'cape-wrap-inside-faces #'cape-wrap-inside-string
-                       #'cape-wrap-nonexclusive #'cape-wrap-noninterruptible
-                       #'cape-wrap-passthrough #'cape-wrap-predicate
-                       #'cape-wrap-prefix-length #'cape-wrap-properties
-                       #'cape-wrap-purify #'cape-wrap-silent
-                       #'cape-wrap-sort #'cape-wrap-super))
-  (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
-    (defalias (intern (format "cape-capf-%s" name))
-      (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
-      (format "Create a %s Capf from CAPF.
-The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
 
 (defvar-keymap cape-prefix-map
   :doc "Keymap used as completion entry point.
