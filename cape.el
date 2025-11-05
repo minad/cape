@@ -1111,8 +1111,10 @@ This function can be used as an advice around an existing Capf."
 
 ;;;###autoload
 (defun cape-wrap-sort (capf &optional sort)
-  "Call CAPF and add SORT function.
-This function can be used as an advice around an existing Capf."
+  "Call CAPF and add SORT function as completion metadata.
+If the SORT argument is nil or not given, the completion UI will use
+its own default sorting algorithm.  This function can be used as an
+advice around an existing Capf."
   (cape-wrap-properties
    capf
    :display-sort-function sort
