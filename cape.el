@@ -1086,7 +1086,8 @@ completion table is refreshed on every input change."
 
 ;;;###autoload
 (defun cape-wrap-passthrough (capf)
-  "Call CAPF and make sure that no completion style filtering takes place."
+  "Call CAPF and make sure that no completion style filtering takes place.
+This function can be used as an advice around an existing Capf."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--passthrough-table table) ,@plist))))
@@ -1178,8 +1179,7 @@ If the prefix is long enough, enforce auto completion."
 
 ;;;###autoload
 (defun cape-wrap-inside-faces (capf &rest faces)
-  "Call CAPF only if inside FACES.
-This function can be used as an advice around an existing Capf."
+  "Call CAPF only if inside FACES."
   (when-let (((> (point) (point-min)))
              (fs (get-text-property (1- (point)) 'face))
              ((if (listp fs)
