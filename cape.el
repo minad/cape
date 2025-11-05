@@ -1110,7 +1110,7 @@ This function can be used as an advice around an existing Capf."
   (cape-wrap-properties capf :exclusive 'no))
 
 ;;;###autoload
-(defun cape-wrap-sort (capf sort)
+(defun cape-wrap-sort (capf &optional sort)
   "Call CAPF and add SORT function.
 This function can be used as an advice around an existing Capf."
   (cape-wrap-properties

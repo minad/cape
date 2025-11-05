@@ -5,6 +5,8 @@
 * Development
 
 - Mark ~cape-capf-purify~ and ~cape-wrap-purify~ as obsolete.
+- ~cape-capf-sort~: Make ~SORT~ function argument optional. If the ~SORT~ argument is
+  nil or not given, the completion UI sorting will take over.
 
 * Version 2.2 (2025-10-13)
 
