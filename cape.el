@@ -882,6 +882,12 @@ again if the input prefix changed."
     (interactive (list t))
     (if interactive (cape-interactive capf) (funcall capf))))
 
+(defvar cape--super-functions
+  '( :company-docsig :company-location :company-kind
+     :company-doc-buffer :company-deprecated
+     :annotation-function :exit-function)
+  "List of extra functions which are handled by `cape-wrap-super'.")
+
 ;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
@@ -907,11 +913,7 @@ the `completion-at-point-functions':
                  (cand-ht nil)
                  (tables nil)
                  (exclusive nil)
-                 (prefix-len nil)
-                 (cand-functions
-                  '( :company-docsig :company-location :company-kind
-                     :company-doc-buffer :company-deprecated
-                     :annotation-function :exit-function)))
+                 (prefix-len nil))
       (cl-loop for (main beg2 end2 table . plist) in results do
                ;; Note: `cape-capf-super' currently cannot merge Capfs which
                ;; trigger at different beginning positions.  In order to support
@@ -924,7 +926,7 @@ the `completion-at-point-functions':
                              (mapcan (lambda (f)
                                        (when-let ((v (plist-get plist f)))
                                          (list f v)))
-                                     cand-functions))
+                                     cape--super-functions))
                        tables)
                  ;; The resulting merged Capf is exclusive if one of the main
                  ;; Capfs is exclusive.
@@ -1002,7 +1004,7 @@ the `completion-at-point-functions':
                         (when-let ((plist (and cand-ht (gethash cand cand-ht)))
                                    (fun (plist-get plist prop)))
                           (apply fun cand args))))))
-            cand-functions)))))
+            cape--super-functions)))))
 
 ;;;###autoload
 (defun cape-wrap-debug (capf &optional name)
