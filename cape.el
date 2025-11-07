@@ -1245,7 +1245,8 @@ This function can be used as an advice around an existing Capf."
     (defalias (intern (format "cape-capf-%s" name))
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
       (format "Create a %s Capf from CAPF.
-The Capf calls `%s' with CAPF and ARGS as arguments." name wrapper))))
+The Capf calls `%s' with CAPF and ARGS as arguments.
+See `%s' for documentation." name wrapper wrapper))))
 
 ;;;###autoload (autoload 'cape-capf-accept-all "cape")
 ;;;###autoload (autoload 'cape-capf-buster "cape")
