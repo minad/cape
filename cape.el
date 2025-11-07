@@ -1222,7 +1222,7 @@ This function can be used as an advice around an existing Capf."
 Example:
   (setq completion-at-point-functions
       (list (cape-capf-trigger \\='cape-abbrev ?/)))"
-  (setq trigger (if (stringp trigger) trigger (char-to-string trigger)))
+  (unless (stringp trigger) (setq trigger (char-to-string trigger)))
   (when-let ((tbeg (save-excursion (search-backward trigger (pos-bol) 'noerror)))
              (tend (+ tbeg (length trigger)))
              ((save-excursion (not (re-search-backward "\\s-" tbeg 'noerror)))))
@@ -1233,7 +1233,7 @@ Example:
              (move-marker beg tend)
            (setq beg tend))
          (setq tbeg (copy-marker tbeg)
-               tend (copy-marker tend))
+               tend (copy-marker tend t))
          `( ,beg ,end ,table
             :company-prefix-length t
             :exit-function
