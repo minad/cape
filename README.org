@@ -210,7 +210,7 @@ its own sorting.
 
 ;; Trigger completion only after trigger character.
 (setq-local completion-at-point-functions
-            (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #tempel-complete) ?/)))
+            (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
 
 ;; Define named Capf instead of using the anonymous Capf directly.
 (defun cape-dabbrev-dict ()
@@ -272,7 +272,7 @@ personal configuration.
 #+begin_src emacs-lisp
 ;; Example 1: Configure a merged Capf with a trigger prefix character.
 (setq-local completion-at-point-functions
-            (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #tempel-complete) ?/)))
+            (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
 
 ;; Example 2: Configure a Capf with a specific auto completion prefix length.
 (setq-local completion-at-point-functions
