@@ -208,6 +208,10 @@ its own sorting.
 (setq-local completion-at-point-functions
             (list (cape-capf-sort (cape-capf-super #'cape-dabbrev #'cape-dict))))
 
+;; Trigger completion only after trigger character.
+(setq-local completion-at-point-functions
+            (list (cape-capf-trigger (cape-capf-super #'cape-dabbrev #'cape-dict) ?/)))
+
 ;; Define named Capf instead of using the anonymous Capf directly.
 (defun cape-dabbrev-dict ()
   (cape-wrap-super #'cape-dabbrev #'cape-dict))
