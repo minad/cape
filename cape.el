@@ -892,7 +892,7 @@ result.  Such behavior is useful when listing multiple super Capfs in
 the `completion-at-point-functions':
 
   (setq completion-at-point-functions
-        (list (cape-capf-super \\='eglot-completion-at-point
+        (list (cape-capf-super \\='elisp-completion-at-point
                                :with \\='tempel-complete)
               (cape-capf-super \\='cape-dabbrev
                                :with \\='tempel-complete)))"
@@ -987,10 +987,10 @@ the `completion-at-point-functions':
                          (if (and table-pred pred)
                              (lambda (x) (and (funcall table-pred x) (funcall pred x)))
                            (or table-pred pred)))))))
-         :company-prefix-length ,prefix-len
          :category cape-super
-         :display-sort-function identity
-         :cycle-sort-function identity
+         :company-prefix-length ,prefix-len
+         :display-sort-function ,#'identity
+         :cycle-sort-function ,#'identity
          ,@(and (not exclusive) '(:exclusive no))
          ,@(mapcan
             (lambda (prop)
