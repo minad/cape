@@ -1216,29 +1216,34 @@ This function can be used as an advice around an existing Capf."
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
 
+(defvar cape--trigger-syntax-table (make-syntax-table (syntax-table))
+  "Syntax table used for the trigger character.")
+
 ;;;###autoload
 (defun cape-wrap-trigger (capf trigger)
-  "Ensure that TRIGGER string or character occurs before point and then call CAPF.
+  "Ensure that TRIGGER character occurs before point and then call CAPF.
 Example:
   (setq completion-at-point-functions
       (list (cape-capf-trigger \\='cape-abbrev ?/)))"
-  (unless (stringp trigger) (setq trigger (char-to-string trigger)))
-  (when-let ((tbeg (save-excursion (search-backward trigger (pos-bol) 'noerror)))
-             (tend (+ tbeg (length trigger)))
-             ((save-excursion (not (re-search-backward "\\s-" tbeg 'noerror)))))
-    (pcase (funcall capf)
+  (when-let ((pos (save-excursion (search-backward (char-to-string trigger) (pos-bol) 'noerror)))
+             ((save-excursion (not (re-search-backward "\\s-" pos 'noerror)))))
+    (pcase
+        ;; Treat the trigger character as punctuation.
+        (with-syntax-table cape--trigger-syntax-table
+          (unless (eq (char-syntax trigger) ?.)
+            (modify-syntax-entry trigger "."))
+          (funcall capf))
       (`(,beg ,end ,table . ,plist)
-       (when (<= tbeg beg tend)
-         (setq beg tend
-               tbeg (copy-marker tbeg)
-               tend (copy-marker tend))
-         `( ,beg ,end ,table
+       (when (<= pos beg (1+ pos))
+         `( ,(1+ pos) ,end ,table
             :company-prefix-length t
             :exit-function
-            ,(lambda (str status)
-               (delete-region tbeg tend)
-               (when-let ((exit (plist-get plist :exit-function)))
-                 (funcall exit str status)))
+            ,(let ((pos (copy-marker pos))
+                   (end (copy-marker (1+ pos))))
+               (lambda (str status)
+                 (delete-region pos end)
+                 (when-let ((exit (plist-get plist :exit-function)))
+                   (funcall exit str status))))
             . ,plist))))))
 
 ;;;###autoload (autoload 'cape-capf-purify "cape")
