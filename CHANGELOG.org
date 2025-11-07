@@ -7,6 +7,9 @@
 - Mark ~cape-capf-purify~ and ~cape-wrap-purify~ as obsolete.
 - ~cape-capf-sort~: Make ~SORT~ function argument optional. If the ~SORT~ argument is
   nil or not given, the completion UI sorting will take over.
+- ~cape-capf-trigger~, ~cape-wrap-trigger~: New Capf transformer for trigger
+  characters. The Capf will only complete if the trigger character occurs before
+  point.
 
 * Version 2.2 (2025-10-13)
 

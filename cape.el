@@ -1216,6 +1216,33 @@ This function can be used as an advice around an existing Capf."
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--accept-all-table table) . ,plist))))
 
+;;;###autoload
+(defun cape-wrap-trigger (capf trigger)
+  "Ensure that TRIGGER string or character occurs before point and then call CAPF.
+Example:
+  (setq completion-at-point-functions
+      (list (cape-capf-trigger \\='cape-abbrev ?/)))"
+  (setq trigger (if (stringp trigger) trigger (char-to-string trigger)))
+  (when-let ((tbeg (save-excursion (search-backward trigger (pos-bol) 'noerror)))
+             (tend (+ tbeg (length trigger)))
+             ((save-excursion (not (re-search-backward "\\s-" tbeg 'noerror)))))
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       (when (<= tbeg beg tend)
+         (if (markerp beg)
+             (move-marker beg tend)
+           (setq beg tend))
+         (setq tbeg (copy-marker tbeg)
+               tend (copy-marker tend))
+         `( ,beg ,end ,table
+            :company-prefix-length t
+            :exit-function
+            ,(lambda (str status)
+               (delete-region tbeg tend)
+               (when-let ((exit (plist-get plist :exit-function)))
+                 (funcall exit str status)))
+            . ,plist))))))
+
 ;;;###autoload (autoload 'cape-capf-purify "cape")
 ;;;###autoload
 (defun cape-wrap-purify (capf)
@@ -1242,7 +1269,7 @@ This function can be used as an advice around an existing Capf."
                        #'cape-wrap-passthrough #'cape-wrap-predicate
                        #'cape-wrap-prefix-length #'cape-wrap-properties
                        'cape-wrap-purify #'cape-wrap-silent
-                       #'cape-wrap-sort #'cape-wrap-super))
+                       #'cape-wrap-sort #'cape-wrap-super #'cape-wrap-trigger))
   (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
     (defalias (intern (format "cape-capf-%s" name))
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
@@ -1266,6 +1293,7 @@ See `%s' for documentation." name wrapper wrapper))))
 ;;;###autoload (autoload 'cape-capf-properties "cape")
 ;;;###autoload (autoload 'cape-capf-silent "cape")
 ;;;###autoload (autoload 'cape-capf-super "cape")
+;;;###autoload (autoload 'cape-capf-trigger "cape")
 
 (defvar-keymap cape-prefix-map
   :doc "Keymap used as completion entry point.
