@@ -582,21 +582,22 @@ If INTERACTIVE is nil the function acts like a Capf."
     (require 'dabbrev))
   (let ((re (or dabbrev-abbrev-char-regexp "\\sw\\|\\s_"))
         (limit (minibuffer-prompt-end)))
-    (when (or (looking-at re)
-              (and (> (point) limit)
-                   (save-excursion (forward-char -1) (looking-at re))))
-      (cons (save-excursion
-              (while (and (> (point) limit)
-                          (save-excursion (forward-char -1) (looking-at re)))
-                (forward-char -1))
-              (when dabbrev-abbrev-skip-leading-regexp
-                (while (looking-at dabbrev-abbrev-skip-leading-regexp)
-                  (forward-char 1)))
-              (point))
-            (save-excursion
-              (while (looking-at re)
-                (forward-char 1))
-              (point))))))
+    (if (or (looking-at re)
+            (and (> (point) limit)
+                 (save-excursion (forward-char -1) (looking-at re))))
+        (cons (save-excursion
+                (while (and (> (point) limit)
+                            (save-excursion (forward-char -1) (looking-at re)))
+                  (forward-char -1))
+                (when dabbrev-abbrev-skip-leading-regexp
+                  (while (looking-at dabbrev-abbrev-skip-leading-regexp)
+                    (forward-char 1)))
+                (point))
+              (save-excursion
+                (while (looking-at re)
+                  (forward-char 1))
+                (point)))
+      (cons (point) (point)))))
 
 ;;;###autoload
 (defun cape-dabbrev (&optional interactive)
@@ -609,10 +610,10 @@ See the user option `cape-dabbrev-buffer-function'."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-dabbrev)
-    (when-let ((bounds (cape--dabbrev-bounds)))
-      `(,(car bounds) ,(cdr bounds)
+    (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
+      `(,beg ,end
         ,(completion-table-case-fold
-          (cape--dynamic-table (car bounds) (cdr bounds) #'cape--dabbrev-list)
+          (cape--dynamic-table beg end #'cape--dabbrev-list)
           (not (cape--case-fold-p dabbrev-case-fold-search)))
         ,@cape--dabbrev-properties))))
 
