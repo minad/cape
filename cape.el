@@ -1229,11 +1229,9 @@ Example:
     (pcase (funcall capf)
       (`(,beg ,end ,table . ,plist)
        (when (<= tbeg beg tend)
-         (if (markerp beg)
-             (move-marker beg tend)
-           (setq beg tend))
-         (setq tbeg (copy-marker tbeg)
-               tend (copy-marker tend t))
+         (setq beg tend
+               tbeg (copy-marker tbeg)
+               tend (copy-marker tend))
          `( ,beg ,end ,table
             :company-prefix-length t
             :exit-function
