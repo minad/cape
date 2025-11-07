@@ -610,7 +610,7 @@ See the user option `cape-dabbrev-buffer-function'."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-dabbrev)
-    (pcase-let ((`(,beg . ,end) (cape--bounds 'word)))
+    (pcase-let ((`(,beg . ,end) (cape--dabbrev-bounds)))
       `(,beg ,end
         ,(completion-table-case-fold
           (cape--dynamic-table beg end #'cape--dabbrev-list)
