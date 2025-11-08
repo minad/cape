@@ -289,10 +289,10 @@ NAME is the name of the Capf, BEG and END are the input markers."
          (+ beg 0) (+ end 0) (buffer-substring-no-properties beg end)
          str completion-ignore-case
          (if completion-regexp-list
-             (format " regexp=%s" (cape--debug-print completion-regexp-list t))
+             (concat " regexp=" (cape--debug-print completion-regexp-list t))
            "")
          (if pred
-             (format " predicate=%s" (cape--debug-print pred))
+             (concat " predicate=" (cape--debug-print pred))
            "")
          (cape--debug-print result)))
       result)))
@@ -1043,10 +1043,10 @@ meaningful debugging output."
           table name (copy-marker beg) (copy-marker end t))
         ,@(when-let ((exit (plist-get plist :exit-function)))
             (list :exit-function
-                  (lambda (cand status)
-                    (cape--debug-message "%s:exit(candidate=%S status=%s)"
-                                         name cand status)
-                    (funcall exit cand status))))
+                  (lambda (str status)
+                    (cape--debug-message "%s:exit(status=%s string=%S)"
+                                         name status str)
+                    (funcall exit str status))))
         . ,plist))
     (result
      (cape--debug-message "%s() => %s (No completion)"
