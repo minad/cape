@@ -9,7 +9,7 @@
   nil or not given, the completion UI sorting will take over.
 - ~cape-capf-trigger~, ~cape-wrap-trigger~: New Capf transformer for trigger
   characters. The Capf will only complete if the trigger character occurs before
-  point.
+  point. See also ~corfu-auto-trigger~.
 
 * Version 2.2 (2025-10-13)
 
