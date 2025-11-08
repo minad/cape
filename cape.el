@@ -1223,9 +1223,11 @@ This function can be used as an advice around an existing Capf."
 ;;;###autoload
 (defun cape-wrap-trigger (capf trigger)
   "Ensure that TRIGGER character occurs before point and then call CAPF.
+See also `corfu-auto-trigger'.
 Example:
-  (setq completion-at-point-functions
-      (list (cape-capf-trigger \\='cape-abbrev ?/)))"
+  (setq corfu-auto-trigger \"/\"
+        completion-at-point-functions
+        (list (cape-capf-trigger \\='cape-abbrev ?/)))"
   (when-let ((pos (save-excursion (search-backward (char-to-string trigger) (pos-bol) 'noerror)))
              ((save-excursion (not (re-search-backward "\\s-" pos 'noerror)))))
     (pcase

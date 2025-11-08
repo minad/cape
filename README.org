@@ -209,7 +209,8 @@ its own sorting.
             (list (cape-capf-sort (cape-capf-super #'cape-dabbrev #'cape-dict))))
 
 ;; Trigger completion only after trigger character.
-(setq-local completion-at-point-functions
+(setq-local corfu-auto-trigger "/"
+            completion-at-point-functions
             (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
 
 ;; Define named Capf instead of using the anonymous Capf directly.
@@ -271,7 +272,8 @@ personal configuration.
 
 #+begin_src emacs-lisp
 ;; Example 1: Configure a merged Capf with a trigger prefix character.
-(setq-local completion-at-point-functions
+(setq-local corfu-auto-trigger "/"
+            completion-at-point-functions
             (list (cape-capf-trigger (cape-capf-super #'cape-abbrev #'tempel-complete) ?/)))
 
 ;; Example 2: Configure a Capf with a specific auto completion prefix length.
