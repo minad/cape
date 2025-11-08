@@ -1252,18 +1252,9 @@ Example:
 ;;;###autoload (autoload 'cape-capf-purify "cape")
 ;;;###autoload
 (defun cape-wrap-purify (capf)
-  "Call CAPF and ensure that it does not illegally modify the buffer.
+  "Obsolete purification wrapper calling CAPF.
 This function can be used as an advice around an existing Capf."
-  (catch 'cape--illegal-completion-in-region
-    (condition-case nil
-        (let ((buffer-read-only t)
-              (inhibit-read-only nil)
-              (completion-in-region-function
-               (lambda (beg end coll pred)
-                 (throw 'cape--illegal-completion-in-region
-                        (list beg end coll :predicate pred)))))
-          (funcall capf))
-      (buffer-read-only nil))))
+  (funcall capf))
 (make-obsolete 'cape-wrap-purify nil "2.2")
 (make-obsolete 'cape-capf-purify nil "2.2")
 
