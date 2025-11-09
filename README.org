@@ -242,6 +242,8 @@ achieve a similarly refreshing strategy.
 
 ** Capf transformers
 
+/Wrap one or multiple Capfs in a Cape to get a Capf of different flavor!/
+
 Cape provides a set of additional Capf transformation functions, which are
 mostly meant to used by experts to fine tune the Capf behavior and Capf
 interaction. These can either be used as advices (=cape-wrap-*)= or to create a
