@@ -10,6 +10,8 @@
 - ~cape-capf-trigger~, ~cape-wrap-trigger~: New Capf transformer for trigger
   characters. The Capf will only complete if the trigger character occurs before
   point. See also ~corfu-auto-trigger~.
+- ~cape-capf-choose~, ~cape-wrap-choose~: New Capf transformer to choose from
+  multiple Capfs.
 
 * Version 2.2 (2025-10-13)
 
