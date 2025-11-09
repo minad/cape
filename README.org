@@ -219,8 +219,9 @@ its own sorting.
 (setq-local completion-at-point-functions (list #'cape-dabbrev-dict))
 #+end_src
 
-See also the aforementioned ~company--multi-backend-adapter~ from Company, which
-allows you to merge multiple Company backends.
+If you want to merge multiple Company backends, use the aforementioned
+~company--multi-backend-adapter~ from Company. In order to combine multiple Capfs,
+such that each of the Capfs is tried one after another, use ~cape-capf-choose~.
 
 ** Capf-Buster - Cache busting
 
