@@ -1254,6 +1254,7 @@ Example:
 (defun cape-wrap-purify (capf)
   "Obsolete purification wrapper calling CAPF.
 This function can be used as an advice around an existing Capf."
+  (warn "`cape-wrap-purify' is obsolete")
   (funcall capf))
 (make-obsolete 'cape-wrap-purify nil "2.2")
 (make-obsolete 'cape-capf-purify nil "2.2")
