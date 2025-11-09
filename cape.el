@@ -1121,12 +1121,11 @@ This function can be used as an advice around an existing Capf."
   "Call CAPF and strip or add completion PROPERTIES.
 Completion properties include for example :exclusive, :category,
 :annotation-function, :display-sort-function and various :company-*
-extensions.  The :strip flag means to strip all completion properties."
+extensions.  Strip all properties if PROPERTIES is :strip."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `( ,beg ,end ,table
-        ,@(and (not (plist-get properties :strip))
-               (append properties plist))))))
+        ,@(and (not (eq :strip (car properties))) (append properties plist))))))
 
 ;;;###autoload
 (defun cape-wrap-nonexclusive (capf)
