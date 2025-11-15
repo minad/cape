@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 2.3 (2025-11-15)
 
 - Mark ~cape-capf-purify~ and ~cape-wrap-purify~ as obsolete.
 - ~cape-capf-sort~: Make ~SORT~ function argument optional. If the ~SORT~ argument is
