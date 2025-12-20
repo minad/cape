@@ -429,15 +429,23 @@ If INTERACTIVE is nil the function acts like a Capf."
                                      (substitute-in-file-name file)))))
         (unless (boundp 'comint-unquote-function)
           (require 'comint))
-        `( ,beg ,end
-           ,(cape--nonessential-table
-             (completion-table-with-quoting
-              #'read-file-name-internal
-              comint-unquote-function
-              comint-requote-function))
-           ,@(when (or prefix (string-match-p "./" file))
-               '(:company-prefix-length t))
-           ,@cape--file-properties)))))
+        (let ((table (cape--nonessential-table
+                      (completion-table-with-quoting
+                       #'read-file-name-internal
+                       comint-unquote-function
+                       comint-requote-function))))
+          `( ,beg ,end ,table
+             :company-location
+             ,(lambda (file)
+                (let* ((str (buffer-substring-no-properties beg (point)))
+                       (pre (condition-case nil
+                                (car (completion-boundaries str table nil ""))
+                              (t 0)))
+                       (file (file-name-concat (substring str 0 pre) file)))
+                  (and (file-exists-p file) (list file))))
+             ,@(when (or prefix (string-match-p "./" file))
+                 '(:company-prefix-length t))
+             ,@cape--file-properties))))))
 
 ;;;;; cape-elisp-symbol
 
