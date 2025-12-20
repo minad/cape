@@ -1031,9 +1031,8 @@ Usually you want to add multiple non-exclusive Capfs to the variable
              (pt (- (point) beg))
              (pred (plist-get plist :predicate))
              (md (completion-metadata (substring str 0 pt) table pred)))
-        ;; NOTE: Treat the Capfs always as non-exclusive. Return the first which
-        ;; returns a non-nil result. See the comment in `corfu--capf-wrapper'
-        ;; for further considerations.
+        ;; Treat the Capfs always as non-exclusive. Return the first which
+        ;; returns non-nil. See also the comment in `corfu--capf-wrapper'.
         (and (completion-try-completion str table pred pt md)
              result))))))
 
