@@ -28,9 +28,9 @@
 ;;; Commentary:
 
 ;; Let your completions fly! This package provides additional completion
-;; backends in the form of Capfs (completion-at-point-functions).
+;; backends in the form of Capfs, see `completion-at-point-functions'.
 ;;
-;; `cape-abbrev': Complete abbreviation (add-global-abbrev, add-mode-abbrev).
+;; `cape-abbrev': Complete abbreviation (`add-global-abbrev', `add-mode-abbrev').
 ;; `cape-dabbrev': Complete word from current buffers.
 ;; `cape-dict': Complete word from dictionary file.
 ;; `cape-elisp-block': Complete Elisp in Org or Markdown code block.
