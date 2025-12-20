@@ -438,9 +438,7 @@ If INTERACTIVE is nil the function acts like a Capf."
              :company-location
              ,(lambda (file)
                 (let* ((str (buffer-substring-no-properties beg (point)))
-                       (pre (condition-case nil
-                                (car (completion-boundaries str table nil ""))
-                              (t 0)))
+                       (pre (car (completion-boundaries str table nil "")))
                        (file (file-name-concat (substring str 0 pre) file)))
                   (and (file-exists-p file) (list file))))
              ,@(when (or prefix (string-match-p "./" file))
