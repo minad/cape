@@ -67,6 +67,8 @@
   "Maximal number of completion candidates returned by `cape-dict'."
   :type '(choice (const nil) natnum))
 
+;; TODO bug#80071 file-local language. Add mechanism to locate dictionary file
+;; based on file-local language variable.
 (defcustom cape-dict-file "/usr/share/dict/words"
   "Path to dictionary word list file.
 This variable can also be a list of paths or
