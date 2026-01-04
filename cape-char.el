@@ -36,36 +36,36 @@
 PREFIX are the prefix characters. Names (hash keys) that map to
 multiple candidates (hash values) in the quail translation map
 are not included. Hash values are either char or strings."
-    (when-let ((im (assoc method input-method-alist))
-               ((eq #'quail-use-package (nth 2 im))))
-      (let ((hash (make-hash-table :test #'equal))
-            (dm (list 'decode-map)))
-        (require 'quail)
-        (apply #'quail-use-package method (nthcdr 5 im))
-        (quail-build-decode-map (list (quail-map)) "" dm 0)
-        (pcase-dolist (`(,name . ,val) (cdr dm))
-          (when (equal method "emoji")
-            (setq name (replace-regexp-in-string
-                        ": " "-"
-                        (replace-regexp-in-string
-                         "[’“”!()]" ""
-                         (replace-regexp-in-string
-                          "[_ &.]+" "-" name))))
-            (when (string-match-p "\\`[[:alnum:]-]*\\'" name)
-              (setq name (format ":%s:" name))))
-          (when (memq (aref name 0) prefix)
-            (puthash name (if (vectorp val) (aref val 0) val) hash)))
-        (quail-deactivate)
-        hash))))
+    (when-let* ((im (assoc method input-method-alist))
+                ((eq #'quail-use-package (nth 2 im)))
+                (hash (make-hash-table :test #'equal))
+                (dm (list 'decode-map)))
+      (require 'quail)
+      (apply #'quail-use-package method (nthcdr 5 im))
+      (quail-build-decode-map (list (quail-map)) "" dm 0)
+      (pcase-dolist (`(,name . ,val) (cdr dm))
+        (when (equal method "emoji")
+          (setq name (replace-regexp-in-string
+                      ": " "-"
+                      (replace-regexp-in-string
+                       "[’“”!()]" ""
+                       (replace-regexp-in-string
+                        "[_ &.]+" "-" name))))
+          (when (string-match-p "\\`[[:alnum:]-]*\\'" name)
+            (setq name (format ":%s:" name))))
+        (when (memq (aref name 0) prefix)
+          (puthash name (if (vectorp val) (aref val 0) val) hash)))
+      (quail-deactivate)
+      hash)))
 
 (defun cape-char--annotation (hash name)
   "Lookup NAME in HASH and return annotation."
-  (when-let ((char (gethash name hash)))
+  (when-let* ((char (gethash name hash)))
     (format (if (stringp char) " %s " " %c ") char)))
 
 (defun cape-char--signature (hash name)
   "Lookup NAME in HASH and return signature."
-  (when-let ((val (gethash name hash)))
+  (when-let* ((val (gethash name hash)))
     (concat
      (and (stringp val) (concat val " = "))
      (mapconcat
@@ -81,8 +81,8 @@ are not included. Hash values are either char or strings."
 
 (defun cape-char--exit (hash name status)
   "Exit function given completion STATUS, looks-up NAME in HASH."
-  (when-let (((not (eq status 'exact)))
-             (char (gethash name hash)))
+  (when-let* (((not (eq status 'exact)))
+              (char (gethash name hash)))
     (delete-region (max (point-min) (- (point) (length name))) (point))
     (insert char)))
 
@@ -91,12 +91,12 @@ are not included. Hash values are either char or strings."
 NAME is the name of the Capf.
 METHOD is the input method.
 PREFIX are the prefix characters."
-  (when-let ((capf (intern (format "cape-%s" name)))
-             (pre-req (intern (format "cape-%s-prefix-required" name)))
-             (props (intern (format "cape--%s-properties" name)))
-             (pre-rx (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
-             (hash (intern (format "cape--%s-hash" name)))
-             (hash-val (cape-char--translation method prefix)))
+  (when-let* ((capf (intern (format "cape-%s" name)))
+              (pre-req (intern (format "cape-%s-prefix-required" name)))
+              (props (intern (format "cape--%s-properties" name)))
+              (pre-rx (concat (regexp-opt (mapcar #'char-to-string prefix)) "[^ \n\t]*" ))
+              (hash (intern (format "cape--%s-hash" name)))
+              (hash-val (cape-char--translation method prefix)))
     `(progn
        (defvar ,hash ,hash-val)
        (defcustom ,pre-req t
@@ -124,11 +124,11 @@ function acts like a Capf." method method)
                           (not (looking-back ,pre-rx (pos-bol))))
                  (self-insert-command 1 last-input-event))
                (cape-interactive #',capf))
-           (when-let ((bounds
-                       (cond
-                        ((looking-back ,pre-rx (pos-bol))
-                         (cons (match-beginning 0) (point)))
-                        ((not ,pre-req) (cons (point) (point))))))
+           (when-let* ((bounds
+                        (cond
+                         ((looking-back ,pre-rx (pos-bol))
+                          (cons (match-beginning 0) (point)))
+                         ((not ,pre-req) (cons (point) (point))))))
              (append (list (car bounds) (cdr bounds) ,hash) ,props)))))))
 
 ;;;###autoload (autoload 'cape-tex "cape-char" nil t)

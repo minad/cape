@@ -403,9 +403,9 @@
 
 (defun cape--keyword-list ()
   "Return keywords for current major mode."
-  (when-let ((kw (or (alist-get major-mode cape-keyword-list)
-                     (when-let ((remap (rassq major-mode major-mode-remap-alist)))
-                       (alist-get (car remap) cape-keyword-list)))))
+  (when-let* ((kw (or (alist-get major-mode cape-keyword-list)
+                      (when-let* ((remap (rassq major-mode major-mode-remap-alist)))
+                        (alist-get (car remap) cape-keyword-list)))))
     (if (symbolp (car kw)) (alist-get (car kw) cape-keyword-list) kw)))
 
 (defvar cape--keyword-properties
@@ -423,9 +423,9 @@ If INTERACTIVE is nil the function acts like a capf."
   (interactive (list t))
   (if interactive
       (cape-interactive #'cape-keyword)
-    (when-let (keywords (cape--keyword-list))
-      (let ((bounds (cape--bounds 'symbol)))
-        `(,(car bounds) ,(cdr bounds) ,keywords ,@cape--keyword-properties)))))
+    (when-let* ((keywords (cape--keyword-list))
+                (bounds (cape--bounds 'symbol)))
+      `(,(car bounds) ,(cdr bounds) ,keywords ,@cape--keyword-properties))))
 
 (provide 'cape-keyword)
 ;;; cape-keyword.el ends here
