@@ -1279,16 +1279,6 @@ Example:
                    (funcall exit str status))))
             . ,plist))))))
 
-;;;###autoload (autoload 'cape-capf-purify "cape")
-;;;###autoload
-(defun cape-wrap-purify (capf)
-  "Obsolete purification wrapper calling CAPF.
-This function can be used as an advice around an existing Capf."
-  (warn "`cape-wrap-purify' is obsolete")
-  (funcall capf))
-(make-obsolete 'cape-wrap-purify nil "2.2")
-(make-obsolete 'cape-capf-purify nil "2.2")
-
 (dolist (wrapper (list #'cape-wrap-accept-all #'cape-wrap-buster
                        #'cape-wrap-case-fold #'cape-wrap-choose
                        #'cape-wrap-debug #'cape-wrap-inside-code
@@ -1296,9 +1286,8 @@ This function can be used as an advice around an existing Capf."
                        #'cape-wrap-inside-string #'cape-wrap-nonexclusive
                        #'cape-wrap-noninterruptible #'cape-wrap-passthrough
                        #'cape-wrap-predicate #'cape-wrap-prefix-length
-                       #'cape-wrap-properties 'cape-wrap-purify
-                       #'cape-wrap-silent #'cape-wrap-sort
-                       #'cape-wrap-super #'cape-wrap-trigger))
+                       #'cape-wrap-properties #'cape-wrap-silent
+                       #'cape-wrap-sort #'cape-wrap-super #'cape-wrap-trigger))
   (let ((name (string-remove-prefix "cape-wrap-" (symbol-name wrapper))))
     (defalias (intern (format "cape-capf-%s" name))
       (lambda (capf &rest args) (lambda () (apply wrapper capf args)))
