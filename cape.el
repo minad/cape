@@ -245,27 +245,24 @@ BODY is the wrapping expression."
       (let ((default-directory dir)
             (non-essential t))))))
 
-(defun cape--properties-table (table properties)
-  "Create completion TABLE with PROPERTIES.
-Some metadata properties of the table must be overridden, since they
-take precedence over the properties specified as part of the Capf
-result.  This function is used by `cape-wrap-properties'."
-  (if-let* ((md (cl-loop
-                 for (x . y) in
-                 '((:category . category)
-                   (:display-sort-function . display-sort-function)
-                   (:cycle-sort-function . cycle-sort-function)
-                   (:annotation-function . annotation-function)
-                   (:affixation-function . affixation-function))
-                 if (plist-member properties x)
-                 collect `(,y . ,(plist-get properties x)))))
+(defun cape--table-drop-properties (table properties)
+  "Create completion TABLE without PROPERTIES.
+PROPERTIES is a properties plist.  The corresponding keys are removed
+from the completion metadata alist.  This function is used by
+`cape-wrap-properties'."
+  (if-let* (((functionp table))
+            (keys (cl-loop for (x . y) in
+                           '((:category . category)
+                             (:display-sort-function . display-sort-function)
+                             (:cycle-sort-function . cycle-sort-function)
+                             (:annotation-function . annotation-function)
+                             (:affixation-function . affixation-function))
+                           if (plist-member properties x) collect y)))
       (lambda (str pred action)
-        ;; We cannot use `completion-table-with-metadata' since the new
-        ;; metadata should be merged with the one of the underlying table.
         (if (eq action 'metadata)
-            `(metadata ,@md
-                       ,@(and (functionp table)
-                              (cdr (funcall table str pred action))))
+            (let ((md (copy-sequence (funcall table str pred action))))
+              (dolist (k keys) (setq md (assq-delete-all k md)))
+              md)
           (complete-with-action action table str pred)))
     table))
 
@@ -1159,7 +1156,7 @@ Completion properties include :exclusive, :category,
 :company-deprecated and :company-prefix-length."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     `( ,beg ,end ,(cape--properties-table table properties)
+     `( ,beg ,end ,(cape--table-drop-properties table properties)
         ,@properties ,@plist))))
 
 ;;;###autoload
