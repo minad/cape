@@ -261,6 +261,8 @@ precedence over the properties specified as part of the Capf result."
                         (and aff `((affixation-function . ,aff))))))
     (if alist
         (lambda (str pred action)
+          ;; We cannot use `completion-table-with-metadata' since the new
+          ;; metadata should be merged with the one of the underlying table.
           (if (eq action 'metadata)
               `(metadata ,@alist
                          ,@(and (functionp table)
