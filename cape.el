@@ -1126,16 +1126,41 @@ This function can be used as an advice around an existing Capf."
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--passthrough-table table) ,@plist))))
 
+(defun cape--properties-table (table properties)
+  "Create completion TABLE with PROPERTIES.
+The properties of the table must be overridden too, since they take
+precedence over the properties specified as part of the Capf result."
+  (let* ((dsort (plist-get properties :display-sort-function))
+         (csort (plist-get properties :cycle-sort-function))
+         (cat (plist-get properties :category))
+         (ann (plist-get properties :annotation-function))
+         (aff (plist-get properties :affixation-function))
+         (alist (append (and dsort `((display-sort-function . ,dsort)))
+                        (and csort `((cycle-sort-function . ,csort)))
+                        (and cat `((category . ,cat)))
+                        (and ann `((annotation-function . ,ann)))
+                        (and aff `((annotation-function . ,aff))))))
+    (if alist
+        (lambda (str pred action)
+          (if (eq action 'metadata)
+              `(metadata
+                ,@alist
+                ,@(and (functionp table)
+                       (cdr (funcall table str pred action))))
+            (complete-with-action action table str pred)))
+      table)))
+
 ;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
-  "Call CAPF and strip or add completion PROPERTIES.
-Completion properties include for example :exclusive, :category,
-:annotation-function, :display-sort-function and various :company-*
-extensions.  Strip all properties if PROPERTIES is :strip."
+  "Call CAPF and add completion PROPERTIES.
+Completion properties include :exclusive, :category,
+:annotation-function, :affixation-function, :display-sort-function,
+:company-kind, :company-doc-buffer, :company-docsig, :company-location,
+:company-deprecated and :company-prefix-length."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
-     `( ,beg ,end ,table
-        ,@(and (not (eq :strip (car properties))) (append properties plist))))))
+     `( ,beg ,end ,(cape--properties-table table properties)
+        ,@properties ,@plist))))
 
 ;;;###autoload
 (defun cape-wrap-nonexclusive (capf)
