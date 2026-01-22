@@ -1139,7 +1139,7 @@ precedence over the properties specified as part of the Capf result."
                         (and csort `((cycle-sort-function . ,csort)))
                         (and cat `((category . ,cat)))
                         (and ann `((annotation-function . ,ann)))
-                        (and aff `((annotation-function . ,aff))))))
+                        (and aff `((affixation-function . ,aff))))))
     (if alist
         (lambda (str pred action)
           (if (eq action 'metadata)
