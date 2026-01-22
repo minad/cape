@@ -251,13 +251,8 @@ PROPERTIES is a properties plist.  The corresponding keys are removed
 from the completion metadata alist.  This function is used by
 `cape-wrap-properties'."
   (if-let* (((functionp table))
-            (keys (cl-loop for (x . y) in
-                           '((:category . category)
-                             (:display-sort-function . display-sort-function)
-                             (:cycle-sort-function . cycle-sort-function)
-                             (:annotation-function . annotation-function)
-                             (:affixation-function . affixation-function))
-                           if (plist-member properties x) collect y)))
+            (keys (cl-loop for (k _) on properties by #'cddr
+                           collect (intern (substring (symbol-name k) 1)))))
       (lambda (str pred action)
         (if (eq action 'metadata)
             (let ((md (copy-sequence (funcall table str pred action))))
