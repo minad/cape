@@ -250,26 +250,24 @@ BODY is the wrapping expression."
 Some metadata properties of the table must be overridden, since they
 take precedence over the properties specified as part of the Capf
 result.  This function is used by `cape-wrap-properties'."
-  (let* ((cat (plist-get properties :category))
-         (dsort (plist-get properties :display-sort-function))
-         (csort (plist-get properties :cycle-sort-function))
-         (ann (plist-get properties :annotation-function))
-         (aff (plist-get properties :affixation-function))
-         (alist (append (and cat `((category . ,cat)))
-                        (and dsort `((display-sort-function . ,dsort)))
-                        (and csort `((cycle-sort-function . ,csort)))
-                        (and ann `((annotation-function . ,ann)))
-                        (and aff `((affixation-function . ,aff))))))
-    (if alist
-        (lambda (str pred action)
-          ;; We cannot use `completion-table-with-metadata' since the new
-          ;; metadata should be merged with the one of the underlying table.
-          (if (eq action 'metadata)
-              `(metadata ,@alist
-                         ,@(and (functionp table)
-                                (cdr (funcall table str pred action))))
-            (complete-with-action action table str pred)))
-      table)))
+  (if-let* ((alist (cl-loop
+                    for (x . y) in
+                    '((:category . category)
+                      (:display-sort-function . display-sort-function)
+                      (:cycle-sort-function . cycle-sort-function)
+                      (:annotation-function . annotation-function)
+                      (:affixation-function . affixation-function))
+                    if (plist-member properties x)
+                    collect `(,y . ,(plist-get properties x)))))
+      (lambda (str pred action)
+        ;; We cannot use `completion-table-with-metadata' since the new
+        ;; metadata should be merged with the one of the underlying table.
+        (if (eq action 'metadata)
+            `(metadata ,@alist
+                       ,@(and (functionp table)
+                              (cdr (funcall table str pred action))))
+          (complete-with-action action table str pred)))
+      table))
 
 (defvar cape--debug-length 5
   "Length of printed lists in `cape--debug-print'.")
