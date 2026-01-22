@@ -255,7 +255,7 @@ from the completion metadata alist.  This function is used by
                            collect (intern (substring (symbol-name k) 1)))))
       (lambda (str pred action)
         (if (eq action 'metadata)
-            (let ((md (copy-sequence (funcall table str pred action))))
+            (when-let* ((md (copy-sequence (funcall table str pred action))))
               (dolist (k keys) (setq md (assq-delete-all k md)))
               md)
           (complete-with-action action table str pred)))
