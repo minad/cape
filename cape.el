@@ -245,6 +245,29 @@ BODY is the wrapping expression."
       (let ((default-directory dir)
             (non-essential t))))))
 
+(defun cape--properties-table (table properties)
+  "Create completion TABLE with PROPERTIES.
+The properties of the table must be overridden too, since they take
+precedence over the properties specified as part of the Capf result."
+  (let* ((cat (plist-get properties :category))
+         (dsort (plist-get properties :display-sort-function))
+         (csort (plist-get properties :cycle-sort-function))
+         (ann (plist-get properties :annotation-function))
+         (aff (plist-get properties :affixation-function))
+         (alist (append (and cat `((category . ,cat)))
+                        (and dsort `((display-sort-function . ,dsort)))
+                        (and csort `((cycle-sort-function . ,csort)))
+                        (and ann `((annotation-function . ,ann)))
+                        (and aff `((affixation-function . ,aff))))))
+    (if alist
+        (lambda (str pred action)
+          (if (eq action 'metadata)
+              `(metadata ,@alist
+                         ,@(and (functionp table)
+                                (cdr (funcall table str pred action))))
+            (complete-with-action action table str pred)))
+      table)))
+
 (defvar cape--debug-length 5
   "Length of printed lists in `cape--debug-print'.")
 
@@ -1125,29 +1148,6 @@ This function can be used as an advice around an existing Capf."
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      `(,beg ,end ,(cape--passthrough-table table) ,@plist))))
-
-(defun cape--properties-table (table properties)
-  "Create completion TABLE with PROPERTIES.
-The properties of the table must be overridden too, since they take
-precedence over the properties specified as part of the Capf result."
-  (let* ((cat (plist-get properties :category))
-         (dsort (plist-get properties :display-sort-function))
-         (csort (plist-get properties :cycle-sort-function))
-         (ann (plist-get properties :annotation-function))
-         (aff (plist-get properties :affixation-function))
-         (alist (append (and cat `((category . ,cat)))
-                        (and dsort `((display-sort-function . ,dsort)))
-                        (and csort `((cycle-sort-function . ,csort)))
-                        (and ann `((annotation-function . ,ann)))
-                        (and aff `((affixation-function . ,aff))))))
-    (if alist
-        (lambda (str pred action)
-          (if (eq action 'metadata)
-              `(metadata ,@alist
-                         ,@(and (functionp table)
-                                (cdr (funcall table str pred action))))
-            (complete-with-action action table str pred)))
-      table)))
 
 ;;;###autoload
 (defun cape-wrap-properties (capf &rest properties)
