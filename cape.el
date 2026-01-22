@@ -245,14 +245,9 @@ BODY is the wrapping expression."
       (let ((default-directory dir)
             (non-essential t))))))
 
-(defun cape--table-drop-properties (table properties)
-  "Create completion TABLE without PROPERTIES.
-PROPERTIES is a properties plist.  The corresponding keys are removed
-from the completion metadata alist.  This function is used by
-`cape-wrap-properties'."
-  (if-let* (((functionp table))
-            (keys (cl-loop for (k _) on properties by #'cddr
-                           collect (intern (substring (symbol-name k) 1)))))
+(defun cape--table-drop-metadata (table keys)
+  "Create completion TABLE without metadata KEYS."
+  (if (functionp table)
       (lambda (str pred action)
         (if (eq action 'metadata)
             (when-let* ((md (copy-sequence (funcall table str pred action))))
@@ -1149,10 +1144,12 @@ Completion properties include :exclusive, :category,
 :annotation-function, :affixation-function, :display-sort-function,
 :company-kind, :company-doc-buffer, :company-docsig, :company-location,
 :company-deprecated and :company-prefix-length."
-  (pcase (funcall capf)
-    (`(,beg ,end ,table . ,plist)
-     `( ,beg ,end ,(cape--table-drop-properties table properties)
-        ,@properties ,@plist))))
+  (let ((keys (cl-loop for (k _) on properties by #'cddr
+                       collect (intern (substring (symbol-name k) 1)))))
+    (pcase (funcall capf)
+      (`(,beg ,end ,table . ,plist)
+       `( ,beg ,end ,(cape--table-drop-metadata table keys)
+          ,@properties ,@plist)))))
 
 ;;;###autoload
 (defun cape-wrap-nonexclusive (capf)
