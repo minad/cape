@@ -247,8 +247,9 @@ BODY is the wrapping expression."
 
 (defun cape--properties-table (table properties)
   "Create completion TABLE with PROPERTIES.
-The properties of the table must be overridden too, since they take
-precedence over the properties specified as part of the Capf result."
+Some metadata properties of the table must be overridden, since they
+take precedence over the properties specified as part of the Capf
+result.  This function is used by `cape-wrap-properties'."
   (let* ((cat (plist-get properties :category))
          (dsort (plist-get properties :display-sort-function))
          (csort (plist-get properties :cycle-sort-function))
