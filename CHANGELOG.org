@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 2.6 (2026-01-24)
 
 - Remove obsolete ~cape-capf-purify~ and ~cape-wrap-purify~.
 - ~cape-capf-properties~: Remove support for ~:strip~ argument. Ensure that relevant
