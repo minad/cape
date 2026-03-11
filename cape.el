@@ -1325,6 +1325,7 @@ See `%s' for documentation." name wrapper wrapper))))
 ;;;###autoload (autoload 'cape-capf-prefix-length "cape")
 ;;;###autoload (autoload 'cape-capf-properties "cape")
 ;;;###autoload (autoload 'cape-capf-silent "cape")
+;;;###autoload (autoload 'cape-capf-sort "cape")
 ;;;###autoload (autoload 'cape-capf-super "cape")
 ;;;###autoload (autoload 'cape-capf-trigger "cape")
 
