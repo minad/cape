@@ -314,7 +314,7 @@ personal configuration.
                                        #'ignore-elisp-keywords)))
 
 ;; Example 8: Catch errors with `cape-wrap-silent'.
-(advice-add 'dabbrev-capf :around #'cape-wrap-silent)
+(advice-add 'dabbrev-capf :around #'cape-wrap-silent) ;; Was necessary on Emacs 30
 (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
 #+end_src
 
