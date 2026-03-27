@@ -778,6 +778,76 @@ If INTERACTIVE is nil the function acts like a Capf."
       (cape-interactive #'cape-line)
     `(,(pos-bol) ,(point) ,(cape--line-list) ,@cape--line-properties)))
 
+;;;;; cape-tempo
+
+(defun cape--tempo-tempel-exit (templates region name status)
+  "Exit function `tempel-exit' for completion for template NAME and STATUS.
+
+TEMPLATES is the list of templates.
+REGION are the current region bounds."
+  (tempel--exit templates region name status))
+
+(defun cape--tempo-company-doc-buffer (templates func name)
+  "Create info buffer with `tempel--info-buffer' for template NAME.
+
+FUN inserts the info into the buffer.
+TEMPLATES is the list of templates."
+  (tempel--info-buffer templates
+                       (lambda (template)
+                         (insert (tempel--print-template template))
+                         (tempel--insert-doc template)
+                         (current-buffer))
+                       name))
+
+(defun cape--tempo-company-location (templates func name)
+  "Create info buffer with `tempel--info-buffer' for template NAME.
+
+FUN inserts the info into the buffer.
+TEMPLATES is the list of templates."
+  (tempel--info-buffer templates
+                       (lambda (template)
+                         (pp (cl-loop for x in template
+                                      until (keywordp x) collect x)
+                             (current-buffer))
+                         (tempel--insert-doc template)
+                         (list (current-buffer)))
+                       name))
+
+(defun cape--tempo-annotation (templates width sep name)
+  "Annotate template NAME given the list of TEMPLATES.
+
+WIDTH and SEP configure the formatting.
+By default WIDTH is `tempel-complete-annotation'."
+  (when tempel-complete-annotation
+    (tempel--annotate templates tempel-complete-annotation " " name)))
+
+(defvar cape--tempo-properties
+  (list :category 'tempel
+        :exclusive 'no
+        :company-kind (lambda (_) 'snippet)
+        :exit-function #'cape--tempo-tempel-exit
+        :company-doc-buffer #'cape--tempo-company-doc-buffer
+        :company-location #'cape--tempo-company-location
+        :annotation-function #'cape--tempo-annotation)
+  "Completion extra properties for `cape-tempo'.")
+
+;;;###autoload
+(defun cape-tempo (&optional interactive)
+  "Complete tempo/tempel template at point.
+If INTERACTIVE is nil the function acts like a CAPF.
+Try `company-tempo' at first, then try `tempel-complete'."
+  (interactive (list t))
+  (unless (featurep 'tempel) (require 'tempel))
+  (if interactive
+      (let ((completion-cycle-threshold))
+        (cape-interactive #'cape-tempo))
+    (when-let* ((templates (tempel--templates))
+                (region (and (eq this-command #'tempel-complete) (tempel--region)))
+                (bounds (or (and (not region)
+                                 (tempel--prefix-bounds templates))
+                            (cons (point) (point)))))
+      `(,(car bounds) ,(cdr bounds) ,templates ,@cape--tempo-properties))))
+
 ;;;; Capf combinators
 
 (defun cape--company-call (&rest app)
