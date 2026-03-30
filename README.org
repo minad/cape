@@ -7,8 +7,6 @@
 #+texinfo_dir_desc: Completion At Point Extensions
 
 #+html: <a href="https://www.gnu.org/software/emacs/"><img alt="GNU Emacs" src="https://github.com/minad/corfu/blob/screenshots/emacs.svg?raw=true"/></a>
-#+html: <a href="https://elpa.gnu.org/packages/cape.html"><img alt="GNU ELPA" src="https://elpa.gnu.org/packages/cape.svg"/></a>
-#+html: <a href="https://elpa.gnu.org/devel/cape.html"><img alt="GNU-devel ELPA" src="https://elpa.gnu.org/devel/cape.svg"/></a>
 #+html: <a href="https://melpa.org/#/cape"><img alt="MELPA" src="https://melpa.org/packages/cape-badge.svg"/></a>
 #+html: <a href="https://stable.melpa.org/#/cape"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/cape-badge.svg"/></a>
 
@@ -52,9 +50,9 @@ advantage of Company backends even if you are not using Company as frontend.
 
 * Configuration
 
-Cape is available on GNU ELPA and MELPA. You can install the package with
-~package-install~. In the following we present a sample configuration based on the
-popular ~use-package~ macro.
+Cape is available on MELPA. You can install the package with ~package-install~. In
+the following we present a sample configuration based on the popular ~use-package~
+macro.
 
 I recommend to bind the =cape-*= completion commands to keys such that you can
 invoke them explicitly. This makes particular sense for special Capfs which you
@@ -317,8 +315,3 @@ personal configuration.
 (advice-add 'dabbrev-capf :around #'cape-wrap-silent) ;; Was necessary on Emacs 30
 (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-silent) ;; Was necessary on Emacs 28
 #+end_src
-
-* Contributions
-
-Since this package is part of [[https://elpa.gnu.org/packages/cape.html][GNU ELPA]] contributions require a copyright
-assignment to the FSF.
