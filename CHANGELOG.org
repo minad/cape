@@ -2,11 +2,6 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
-
-- ~cape-capf-super~: Deduplicate candidates based on ~:exit-function~. Duplicate
-  candidates are only kept if they differ in their exit function.
-
 * Version 2.6 (2026-01-24)
 
 - Remove obsolete ~cape-capf-purify~ and ~cape-wrap-purify~.
