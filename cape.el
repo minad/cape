@@ -985,22 +985,28 @@ turn."
                                  ;; candidates if we've already determined that
                                  ;; main candidates are available.
                                  (cands (when (or main (or exclusive cand-ht candidates))
-                                          (funcall sort (all-completions str table pr)))))
+                                          (funcall sort (all-completions str table pr))))
+                                 (cands (cons nil cands))
+                                 (ptr cands))
                             ;; Handle duplicates with a hash table.
-                            (cl-loop
-                             for cand in-ref cands
-                             for dup = (gethash cand ht t) do
-                             (cond
-                              ((eq dup t)
-                               ;; Candidate does not yet exist.
-                               (puthash cand cand-plist ht))
-                              ((not (equal dup cand-plist))
-                               ;; Duplicate candidate. Candidate plist is
-                               ;; different, therefore disambiguate the
-                               ;; candidates.
-                               (setf cand (propertize cand 'cape-capf-super
-                                                      (cons cand cand-plist))))))
-                            (when cands (push cands candidates))))
+                            (while (cdr ptr)
+                              (let* ((cand (cadr ptr))
+                                     (dup (gethash cand ht t)))
+                                (cond
+                                 ((eq dup t)
+                                  ;; Candidate is unique so far.
+                                  (puthash cand cand-plist ht)
+                                  (pop ptr))
+                                 ((not (equal (plist-get dup :exit-function)
+                                              (plist-get cand-plist :exit-function)))
+                                  ;; Disambiguate duplicate candidates with
+                                  ;; different exit functions.
+                                  (setf (cadr ptr) (propertize cand 'cape-capf-super
+                                                               (cons cand cand-plist)))
+                                  (pop ptr))
+                                 (t ;; Delete duplicate candidate.
+                                  (setcdr ptr (cddr ptr))))))
+                            (when (cdr cands) (push (cdr cands) candidates))))
                  (when (or cand-ht candidates)
                    (setq candidates (apply #'nconc (nreverse candidates))
                          cand-ht ht)
