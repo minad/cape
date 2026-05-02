@@ -6,7 +6,7 @@
 ;; Maintainer: Daniel Mendler <mail@daniel-mendler.de>
 ;; Created: 2021
 ;; Version: 2.6
-;; Package-Requires: ((emacs "29.1") (compat "30"))
+;; Package-Requires: ((emacs "29.1") (compat "31"))
 ;; URL: https://github.com/minad/cape
 ;; Keywords: abbrev, convenience, matching, completion, text
 
@@ -1056,7 +1056,7 @@ If CAPF is an anonymous lambda, pass the Capf NAME explicitly for
 meaningful debugging output."
   (unless name
     (setq name (if (symbolp capf) capf "capf")))
-  (setq name (format "%s@%s" name (cl-incf cape--debug-id)))
+  (setq name (format "%s@%s" name (incf cape--debug-id)))
   (pcase (funcall capf)
     (`(,beg ,end ,table . ,plist)
      (let* ((limit (1+ cape--debug-length))
@@ -1067,7 +1067,7 @@ meaningful debugging output."
                (all-completions
                 "" table
                 (lambda (&rest args)
-                  (and (or (not pred) (apply pred args)) (>= (cl-decf limit) 0))))))
+                  (and (or (not pred) (apply pred args)) (>= (decf limit) 0))))))
             (plist-str "")
             (plist-elt plist))
        (while (cdr plist-elt)
