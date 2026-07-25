@@ -1001,7 +1001,7 @@ turn."
                                ;; Duplicate candidate. Candidate plist is
                                ;; different, therefore disambiguate the
                                ;; candidates.
-                               (setf cand (propertize cand 'cape-capf-super
+                               (setf cand (propertize cand 'cape--super
                                                       (cons cand cand-plist))))))
                             (when cands (push cands candidates))))
                  (when (or cand-ht candidates)
@@ -1024,7 +1024,7 @@ turn."
             (lambda (prop)
               (list prop
                     (lambda (cand &rest args)
-                      (if-let* ((ref (get-text-property 0 'cape-capf-super cand)))
+                      (if-let* ((ref (get-text-property 0 'cape--super cand)))
                           (when-let* ((fun (plist-get (cdr ref) prop)))
                             (apply fun (car ref) args))
                         (when-let* ((plist (and cand-ht (gethash cand cand-ht)))
