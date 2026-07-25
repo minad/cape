@@ -164,8 +164,7 @@ The buffers are scanned for completion candidates by `cape-line'."
 
 (defun cape--case-replace-list (flag input strs)
   "Replace case of STRS depending on INPUT and FLAG."
-  (if (and (if (eq flag 'case-replace) case-replace flag)
-           (let (case-fold-search) (string-match-p "\\`[[:upper:]]" input)))
+  (if (if (eq flag 'case-replace) case-replace flag)
       (mapcar (apply-partially #'cape--case-replace flag input) strs)
     strs))
 
@@ -173,14 +172,19 @@ The buffers are scanned for completion candidates by `cape-line'."
   "Replace case of STR depending on INPUT and FLAG."
   (or (and (if (eq flag 'case-replace) case-replace flag)
            (string-prefix-p input str t)
-           (let (case-fold-search) (string-match-p "\\`[[:upper:]]" input))
-           (save-match-data
-             ;; Ensure that single character uppercase input does not lead to an
-             ;; all uppercase result.
-             (when (and (= (length input) 1) (> (length str) 1))
-               (setq input (concat input (substring str 1 2))))
-             (and (string-match input input)
-                  (replace-match str nil nil input))))
+           (cond
+            ((let (case-fold-search) (string-match-p "\\`[[:upper:]]" input))
+             (save-match-data
+               ;; Ensure that single character uppercase input does not lead to
+               ;; an all uppercase result.
+               (when (and (= (length input) 1) (> (length str) 1))
+                 (setq input (concat input (substring str 1 2))))
+               (and (string-match input input)
+                    (replace-match str nil nil input))))
+            ((let (case-fold-search)
+               (and (string-match-p "\\`[[:lower:]]*\\'" input)
+                    (not (string-match-p "\\`[[:lower:]]*\\'" str))))
+             (downcase str))))
       str))
 
 (defun cape--separator-p (str)
