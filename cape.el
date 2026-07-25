@@ -943,6 +943,45 @@ again if the input prefix changed."
            (setq prefix-len (max prefix-len plen)))))))
     (list (nreverse tables) exclusive prefix-len)))
 
+(defun cape--super-candidates (str pred tables exclusive cache)
+  "Compute candidates given STR, PRED, TABLES, EXCLUSIVE and CACHE."
+  (let ((ht (make-hash-table :test #'equal))
+        (candidates nil))
+    (cl-loop
+     for (main table-pred table cand-plist) in tables do
+     (let* ((pr (if (and table-pred pred)
+                    (lambda (x) (and (funcall table-pred x) (funcall pred x)))
+                  (or table-pred pred)))
+            (md (completion-metadata "" table pr))
+            (sort (or (completion-metadata-get md 'display-sort-function)
+                      #'identity))
+            ;; Always compute candidates of the main Capf
+            ;; tables, which come first in the tables
+            ;; list. For the :with Capfs only compute
+            ;; candidates if we've already determined that
+            ;; main candidates are available.
+            (cands (when (or main (or exclusive (car cache) candidates))
+                     (funcall sort (all-completions str table pr)))))
+       ;; Handle duplicates with a hash table.
+       (cl-loop
+        for cand in-ref cands
+        for dup = (gethash cand ht t) do
+        (cond
+         ((eq dup t)
+          ;; Candidate does not yet exist.
+          (puthash cand cand-plist ht))
+         ((not (equal dup cand-plist))
+          ;; Duplicate candidate. Candidate plist is
+          ;; different, therefore disambiguate the
+          ;; candidates.
+          (setf cand (propertize cand 'cape--super
+                                 (cons cand cand-plist))))))
+       (when cands (push cands candidates))))
+    (when (or (car cache) candidates)
+      (setf candidates (apply #'nconc (nreverse candidates))
+            (car cache) ht)
+      candidates)))
+
 ;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
@@ -968,47 +1007,13 @@ turn."
                             if res collect (cons nil res)))
     (pcase-let* ((`((,_main ,beg ,end . ,_)) results)
                  (`(,tables ,exclusive ,prefix-len) (cape--super-tables beg end results))
-                 (cand-ht nil))
+                 (cache (cons nil nil)))
       `( ,beg ,end
          ,(lambda (str pred action)
             (pcase action
               ((or `(boundaries . ,_) 'metadata) nil)
               ('t ;; all-completions
-               (let ((ht (make-hash-table :test #'equal))
-                     (candidates nil))
-                 (cl-loop for (main table-pred table cand-plist) in tables do
-                          (let* ((pr (if (and table-pred pred)
-                                         (lambda (x) (and (funcall table-pred x) (funcall pred x)))
-                                       (or table-pred pred)))
-                                 (md (completion-metadata "" table pr))
-                                 (sort (or (completion-metadata-get md 'display-sort-function)
-                                           #'identity))
-                                 ;; Always compute candidates of the main Capf
-                                 ;; tables, which come first in the tables
-                                 ;; list. For the :with Capfs only compute
-                                 ;; candidates if we've already determined that
-                                 ;; main candidates are available.
-                                 (cands (when (or main (or exclusive cand-ht candidates))
-                                          (funcall sort (all-completions str table pr)))))
-                            ;; Handle duplicates with a hash table.
-                            (cl-loop
-                             for cand in-ref cands
-                             for dup = (gethash cand ht t) do
-                             (cond
-                              ((eq dup t)
-                               ;; Candidate does not yet exist.
-                               (puthash cand cand-plist ht))
-                              ((not (equal dup cand-plist))
-                               ;; Duplicate candidate. Candidate plist is
-                               ;; different, therefore disambiguate the
-                               ;; candidates.
-                               (setf cand (propertize cand 'cape--super
-                                                      (cons cand cand-plist))))))
-                            (when cands (push cands candidates))))
-                 (when (or cand-ht candidates)
-                   (setq candidates (apply #'nconc (nreverse candidates))
-                         cand-ht ht)
-                   candidates)))
+               (cape--super-candidates str pred tables exclusive cache))
               (_ ;; try-completion and test-completion
                (cl-loop for (_main table-pred table _cand-plist) in tables thereis
                         (complete-with-action
@@ -1028,7 +1033,8 @@ turn."
                       (if-let* ((ref (get-text-property 0 'cape--super cand)))
                           (when-let* ((fun (plist-get (cdr ref) prop)))
                             (apply fun (car ref) args))
-                        (when-let* ((plist (and cand-ht (gethash cand cand-ht)))
+                        (when-let* ((ht (car cache))
+                                    (plist (gethash cand ht))
                                     (fun (plist-get plist prop)))
                           (apply fun cand args))))))
             cape--super-functions)))))
