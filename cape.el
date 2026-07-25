@@ -933,11 +933,9 @@ again if the input prefix changed."
      ;; such that they all start at the smallest BEG position.
      (when (= beg beg2)
        (push (list main (plist-get plist :predicate) table
-                   ;; Plist attached to the candidates
-                   (mapcan (lambda (f)
-                             (when-let* ((v (plist-get plist f)))
-                               (list f v)))
-                           cape--super-functions))
+                   (cl-loop for f in cape--super-functions
+                            for v = (plist-get plist f)
+                            if v collect f and collect v))
              tables)
        ;; The resulting merged Capf is exclusive if one of the main
        ;; Capfs is exclusive.
@@ -1046,8 +1044,8 @@ turn."
          :display-sort-function ,#'identity
          :cycle-sort-function ,#'identity
          ,@(and (not exc) '(:exclusive no))
-         ,@(mapcan (lambda (prop) (list prop (cape--super-function prop cache)))
-                   cape--super-functions)))))
+         ,@(cl-loop for f in cape--super-functions
+                    collect f collect (cape--super-function f cache))))))
 
 ;;;###autoload
 (defun cape-wrap-choose (&rest capfs)
