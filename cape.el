@@ -911,6 +911,17 @@ again if the input prefix changed."
      :annotation-function :exit-function)
   "List of extra functions which are handled by `cape-wrap-super'.")
 
+(defun cape--super-function (prop cache)
+  "Extra function for PROP given the candidate CACHE."
+  (lambda (cand &rest args)
+    (if-let* ((ref (get-text-property 0 'cape--super cand)))
+        (when-let* ((fun (plist-get (cdr ref) prop)))
+          (apply fun (car ref) args))
+      (when-let* ((ht (car cache))
+                  (plist (gethash cand ht))
+                  (fun (plist-get plist prop)))
+        (apply fun cand args)))))
+
 (defun cape--super-tables (beg end results)
   "Find matching tables from Capf RESULTS at BEG to END position."
   (let (tables exclusive prefix-len)
@@ -1026,18 +1037,8 @@ turn."
          :display-sort-function ,#'identity
          :cycle-sort-function ,#'identity
          ,@(and (not exclusive) '(:exclusive no))
-         ,@(mapcan
-            (lambda (prop)
-              (list prop
-                    (lambda (cand &rest args)
-                      (if-let* ((ref (get-text-property 0 'cape--super cand)))
-                          (when-let* ((fun (plist-get (cdr ref) prop)))
-                            (apply fun (car ref) args))
-                        (when-let* ((ht (car cache))
-                                    (plist (gethash cand ht))
-                                    (fun (plist-get plist prop)))
-                          (apply fun cand args))))))
-            cape--super-functions)))))
+         ,@(mapcan (lambda (prop) (list prop (cape--super-function prop cache)))
+                   cape--super-functions)))))
 
 ;;;###autoload
 (defun cape-wrap-choose (&rest capfs)
