@@ -45,12 +45,10 @@ are not included. Hash values are either char or strings."
       (quail-build-decode-map (list (quail-map)) "" dm 0)
       (pcase-dolist (`(,name . ,val) (cdr dm))
         (when (equal method "emoji")
-          (setq name (replace-regexp-in-string
+          (setq name (string-replace
                       ": " "-"
                       (replace-regexp-in-string
-                       "[’“”!()]" ""
-                       (replace-regexp-in-string
-                        "[_ &.]+" "-" name))))
+                       "[_ &.]+" "-" name)))
           (when (string-match-p "\\`[[:alnum:]-]*\\'" name)
             (setq name (format ":%s:" name))))
         (when (memq (aref name 0) prefix)
