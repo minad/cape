@@ -104,7 +104,7 @@ PREFIX are the prefix characters."
        (defvar ,props
          (list :annotation-function (lambda (x) (cape-char--annotation ,hash x))
                :company-docsig (lambda (x) (cape-char--signature ,hash x))
-               :exit-function (lambda (x) (cape-char--exit ,hash x))
+               :exit-function (lambda (x y) (cape-char--exit ,hash x y))
                :company-kind (lambda (_) 'text)
                :category ',capf
                :exclusive 'no)
