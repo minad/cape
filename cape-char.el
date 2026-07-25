@@ -102,9 +102,9 @@ PREFIX are the prefix characters."
          :type 'boolean
          :group 'cape)
        (defvar ,props
-         (list :annotation-function (apply-partially #'cape-char--annotation ,hash)
-               :company-docsig (apply-partially #'cape-char--signature ,hash)
-               :exit-function (apply-partially #'cape-char--exit ,hash)
+         (list :annotation-function (lambda (x) (cape-char--annotation ,hash x))
+               :company-docsig (lambda (x) (cape-char--signature ,hash x))
+               :exit-function (lambda (x) (cape-char--exit ,hash x))
                :company-kind (lambda (_) 'text)
                :category ',capf
                :exclusive 'no)
