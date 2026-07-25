@@ -911,6 +911,38 @@ again if the input prefix changed."
      :annotation-function :exit-function)
   "List of extra functions which are handled by `cape-wrap-super'.")
 
+(defun cape--super-tables (beg end results)
+  "Find matching tables from Capf RESULTS at BEG to END position."
+  (let (tables exclusive prefix-len)
+    (cl-loop
+     for (main beg2 end2 table . plist) in results do
+     ;; Note: `cape-capf-super' currently cannot merge Capfs which trigger at
+     ;; different beginning positions.  In order to support this, take the
+     ;; smallest BEG value and then normalize all candidates by prefixing them
+     ;; such that they all start at the smallest BEG position.
+     (when (= beg beg2)
+       (push (list main (plist-get plist :predicate) table
+                   ;; Plist attached to the candidates
+                   (mapcan (lambda (f)
+                             (when-let* ((v (plist-get plist f)))
+                               (list f v)))
+                           cape--super-functions))
+             tables)
+       ;; The resulting merged Capf is exclusive if one of the main
+       ;; Capfs is exclusive.
+       (when (and main (not (eq (plist-get plist :exclusive) 'no)))
+         (setq exclusive t))
+       (setq end (max end end2))
+       (let ((plen (plist-get plist :company-prefix-length)))
+         (cond
+          ((eq plen t)
+           (setq prefix-len t))
+          ((and (not prefix-len) (integerp plen))
+           (setq prefix-len plen))
+          ((and (integerp prefix-len) (integerp plen))
+           (setq prefix-len (max prefix-len plen)))))))
+    (list (nreverse tables) exclusive prefix-len)))
+
 ;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
@@ -931,43 +963,12 @@ turn."
   (when-let* ((results (cl-loop for capf in capfs until (eq capf :with)
                                 for res = (funcall capf)
                                 if res collect (cons t res))))
-    (pcase-let* ((results (nconc results
-                                 (cl-loop for capf in (cdr (memq :with capfs))
-                                          for res = (funcall capf)
-                                          if res collect (cons nil res))))
-                 (`((,_main ,beg ,end . ,_)) results)
-                 (cand-ht nil)
-                 (tables nil)
-                 (exclusive nil)
-                 (prefix-len nil))
-      (cl-loop for (main beg2 end2 table . plist) in results do
-               ;; Note: `cape-capf-super' currently cannot merge Capfs which
-               ;; trigger at different beginning positions.  In order to support
-               ;; this, take the smallest BEG value and then normalize all
-               ;; candidates by prefixing them such that they all start at the
-               ;; smallest BEG position.
-               (when (= beg beg2)
-                 (push (list main (plist-get plist :predicate) table
-                             ;; Plist attached to the candidates
-                             (mapcan (lambda (f)
-                                       (when-let* ((v (plist-get plist f)))
-                                         (list f v)))
-                                     cape--super-functions))
-                       tables)
-                 ;; The resulting merged Capf is exclusive if one of the main
-                 ;; Capfs is exclusive.
-                 (when (and main (not (eq (plist-get plist :exclusive) 'no)))
-                   (setq exclusive t))
-                 (setq end (max end end2))
-                 (let ((plen (plist-get plist :company-prefix-length)))
-                   (cond
-                    ((eq plen t)
-                     (setq prefix-len t))
-                    ((and (not prefix-len) (integerp plen))
-                     (setq prefix-len plen))
-                    ((and (integerp prefix-len) (integerp plen))
-                     (setq prefix-len (max prefix-len plen)))))))
-      (setq tables (nreverse tables))
+    (nconc results (cl-loop for capf in (cdr (memq :with capfs))
+                            for res = (funcall capf)
+                            if res collect (cons nil res)))
+    (pcase-let* ((`((,_main ,beg ,end . ,_)) results)
+                 (`(,tables ,exclusive ,prefix-len) (cape--super-tables beg end results))
+                 (cand-ht nil))
       `( ,beg ,end
          ,(lambda (str pred action)
             (pcase action
