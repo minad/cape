@@ -922,9 +922,9 @@ again if the input prefix changed."
                   (fun (plist-get plist prop)))
         (apply fun cand args)))))
 
-(defun cape--super-tables (beg end results)
-  "Find matching tables from Capf RESULTS at BEG to END position."
-  (let (tables exclusive prefix-len)
+(defun cape--super-prefix (beg end results)
+  "Find tables from Capf RESULTS matching prefix at BEG to END."
+  (let (tables exc prefix-len)
     (cl-loop
      for (main beg2 end2 table . plist) in results do
      ;; Note: `cape-capf-super' currently cannot merge Capfs which trigger at
@@ -942,7 +942,7 @@ again if the input prefix changed."
        ;; The resulting merged Capf is exclusive if one of the main
        ;; Capfs is exclusive.
        (when (and main (not (eq (plist-get plist :exclusive) 'no)))
-         (setq exclusive t))
+         (setq exc t))
        (setq end (max end end2))
        (let ((plen (plist-get plist :company-prefix-length)))
          (cond
@@ -952,10 +952,10 @@ again if the input prefix changed."
            (setq prefix-len plen))
           ((and (integerp prefix-len) (integerp plen))
            (setq prefix-len (max prefix-len plen)))))))
-    (list (nreverse tables) exclusive prefix-len)))
+    (list (nreverse tables) exc prefix-len)))
 
-(defun cape--super-candidates (str pred tables exclusive cache)
-  "Compute candidates given STR, PRED, TABLES, EXCLUSIVE and CACHE."
+(defun cape--super-all (str pred tables exc cache)
+  "Compute all candidates given STR, PRED, TABLES, EXC and CACHE."
   (let ((ht (make-hash-table :test #'equal))
         (candidates nil))
     (cl-loop
@@ -971,7 +971,7 @@ again if the input prefix changed."
             ;; list. For the :with Capfs only compute
             ;; candidates if we've already determined that
             ;; main candidates are available.
-            (cands (when (or main (or exclusive (car cache) candidates))
+            (cands (when (or main (or exc (car cache) candidates))
                      (funcall sort (all-completions str table pr)))))
        ;; Handle duplicates with a hash table.
        (cl-loop
@@ -1027,27 +1027,25 @@ turn."
                             for res = (funcall capf)
                             if res collect (cons nil res)))
     (pcase-let* ((`((,_main ,beg ,end . ,_)) results)
-                 (`(,tables ,exclusive ,prefix-len)
-                  (cape--super-tables beg end results))
+                 (`(,tables ,exc ,plen) (cape--super-prefix beg end results))
                  (cache (cons nil nil)))
       `( ,beg ,end
          ,(lambda (str pred action)
             (pcase action
               ((or `(boundaries . ,_) 'metadata) nil)
               ('t ;; all-completions
-               (cape--super-candidates str pred tables exclusive cache))
+               (cape--super-all str pred tables exc cache))
               ('nil ;; try-completion
-               (let ((cands (cape--super-candidates
-                             str pred tables exclusive cache)))
+               (let ((cands (cape--super-all str pred tables exc cache)))
                  (or (try-completion str cands pred)
                      (cape--super-complete str pred action tables))))
               (_ ;; test-completion and other actions
                (cape--super-complete str pred action tables))))
          :category cape-super
-         :company-prefix-length ,prefix-len
+         :company-prefix-length ,plen
          :display-sort-function ,#'identity
          :cycle-sort-function ,#'identity
-         ,@(and (not exclusive) '(:exclusive no))
+         ,@(and (not exc) '(:exclusive no))
          ,@(mapcan (lambda (prop) (list prop (cape--super-function prop cache)))
                    cape--super-functions)))))
 
