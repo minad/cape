@@ -1036,7 +1036,12 @@ turn."
               ((or `(boundaries . ,_) 'metadata) nil)
               ('t ;; all-completions
                (cape--super-candidates str pred tables exclusive cache))
-              (_ ;; try-completion and test-completion
+              ('nil ;; try-completion
+               (let ((cands (cape--super-candidates
+                             str pred tables exclusive cache)))
+                 (or (try-completion str cands pred)
+                     (cape--super-complete str pred action tables))))
+              (_ ;; test-completion and other actions
                (cape--super-complete str pred action tables))))
          :category cape-super
          :company-prefix-length ,prefix-len
