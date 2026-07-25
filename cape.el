@@ -993,6 +993,16 @@ again if the input prefix changed."
             (car cache) ht)
       candidates)))
 
+(defun cape--super-complete (str pred action tables)
+  "Complete with ACTION for input STR and predicate PRED for all TABLES."
+  (cl-loop
+   for (_main table-pred table _cand-plist) in tables
+   thereis (complete-with-action
+            action table str
+            (if (and table-pred pred)
+                (lambda (x) (and (funcall table-pred x) (funcall pred x)))
+              (or table-pred pred)))))
+
 ;;;###autoload
 (defun cape-wrap-super (&rest capfs)
   "Call CAPFS and return merged completion result.
@@ -1017,7 +1027,8 @@ turn."
                             for res = (funcall capf)
                             if res collect (cons nil res)))
     (pcase-let* ((`((,_main ,beg ,end . ,_)) results)
-                 (`(,tables ,exclusive ,prefix-len) (cape--super-tables beg end results))
+                 (`(,tables ,exclusive ,prefix-len)
+                  (cape--super-tables beg end results))
                  (cache (cons nil nil)))
       `( ,beg ,end
          ,(lambda (str pred action)
@@ -1026,12 +1037,7 @@ turn."
               ('t ;; all-completions
                (cape--super-candidates str pred tables exclusive cache))
               (_ ;; try-completion and test-completion
-               (cl-loop for (_main table-pred table _cand-plist) in tables thereis
-                        (complete-with-action
-                         action table str
-                         (if (and table-pred pred)
-                             (lambda (x) (and (funcall table-pred x) (funcall pred x)))
-                           (or table-pred pred)))))))
+               (cape--super-complete str pred action tables))))
          :category cape-super
          :company-prefix-length ,prefix-len
          :display-sort-function ,#'identity
