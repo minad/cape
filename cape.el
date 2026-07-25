@@ -590,10 +590,9 @@ If INTERACTIVE is nil the function acts like a Capf."
       (dabbrev--reset-global-variables)
       (cons
        (apply-partially #'string-prefix-p input)
-       (cl-loop
-        with ic = (cape--case-fold-p dabbrev-case-fold-search)
-        for w in (dabbrev--find-all-expansions input ic)
-        collect (cape--case-replace (and ic dabbrev-case-replace) input w))))))
+       (let ((ic (cape--case-fold-p dabbrev-case-fold-search)))
+         (cape--case-replace-list (and ic dabbrev-case-replace) input
+                                  (dabbrev--find-all-expansions input ic)))))))
 
 (defun cape--dabbrev-bounds ()
   "Return bounds of abbreviation."
