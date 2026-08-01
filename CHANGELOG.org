@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 2.8 (2026-08-01)
 
 - =cape-dict=, =cape-dabbrev=: Down case candidates if input is all lower case.
 - =cape-capf-super=: Improve =try-completion= handling.
