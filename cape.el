@@ -590,7 +590,8 @@ If INTERACTIVE is nil the function acts like a Capf."
            (dabbrev-backward-only nil)
            (dabbrev-limit nil)
            (dabbrev-search-these-buffers-only
-            (ensure-list (funcall cape-dabbrev-buffer-function))))
+            (ensure-list (funcall cape-dabbrev-buffer-function)))
+           (inhibit-redisplay t))
       (dabbrev--reset-global-variables)
       (cons
        (apply-partially #'string-prefix-p input)
