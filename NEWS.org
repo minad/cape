@@ -2,7 +2,7 @@
 #+author: Daniel Mendler
 #+language: en
 
-* Development
+* Version 2.10 (2026-09-28)
 
 - =cape-capf-debug=: Debugging output improvements.
 
